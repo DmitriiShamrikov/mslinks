@@ -7,6 +7,7 @@ public class ByteReader extends InputStream {
 	
 	private InputStream stream;
 	private Endianness end = Endianness.LITTLE_ENDIAN;
+	private int pos = 0;
 	
 	
 	public ByteReader(InputStream in) {
@@ -39,8 +40,13 @@ public class ByteReader extends InputStream {
 		return end == Endianness.LITTLE_ENDIAN;
 	}
 	
+	public int getPosition() {
+		return pos;
+	}
+	
 	@Override
 	public int read() throws IOException {
+		pos++;
 		return stream.read();
 	}
 	

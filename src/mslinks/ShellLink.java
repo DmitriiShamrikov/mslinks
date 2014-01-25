@@ -7,7 +7,9 @@ import java.nio.file.Paths;
 
 public class ShellLink {
 	
-	private ShellLinkHeader header; 
+	private boolean le;
+	private ShellLinkHeader header;
+	private LinkTargetIDList idlist;
 	
 	public ShellLink(String file) throws IOException, ShellLinkException {
 		this(Paths.get(file));
@@ -27,17 +29,17 @@ public class ShellLink {
 	
 	private ShellLink(ByteReader data) throws ShellLinkException, IOException {
 		header = new ShellLinkHeader(data);
+		if (header.getLinkFlags().hasLinkTargetIDList()) 
+			idlist = new LinkTargetIDList(data);
+		le = data.isLitteEndian();
 	}
-	
+		
 	public void serialize(OutputStream out) throws IOException {
-		serialize(out, true);
-	}
-	
-	public void serialize(OutputStream out, boolean littleendian) throws IOException {
 		ByteWriter bw = new ByteWriter(out);
-		if (littleendian) bw.setLittleEndian();
+		if (le) bw.setLittleEndian();
 		else bw.setBigEndian();
-		header.serialize(bw);		
+		header.serialize(bw);
+		idlist.serialize(bw);
 	}
 	
 	/*    to header      */
