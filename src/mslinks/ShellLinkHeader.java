@@ -1,6 +1,16 @@
 package mslinks;
 
+import io.ByteReader;
+import io.ByteWriter;
+import io.Bytes;
+
 import java.io.IOException;
+
+import mslinks.data.FileAttributesFlags;
+import mslinks.data.Filetime;
+import mslinks.data.GUID;
+import mslinks.data.HotKeyFlags;
+import mslinks.data.LinkFlags;
 
 public class ShellLinkHeader {
 	private static byte b(int i) { return (byte)i; }
@@ -27,7 +37,7 @@ public class ShellLinkHeader {
 	public ShellLinkHeader(ByteReader data) throws ShellLinkException, IOException {
 		int size = (int)data.read4bytes();
 		if (size != headerSize) {
-			size = ByteReader.reverse(size);			
+			size = Bytes.reverse(size);			
 			if (size != headerSize) 
 				throw new ShellLinkException();
 			data.changeEndiannes();

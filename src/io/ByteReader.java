@@ -1,4 +1,4 @@
-package mslinks;
+package io;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,51 +132,6 @@ public class ByteReader extends InputStream {
 			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40) | (b6 << 48) | (b7 << 56);
 		else 
 			return b7 | (b6 << 8) | (b5 << 16) | (b4 << 24) | (b3 << 32) | (b2 << 40) | (b1 << 48) | (b0 << 56);
-	}
-	
-	public static short reverse(short n) {
-		return (short)(((n & 0xff) << 8) | ((n & 0xff00) >> 8));
-	}
-	
-	public static int reverse(int n) {
-		return ((n & 0xff) << 24) | ((n & 0xff00) << 8) | ((n & 0xff0000) >> 8) | ((n & 0xff000000) >>> 24);
-	}
-	
-	public static long reverse(long n) {
-		return ((n & 0xff) << 56) | ((n & 0xff00) << 40) | ((n & 0xff0000) << 24) | ((n & 0xff000000) << 8) |
-				((n & 0xff00000000L) >> 8) | ((n & 0xff0000000000L) >> 24) | ((n & 0xff000000000000L) >> 40) | ((n & 0xff00000000000000L) >>> 56);
-	}
-	
-	public static short makeShortB(byte b0, byte b1) {
-		return (short)((i(b0) << 8) | i(b1));
-	}
-	
-	public static int makeIntB(byte b0, byte b1, byte b2, byte b3) {
-		return (i(b0) << 24) | (i(b1) << 16) | (i(b2) << 8) | i(b3);
-	}
-	
-	public static long makeLongB(byte b0, byte b1, byte b2, byte b3, byte b4, byte b5, byte b6, byte b7) {
-		return (l(b0) << 56) | (l(b1) << 48) | (l(b2) << 40) | (l(b3) << 32) | (l(b4) << 24) | (l(b5) << 16) | (l(b6) << 8) | l(b7);
-	}
-	
-	public static short makeShortL(byte b0, byte b1) {
-		return (short)((i(b1) << 8) | i(b0));
-	}
-	
-	public static int makeIntL(byte b0, byte b1, byte b2, byte b3) {
-		return (i(b3) << 24) | (i(b2) << 16) | (i(b1) << 8) | i(b0);
-	}
-	
-	public static long makeLongL(byte b0, byte b1, byte b2, byte b3, byte b4, byte b5, byte b6, byte b7) {
-		return (l(b7) << 56) | (l(b6) << 48) | (l(b5) << 40) | (l(b4) << 32) | (l(b3) << 24) | (l(b2) << 16) | (l(b1) << 8) | l(b0);
-	}
-		
-	private static int i(byte b) {
-		return b & 0xff;
-	}
-	
-	private static long l(byte b) {
-		return b & 0xffL;
 	}
 }
 

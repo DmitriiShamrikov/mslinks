@@ -1,4 +1,7 @@
-package mslinks;
+package mslinks.data;
+
+import io.ByteReader;
+import io.ByteWriter;
 
 import java.io.IOException;
 import java.util.HashMap;

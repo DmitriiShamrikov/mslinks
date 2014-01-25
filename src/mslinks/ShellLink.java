@@ -1,9 +1,17 @@
 package mslinks;
 
+import io.ByteReader;
+import io.ByteWriter;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import mslinks.data.FileAttributesFlags;
+import mslinks.data.Filetime;
+import mslinks.data.HotKeyFlags;
+import mslinks.data.LinkFlags;
 
 public class ShellLink {
 	

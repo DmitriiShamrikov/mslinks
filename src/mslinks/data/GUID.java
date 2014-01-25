@@ -1,4 +1,8 @@
-package mslinks;
+package mslinks.data;
+
+import io.ByteReader;
+import io.ByteWriter;
+import io.Bytes;
 
 import java.io.IOException;
 
@@ -8,11 +12,11 @@ public class GUID {
 	private long d5;
 	
 	public GUID(byte[] d) {
-		d1 = ByteReader.makeIntL(d[0], d[1], d[2], d[3]);
-		d2 = ByteReader.makeShortL(d[4], d[5]);
-		d3 = ByteReader.makeShortL(d[6], d[7]);
-		d4 = ByteReader.makeShortB(d[8], d[9]);
-		d5 = ByteReader.makeLongB((byte)0, (byte)0, d[10], d[11], d[12], d[13], d[14], d[15]);
+		d1 = Bytes.makeIntL(d[0], d[1], d[2], d[3]);
+		d2 = Bytes.makeShortL(d[4], d[5]);
+		d3 = Bytes.makeShortL(d[6], d[7]);
+		d4 = Bytes.makeShortB(d[8], d[9]);
+		d5 = Bytes.makeLongB((byte)0, (byte)0, d[10], d[11], d[12], d[13], d[14], d[15]);
 	}
 	
 	public GUID(ByteReader data) throws IOException {

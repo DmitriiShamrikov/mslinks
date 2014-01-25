@@ -1,4 +1,6 @@
-package mslinks;
+package mslinks.data;
+
+import io.ByteReader;
 
 import java.io.IOException;
 

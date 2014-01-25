@@ -1,5 +1,8 @@
 package mslinks;
 
+import io.ByteReader;
+import io.ByteWriter;
+
 import java.io.IOException;
 import java.util.LinkedList;
 
