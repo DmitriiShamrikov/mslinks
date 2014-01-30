@@ -149,4 +149,10 @@ public class ByteWriter extends OutputStream {
 		for (byte i : b) 
 			write(i);
 	}
+	
+	public void writeUnicodeString(String s) throws IOException {
+		write2bytes(s.length());
+		for (int i=0; i<s.length(); i++)
+			write2bytes(s.charAt(i));
+	}
 }

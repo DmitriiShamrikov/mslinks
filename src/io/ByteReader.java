@@ -168,6 +168,14 @@ public class ByteReader extends InputStream {
 		if (i == 0) return null;
 		return new String(buf, 0, i);
 	}
+	
+	public String readUnicodeString() throws IOException {
+		int c = (int)read2bytes();
+		char[] buf = new char[c];
+		for (int i=0; i<c; i++)
+			buf[i] = (char)read2bytes();
+		return new String(buf);
+	}
 }
 
 enum Endianness {
