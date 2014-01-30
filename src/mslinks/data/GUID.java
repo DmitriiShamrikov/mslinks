@@ -6,7 +6,9 @@ import io.Bytes;
 
 import java.io.IOException;
 
-public class GUID {
+import mslinks.Serializable;
+
+public class GUID implements Serializable {
 	private int d1;
 	private short d2, d3, d4;
 	private long d5;

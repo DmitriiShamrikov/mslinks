@@ -8,10 +8,19 @@ public class LinkFlags extends BitSet32 {
 	
 	public LinkFlags(int n) {
 		super(n);
+		reset();
 	}
 	
 	public LinkFlags(ByteReader data) throws IOException {
 		super(data);
+		reset();
+	}
+	
+	private void reset() {
+		clear(11);
+		clear(16);
+		for (int i=27; i<32; i++)
+			clear(i);
 	}
 	
 	public boolean hasLinkTargetIDList() 			{ return get(0); }	

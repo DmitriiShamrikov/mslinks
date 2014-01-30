@@ -7,10 +7,19 @@ import java.io.IOException;
 public class FileAttributesFlags extends BitSet32 {
 	public FileAttributesFlags(int n) {
 		super(n);
+		reset();
 	}
 	
 	public FileAttributesFlags(ByteReader data) throws IOException {
 		super(data);
+		reset();
+	}
+	
+	private void reset() {
+		clear(3);
+		clear(6);
+		for (int i=15; i<32; i++)
+			clear(i);
 	}
 	
 	public boolean isReadonly() 			{ return get(0); }

@@ -6,13 +6,13 @@ import io.ByteWriter;
 import java.io.IOException;
 import java.util.LinkedList;
 
-public class LinkTargetIDList {
+public class LinkTargetIDList implements Serializable {
 	private LinkedList<byte[]> list = new LinkedList<>();
 	
 	public LinkTargetIDList(ByteReader data) throws IOException, ShellLinkException {
 		int size = (int)data.read2bytes();
 		
-		int check = data.getPosition(); 
+		int pos = data.getPosition(); 
 		
 		int s = (int)data.read2bytes();
 		while (s != 0) {
@@ -24,8 +24,8 @@ public class LinkTargetIDList {
 			s = (int)data.read2bytes();
 		}
 		
-		check = data.getPosition() - check;
-		if (check != size) 
+		pos = data.getPosition() - pos;
+		if (pos != size) 
 			throw new ShellLinkException();
 	}
 

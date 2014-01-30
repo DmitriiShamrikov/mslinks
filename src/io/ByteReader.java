@@ -44,6 +44,13 @@ public class ByteReader extends InputStream {
 		return pos;
 	}
 	
+	public boolean seek(int n) throws IOException {
+		if (n == 0) return false;
+		for (int i=0; i<n; i++)
+			read();		
+		return true;
+	}
+	
 	@Override
 	public int read() throws IOException {
 		pos++;
@@ -132,6 +139,34 @@ public class ByteReader extends InputStream {
 			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40) | (b6 << 48) | (b7 << 56);
 		else 
 			return b7 | (b6 << 8) | (b5 << 16) | (b4 << 24) | (b3 << 32) | (b2 << 40) | (b1 << 48) | (b0 << 56);
+	}
+	
+	public String readString(int start, int size) throws IOException {
+		int sz = size + start - getPosition();
+		if (sz == 0) return null;
+		byte[] buf = new byte[sz];
+		int i = 0;
+		for (;; i++) {
+			int b = read();
+			if (b == 0) break;
+			buf[i] = (byte)b;
+		}
+		if (i == 0) return null;
+		return new String(buf, 0, i);
+	}
+	
+	public String readUnicodeString(int start, int size) throws IOException {
+		int sz = (size + start - getPosition())>>1;
+		if (sz == 0) return null;
+		char[] buf = new char[sz];		
+		int i = 0;
+		for (;; i++) {
+			char c = (char)read2bytes();
+			if (c == 0) break;
+			buf[i] = c;
+		}
+		if (i == 0) return null;
+		return new String(buf, 0, i);
 	}
 }
 

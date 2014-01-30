@@ -7,6 +7,8 @@ public class ByteWriter extends OutputStream {
 
 	private OutputStream stream;
 	private Endianness end = Endianness.LITTLE_ENDIAN;
+	private int pos = 0;
+	
 	
 	public ByteWriter(OutputStream out) {
 		stream = out;
@@ -38,8 +40,13 @@ public class ByteWriter extends OutputStream {
 		return end == Endianness.LITTLE_ENDIAN;
 	}
 	
+	public int getPosition() {
+		return pos;
+	}
+	
 	@Override
 	public void write(int b) throws IOException {
+		pos++;
 		stream.write(b);
 	}
 	
@@ -136,5 +143,10 @@ public class ByteWriter extends OutputStream {
 		} else {
 			write(b7); write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
 		}
+	}
+	
+	public void writeBytes(byte[] b) throws IOException {
+		for (byte i : b) 
+			write(i);
 	}
 }

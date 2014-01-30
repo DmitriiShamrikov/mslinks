@@ -12,7 +12,7 @@ import mslinks.data.GUID;
 import mslinks.data.HotKeyFlags;
 import mslinks.data.LinkFlags;
 
-public class ShellLinkHeader {
+public class ShellLinkHeader implements Serializable {
 	private static byte b(int i) { return (byte)i; }
 	private static int headerSize = 0x0000004C;
 	private static GUID clsid = new GUID(new byte[] {
@@ -22,9 +22,9 @@ public class ShellLinkHeader {
 			b(0xc0), b(0x00),  
 			b(0x00),  b(0x00),  b(0x00),  b(0x00),  b(0x00),  b(0x46) });
 	
-	public static int SW_SHOWNORMAL = 1;
-	public static int SW_SHOWMAXIMIZED = 3;
-	public static int SW_SHOWMINNOACTIVE = 7;	
+	public static final int SW_SHOWNORMAL = 1;
+	public static final int SW_SHOWMAXIMIZED = 3;
+	public static final int SW_SHOWMINNOACTIVE = 7;	
 	
 	private LinkFlags lf;
 	private FileAttributesFlags faf;
@@ -54,6 +54,8 @@ public class ShellLinkHeader {
 		fileSize = (int)data.read4bytes();
 		iconIndex = (int)data.read4bytes();
 		showCommand = (int)data.read4bytes();
+		if (showCommand != SW_SHOWNORMAL && showCommand != SW_SHOWMAXIMIZED && showCommand != SW_SHOWMINNOACTIVE)
+			throw new ShellLinkException();
 		hkf = new HotKeyFlags(data);
 		data.read2bytes();
 		data.read8bytes();

@@ -39,12 +39,12 @@ public class Bytes {
 		return (Bytes.l(b7) << 56) | (Bytes.l(b6) << 48) | (Bytes.l(b5) << 40) | (Bytes.l(b4) << 32) | (Bytes.l(b3) << 24) | (Bytes.l(b2) << 16) | (Bytes.l(b1) << 8) | Bytes.l(b0);
 	}
 
-	static int i(byte b) {
-		return b & 0xff;
-	}
-
 	static long l(byte b) {
 		return b & 0xffL;
+	}
+
+	static int i(byte b) {
+		return b & 0xff;
 	}
 
 }

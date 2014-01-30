@@ -6,7 +6,9 @@ import io.ByteWriter;
 import java.io.IOException;
 import java.util.GregorianCalendar;
 
-public class Filetime extends GregorianCalendar {
+import mslinks.Serializable;
+
+public class Filetime extends GregorianCalendar implements Serializable {
 	private long residue;
 	
 	public Filetime(ByteReader data) throws IOException {

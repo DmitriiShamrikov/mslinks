@@ -5,7 +5,9 @@ import io.ByteWriter;
 
 import java.io.IOException;
 
-public class BitSet32 {
+import mslinks.Serializable;
+
+public class BitSet32 implements Serializable {
 	private int d;
 	
 	public BitSet32(int n) {

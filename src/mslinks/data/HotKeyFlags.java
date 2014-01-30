@@ -6,7 +6,9 @@ import io.ByteWriter;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class HotKeyFlags {
+import mslinks.Serializable;
+
+public class HotKeyFlags implements Serializable {
 	private static HashMap<Byte, String> keys = new HashMap<Byte, String>() {{
 		put((byte)0x30, "0");
 		put((byte)0x31, "1");
