@@ -45,7 +45,7 @@ public class ByteReader extends InputStream {
 	}
 	
 	public boolean seek(int n) throws IOException {
-		if (n == 0) return false;
+		if (n <= 0) return false;
 		for (int i=0; i<n; i++)
 			read();		
 		return true;
@@ -141,8 +141,11 @@ public class ByteReader extends InputStream {
 			return b7 | (b6 << 8) | (b5 << 16) | (b4 << 24) | (b3 << 32) | (b2 << 40) | (b1 << 48) | (b0 << 56);
 	}
 	
-	public String readString(int start, int size) throws IOException {
-		int sz = size + start - getPosition();
+	/**
+	 * reads 0-terminated string in default code page
+	 * @param sz - maximum size in bytes
+	 */
+	public String readString(int sz) throws IOException {
 		if (sz == 0) return null;
 		byte[] buf = new byte[sz];
 		int i = 0;
@@ -155,8 +158,11 @@ public class ByteReader extends InputStream {
 		return new String(buf, 0, i);
 	}
 	
-	public String readUnicodeString(int start, int size) throws IOException {
-		int sz = (size + start - getPosition())>>1;
+	/**
+	 * reads 0-terminated string in unicode
+	 * @param sz - maximum size in bytes
+	 */
+	public String readUnicodeString(int sz) throws IOException {
 		if (sz == 0) return null;
 		char[] buf = new char[sz];		
 		int i = 0;
@@ -169,6 +175,9 @@ public class ByteReader extends InputStream {
 		return new String(buf, 0, i);
 	}
 	
+	/**
+	 * reads unicode string that has 2 bytes at start indicates length of string
+	 */
 	public String readUnicodeString() throws IOException {
 		int c = (int)read2bytes();
 		char[] buf = new char[c];

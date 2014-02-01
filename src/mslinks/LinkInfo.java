@@ -40,21 +40,21 @@ public class LinkInfo implements Serializable {
 			data.seek(pos + vidoffset - data.getPosition());
 			vid = new VolumeID(data);
 			data.seek(pos + lbpoffset - data.getPosition());
-			localBasePath = data.readString(pos, size);
+			localBasePath = data.readString(pos + size - data.getPosition());
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
 			data.seek(pos + cnrloffset - data.getPosition());
 			cnrlink = new CNRLink(data);
 			data.seek(pos + cpsoffset - data.getPosition());
-			commonPathSuffix = data.readString(pos, size);
+			commonPathSuffix = data.readString(pos + size - data.getPosition());
 		}
 		if (lif.hasVolumeIDAndLocalBasePath() && lbpoffset_u != 0) {
 			data.seek(pos + lbpoffset_u - data.getPosition());
-			localBasePath = data.readUnicodeString(pos, size);
+			localBasePath = data.readUnicodeString((pos + size - data.getPosition())>>1);
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix() && cpfoffset_u != 0) {
 			data.seek(pos + cpfoffset_u - data.getPosition());
-			commonPathSuffix = data.readUnicodeString(pos, size);
+			commonPathSuffix = data.readUnicodeString((pos + size - data.getPosition())>>1);
 		}
 		
 		data.seek(pos + size - data.getPosition());

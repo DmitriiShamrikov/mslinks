@@ -151,8 +151,13 @@ public class ByteWriter extends OutputStream {
 	}
 	
 	public void writeUnicodeString(String s) throws IOException {
-		write2bytes(s.length());
+		writeUnicodeString(s, false);
+	}
+	
+	public void writeUnicodeString(String s, boolean nullterm) throws IOException {
+		if (!nullterm) write2bytes(s.length());
 		for (int i=0; i<s.length(); i++)
 			write2bytes(s.charAt(i));
+		if (nullterm) write2bytes(0);
 	}
 }

@@ -7,19 +7,27 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
+import mslinks.data.ConsoleData;
 import mslinks.data.LinkFlags;
 
 public class ShellLink {
+	private static HashMap<Integer, Class> extraTypes = new HashMap<Integer, Class>() {{
+		put(ConsoleData.signature, ConsoleData.class);
+	}};
+	
 	
 	private boolean le;
 	private ShellLinkHeader header;
 	private LinkTargetIDList idlist;
 	private LinkInfo info;
 	private String name, relativePath, workingDir, cmdArgs, iconLocation;
+	private HashMap<Integer, Serializable> extra = new HashMap<>();
 	
 	public ShellLink(String file) throws IOException, ShellLinkException {
 		this(Paths.get(file));
@@ -54,6 +62,22 @@ public class ShellLink {
 			cmdArgs = data.readUnicodeString();
 		if (lf.hasIconLocation())
 			iconLocation = data.readUnicodeString();
+				
+		while (true) {
+			int size = (int)data.read4bytes();
+			if (size < 4) break;
+			int sign = (int)data.read4bytes();
+			try {
+				Class cl = extraTypes.get(sign);
+				if (cl != null)
+					extra.put(sign, (Serializable)cl.getConstructor(ByteReader.class, int.class).newInstance(data, size));
+				else 
+					data.seek(size - 8);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
+				e.printStackTrace();
+			}			
+		}
 		
 		le = data.isLitteEndian();
 	}
@@ -78,6 +102,10 @@ public class ShellLink {
 			bw.writeUnicodeString(cmdArgs);
 		if (lf.hasIconLocation())
 			bw.writeUnicodeString(iconLocation);
+		
+		for (Serializable i : extra.values())
+			i.serialize(bw);
+		bw.write4bytes(0);
 	}
 	
 	public ShellLinkHeader getHeader() { return header; }
@@ -132,5 +160,13 @@ public class ShellLink {
 		else 
 			header.getLinkFlags().setHasIconLocation();
 		iconLocation = s;
+	}
+	
+	public ConsoleData getConsoleData() {
+		ConsoleData cd = (ConsoleData)extra.get(ConsoleData.signature);
+		if (cd == null) 
+			cd = new ConsoleData();
+		extra.put(ConsoleData.signature, cd);
+		return cd;
 	}
 }
