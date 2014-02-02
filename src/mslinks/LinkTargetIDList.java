@@ -27,6 +27,9 @@ public class LinkTargetIDList implements Serializable {
 		pos = data.getPosition() - pos;
 		if (pos != size) 
 			throw new ShellLinkException();
+		
+		//for (byte[] b : list)
+		//	System.out.println(new String(b));
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {

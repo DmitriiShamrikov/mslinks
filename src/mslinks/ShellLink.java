@@ -69,16 +69,17 @@ public class ShellLink {
 			int size = (int)data.read4bytes();
 			if (size < 4) break;
 			int sign = (int)data.read4bytes();
+			System.out.println("0x" + Integer.toHexString(sign));
 			try {
 				Class cl = extraTypes.get(sign);
 				if (cl != null)
 					extra.put(sign, (Serializable)cl.getConstructor(ByteReader.class, int.class).newInstance(data, size));
-				else 
+				else
 					data.seek(size - 8);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
 				e.printStackTrace();
-			}			
+			}
 		}
 		
 		le = data.isLitteEndian();

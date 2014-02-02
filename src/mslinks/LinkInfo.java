@@ -89,10 +89,9 @@ public class LinkInfo implements Serializable {
 				size += localBasePath.length() * 2 + 2;
 				size += 1;
 			}
-			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-				size += commonPathSuffix.length() * 2 + 2;
-			} else 
-				size += 2;
+			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix())
+				size += commonPathSuffix.length() * 2;
+			size += 2;
 		}
 		
 		
@@ -105,16 +104,18 @@ public class LinkInfo implements Serializable {
 			off += vid_b.length;
 			bw.write4bytes(off); // localBasePath offset
 			off += localBasePath_b.length + 1;
-			bw.write4bytes(0); // CommonNetworkRelativeLinkOffset
-			bw.write4bytes(size - (hsize > 28 ? 4 : 1)); // fake commonPathSuffix offset 
-		}
-		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
+		} else {
 			bw.write4bytes(0); // volumeid offset
 			bw.write4bytes(0); // localBasePath offset
+		}
+		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {			
 			bw.write4bytes(off); // CommonNetworkRelativeLink offset 
 			off += cnrlink_b.length;
 			bw.write4bytes(off); // commonPathSuffix
 			off += commonPathSuffix_b.length + 1;
+		} else {
+			bw.write4bytes(0); // CommonNetworkRelativeLinkOffset
+			bw.write4bytes(size - (hsize > 28 ? 4 : 1)); // fake commonPathSuffix offset 
 		}
 		if (hsize > 28) {
 			if (lif.hasVolumeIDAndLocalBasePath()) {
@@ -167,13 +168,9 @@ public class LinkInfo implements Serializable {
 	
 	public VolumeID getVolumeID() { return vid; }
 	/**
-	 * Creates VolumeID and LocalBasePath that is empty string, clears CommonNetworkRelativeLink and CommonPathSuffix
+	 * Creates VolumeID and LocalBasePath that is empty string
 	 */
-	public VolumeID createVolumeID() {
-		cnrlink = null;
-		commonPathSuffix = null;
-		lif.clearCommonNetworkRelativeLinkAndPathSuffix();
-		
+	public VolumeID createVolumeID() {	
 		vid = new VolumeID();
 		localBasePath = "";
 		lif.setVolumeIDAndLocalBasePath();
@@ -182,7 +179,7 @@ public class LinkInfo implements Serializable {
 	
 	public String getLocalBasePath() { return localBasePath; }
 	/**
-	 * Set LocalBasePath and creates new VolumeID (if it not exists), clears CommonNetworkRelativeLink and CommonPathSuffix.
+	 * Set LocalBasePath and creates new VolumeID (if it not exists)
 	 * If s is null takes no effect 
 	 */
 	public LinkInfo setLocalBasePath(String s) {
@@ -190,42 +187,28 @@ public class LinkInfo implements Serializable {
 		
 		localBasePath = s;
 		if (vid == null) vid = new VolumeID();
-		lif.setVolumeIDAndLocalBasePath();
-		
-		cnrlink = null;
-		commonPathSuffix = null;
-		lif.clearCommonNetworkRelativeLinkAndPathSuffix();
+		lif.setVolumeIDAndLocalBasePath();		
 		return this;
 	}
 	
 	public CNRLink getCommonNetworkRelativeLink() { return cnrlink; }
 	/**
-	 * Creates CommonNetworkRelativeLink and CommonPathSuffix that is empty string, clears VolumeID and LocalBasePath
+	 * Creates CommonNetworkRelativeLink and CommonPathSuffix that is empty string
 	 */
 	public CNRLink createCommonNetworkRelativeLink() {
 		cnrlink = new CNRLink();
 		commonPathSuffix = "";
-		lif.setCommonNetworkRelativeLinkAndPathSuffix();
-		
-		vid = null;
-		localBasePath = null;
-		lif.clearVolumeIDAndLocalBasePath();
-		
+		lif.setCommonNetworkRelativeLinkAndPathSuffix();		
 		return cnrlink;
 	}
 	
 	public String getCommonPathSuffix() { return commonPathSuffix; }
 	/**
-	 * Set CommonPathSuffix and creates new CommonNetworkRelativeLink (if it not exists), clears VolumeID and LocalBasePath.
+	 * Set CommonPathSuffix and creates new CommonNetworkRelativeLink (if it not exists)
 	 * If s is null takes no effect 
 	 */
 	public LinkInfo setCommonPathSuffix(String s) {
-		if (s == null) return this;
-		
-		localBasePath = null;
-		vid = null;
-		lif.clearVolumeIDAndLocalBasePath();
-		
+		if (s == null) return this;		
 		commonPathSuffix = s;
 		if (cnrlink == null) cnrlink = new CNRLink();		
 		lif.setCommonNetworkRelativeLinkAndPathSuffix();
