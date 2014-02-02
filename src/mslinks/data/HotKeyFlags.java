@@ -96,23 +96,23 @@ public class HotKeyFlags implements Serializable {
 		return keys.get(low);
 	}
 	
-	public void setKey(String k) {
-		if (k == null || k.equals(""))
-			return;
-		low = keysr.get(k);
+	public HotKeyFlags setKey(String k) {
+		if (k != null && !k.equals(""))
+			low = keysr.get(k);
+		return this;
 	}
 	
 	public boolean isShift() { return (high & 1) != 0; }
 	public boolean isCtrl() { return (high & 2) != 0; }
 	public boolean isAlt() { return (high & 4) != 0; }
 	
-	public void setShift() { high = (byte)(1 | (high & 6)); }
-	public void setCtrl() { high = (byte)(2 | (high & 5)); }
-	public void setAlt() { high = (byte)(4 | (high & 3)); }
+	public HotKeyFlags setShift() { high = (byte)(1 | (high & 6)); return this; }
+	public HotKeyFlags setCtrl() { high = (byte)(2 | (high & 5)); return this; }
+	public HotKeyFlags setAlt() { high = (byte)(4 | (high & 3)); return this; }
 	
-	public void clearShift() { high = (byte)(high & 6); }
-	public void clearCtrl() { high = (byte)(high & 5); }
-	public void clearAlt() { high = (byte)(high & 3); }
+	public HotKeyFlags clearShift() { high = (byte)(high & 6); return this; }
+	public HotKeyFlags clearCtrl() { high = (byte)(high & 5); return this; }
+	public HotKeyFlags clearAlt() { high = (byte)(high & 3); return this; }
 
 	public void serialize(ByteWriter bw) throws IOException {
 		bw.write(low);

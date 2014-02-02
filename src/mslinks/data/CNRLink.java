@@ -165,7 +165,7 @@ public class CNRLink implements Serializable {
 	/**
 	 * pass zero to switch off network type
 	 */
-	public void setNetworlType(int n) throws ShellLinkException {
+	public CNRLink setNetworlType(int n) throws ShellLinkException {
 		if (n == 0) {
 			flags.clearValidNetType();
 			nptype = n;
@@ -174,22 +174,24 @@ public class CNRLink implements Serializable {
 			flags.setValidNetType();
 			nptype = n;
 		}
+		return this;
 	}
 	
 	public String getNetName() { return netname; }
 	/** 
 	 * if s is null take no effect
 	 */
-	public void setNetName(String s) throws ShellLinkException {
-		if (s == null) return;
-		netname = s; 
+	public CNRLink setNetName(String s) throws ShellLinkException {
+		if (s != null)
+			netname = s; 
+		return this;
 	}
 	
 	public String getDeviceName() { return devname; }
 	/**
 	 * pass null to switch off device info
 	 */
-	public void setDeviceName(String s) {
+	public CNRLink setDeviceName(String s) {
 		if (s == null) {
 			devname = null;
 			flags.clearValidDevice();
@@ -197,5 +199,6 @@ public class CNRLink implements Serializable {
 			devname = s;
 			flags.setValidDevice();
 		}
+		return this;
 	}
 }

@@ -152,20 +152,20 @@ public class ConsoleData implements Serializable {
 	/** get index in array returned by getColorTable() method */
 	public int getTextColor() { return textFG; }
 	/** set index in array returned by getColorTable() method */
-	public void setTextColor(int n) { textFG = n; }	
+	public ConsoleData setTextColor(int n) { textFG = n; return this; }	
 	/** get index in array returned by getColorTable() method */
 	public int getTextBackground() { return textBG; }
 	/** set index in array returned by getColorTable() method */
-	public void setTextBackground(int n) { textBG = n; }
+	public ConsoleData setTextBackground(int n) { textBG = n; return this; }
 	
 	/** get index in array returned by getColorTable() method */
 	public int getPopupTextColor() { return popupFG; }
 	/** set index in array returned by getColorTable() method */
-	public void setPopupTextColor(int n) { popupFG = n; }
+	public ConsoleData setPopupTextColor(int n) { popupFG = n; return this; }
 	/** get index in array returned by getColorTable() method */
 	public int getPopupTextBackground() { return popupBG; }
 	/** set index in array returned by getColorTable() method */
-	public void setPopupTextBackground(int n) { popupBG = n; }
+	public ConsoleData setPopupTextBackground(int n) { popupBG = n; return this; }
 	
 	public Size getBufferSize() { return buffer; }	
 	public Size getWindowSize() { return window; }	
@@ -174,19 +174,19 @@ public class ConsoleData implements Serializable {
 	public ConsoleFlags getConsoleFlags() { return flags; }
 	
 	public int getFontSize() { return fontsize; }
-	public void setFontSize(int n) { fontsize = n; } 
+	public ConsoleData setFontSize(int n) { fontsize = n; return this; } 
 	
 	public Font getFont() { return font; }
-	public void setFont(Font f) { font = f; }
+	public ConsoleData setFont(Font f) { font = f; return this; }
 	
 	public CursorSize getCursorSize() { return cursize; }
-	public void setCursorSize(CursorSize cs) { cursize = cs; }
+	public ConsoleData setCursorSize(CursorSize cs) { cursize = cs; return this; }
 	
 	public int getHistorySize() { return historysize; }
-	public void setHistorySize(int n) { historysize = n; }
+	public ConsoleData setHistorySize(int n) { historysize = n; return this; }
 	
 	public int getHistoryBuffers() { return historybuffers; }
-	public void setHistoryBuffers(int n) { historybuffers = n; }
+	public ConsoleData setHistoryBuffers(int n) { historybuffers = n; return this; }
 }
 
 /**

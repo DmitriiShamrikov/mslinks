@@ -22,16 +22,18 @@ public class Size implements Serializable{
 		return x;
 	}
 
-	public void setX(int x) {
+	public Size setX(int x) {
 		this.x = x;
+		return this;
 	}
 
 	public int getY() {
 		return y;
 	}
 
-	public void setY(int y) {
+	public Size setY(int y) {
 		this.y = y;
+		return this;
 	}
 
 	@Override

@@ -24,10 +24,10 @@ public class CNRLinkFlags extends BitSet32 {
 	public boolean isValidDevice() 		{ return get(0); }
 	public boolean isValidNetType()		{ return get(1); }
 	
-	public void setValidDevice() 		{ set(0); }	
-	public void setValidNetType()		{ set(1); }
+	public CNRLinkFlags setValidDevice() 		{ set(0); return this; }	
+	public CNRLinkFlags setValidNetType()		{ set(1); return this; }
 	
-	public void clearValidDevice() 		{ clear(0); }	
-	public void clearValidNetType()		{ clear(1); }
+	public CNRLinkFlags clearValidDevice() 		{ clear(0); return this; }	
+	public CNRLinkFlags clearValidNetType()		{ clear(1); return this; }
 
 }

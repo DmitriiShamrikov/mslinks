@@ -36,32 +36,32 @@ public class FileAttributesFlags extends BitSet32 {
 	public boolean isNotContentIndexed() 	{ return get(13); }
 	public boolean isEncypted() 			{ return get(14); }
 	
-	public void setReadonly() 			{ set(0); }
-	public void setHidden() 			{ set(1); }
-	public void setSystem() 			{ set(2); }
-	public void setDirecory() 			{ set(4); }
-	public void setArchive() 			{ set(5); }
-	public void setNormal() 			{ set(7); }
-	public void setTemporary() 			{ set(8); }
-	public void setSparseFile() 		{ set(9); }
-	public void setReparsePoint() 		{ set(10); }
-	public void setCompressed() 		{ set(11); }
-	public void setOffline() 			{ set(12); }
-	public void setNotContentIndexed() 	{ set(13); }
-	public void setEncypted() 			{ set(14); }
+	public FileAttributesFlags setReadonly() 			{ set(0); return this; }
+	public FileAttributesFlags setHidden() 				{ set(1); return this; }
+	public FileAttributesFlags setSystem() 				{ set(2); return this; }
+	public FileAttributesFlags setDirecory() 			{ set(4); return this; }
+	public FileAttributesFlags setArchive() 			{ set(5); return this; }
+	public FileAttributesFlags setNormal() 				{ set(7); return this; }
+	public FileAttributesFlags setTemporary() 			{ set(8); return this; }
+	public FileAttributesFlags setSparseFile() 			{ set(9); return this; }
+	public FileAttributesFlags setReparsePoint() 		{ set(10); return this; }
+	public FileAttributesFlags setCompressed() 			{ set(11); return this; }
+	public FileAttributesFlags setOffline() 			{ set(12); return this; }
+	public FileAttributesFlags setNotContentIndexed() 	{ set(13); return this; }
+	public FileAttributesFlags setEncypted() 			{ set(14); return this; }
 	
-	public void clearReadonly() 			{ clear(0); }
-	public void clearHidden() 				{ clear(1); }
-	public void clearSystem() 				{ clear(2); }
-	public void clearDirecory() 			{ clear(4); }
-	public void clearArchive() 				{ clear(5); }
-	public void clearNormal() 				{ clear(7); }
-	public void clearTemporary() 			{ clear(8); }
-	public void clearSparseFile() 			{ clear(9); }
-	public void clearReparsePoint() 		{ clear(10); }
-	public void clearCompressed() 			{ clear(11); }
-	public void clearOffline() 				{ clear(12); }
-	public void clearNotContentIndexed() 	{ clear(13); }
-	public void clearEncypted() 			{ clear(14); }
+	public FileAttributesFlags clearReadonly() 			{ clear(0); return this; }
+	public FileAttributesFlags clearHidden() 			{ clear(1); return this; }
+	public FileAttributesFlags clearSystem() 			{ clear(2); return this; }
+	public FileAttributesFlags clearDirecory() 			{ clear(4); return this; }
+	public FileAttributesFlags clearArchive() 			{ clear(5); return this; }
+	public FileAttributesFlags clearNormal() 			{ clear(7); return this; }
+	public FileAttributesFlags clearTemporary() 		{ clear(8); return this; }
+	public FileAttributesFlags clearSparseFile() 		{ clear(9); return this; }
+	public FileAttributesFlags clearReparsePoint() 		{ clear(10); return this; }
+	public FileAttributesFlags clearCompressed() 		{ clear(11); return this; }
+	public FileAttributesFlags clearOffline() 			{ clear(12); return this; }
+	public FileAttributesFlags clearNotContentIndexed() { clear(13); return this; }
+	public FileAttributesFlags clearEncypted() 			{ clear(14); return this; }
 	
 }

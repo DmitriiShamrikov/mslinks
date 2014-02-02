@@ -102,24 +102,26 @@ public class VolumeID implements Serializable {
 	}
 	
 	public int getDriveType() { return dt;}
-	public void setDriveType(int n) throws ShellLinkException {
+	public VolumeID setDriveType(int n) throws ShellLinkException {
 		if (n == DRIVE_UNKNOWN || n == DRIVE_NO_ROOT_DIR || n == DRIVE_REMOVABLE || n == DRIVE_FIXED 
-				|| n == DRIVE_REMOTE || n == DRIVE_CDROM || n == DRIVE_RAMDISK)
+				|| n == DRIVE_REMOTE || n == DRIVE_CDROM || n == DRIVE_RAMDISK) {
 			dt = n;
-		else 
+			return this;
+		} else 
 			throw new ShellLinkException("incorrect drive type");
 	}
 	
 	public int getSerialNumber() { return dsn; }
-	public void setSerialNumber(int n) { dsn = n; }
+	public VolumeID setSerialNumber(int n) { dsn = n; return this; }
 	
 	public String getLabel() { return label; }
 	/** 
 	 * if s is null take no effect
 	 */
-	public void setLabel(String s) {
-		if (s == null) return;
-		label = s;
+	public VolumeID setLabel(String s) {
+		if (s != null) 
+			label = s;
+		return this;
 	}
 
 }

@@ -14,11 +14,13 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 
 import mslinks.data.ConsoleData;
+import mslinks.data.ConsoleFEData;
 import mslinks.data.LinkFlags;
 
 public class ShellLink {
 	private static HashMap<Integer, Class> extraTypes = new HashMap<Integer, Class>() {{
 		put(ConsoleData.signature, ConsoleData.class);
+		put(ConsoleFEData.signature, ConsoleFEData.class);
 	}};
 	
 	
@@ -118,55 +120,80 @@ public class ShellLink {
 	}
 	
 	public String getName() { return name; }
-	public void setName(String s) {
+	public ShellLink setName(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasName();
 		else 
 			header.getLinkFlags().setHasName();
 		name = s;
+		return this;
 	}
 	
 	public String getRelativePath() { return relativePath; }
-	public void setRelativePath(String s) {
+	public ShellLink setRelativePath(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasRelativePath();
 		else 
 			header.getLinkFlags().setHasRelativePath();
 		relativePath = s;
+		return this;
 	}
 	
 	public String getWorkingDir() { return workingDir; }
-	public void setWorkingDir(String s) {
+	public ShellLink setWorkingDir(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasWorkingDir();
 		else 
 			header.getLinkFlags().setHasWorkingDir();
 		workingDir = s;
+		return this;
 	}
 	
 	public String getCMDArgs() { return cmdArgs; }
-	public void setCMDArgs(String s) {
+	public ShellLink setCMDArgs(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasArguments();
 		else 
 			header.getLinkFlags().setHasArguments();
 		cmdArgs = s;
+		return this;
 	}
 	
 	public String getIconLocation() { return iconLocation; }
-	public void setIconLocation(String s) {
+	public ShellLink setIconLocation(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasIconLocation();
 		else 
 			header.getLinkFlags().setHasIconLocation();
 		iconLocation = s;
+		return this;
 	}
 	
 	public ConsoleData getConsoleData() {
 		ConsoleData cd = (ConsoleData)extra.get(ConsoleData.signature);
-		if (cd == null) 
+		if (cd == null) {
 			cd = new ConsoleData();
-		extra.put(ConsoleData.signature, cd);
+			extra.put(ConsoleData.signature, cd);
+		}
 		return cd;
+	}
+	
+	public String getLanguage() { 
+		ConsoleFEData cd = (ConsoleFEData)extra.get(ConsoleFEData.signature);
+		if (cd == null) {
+			cd = new ConsoleFEData();
+			extra.put(ConsoleFEData.signature, cd);
+		}
+		return cd.getLanguage();
+	}
+	
+	public ShellLink setLanguage(String s) { 
+		ConsoleFEData cd = (ConsoleFEData)extra.get(ConsoleFEData.signature);
+		if (cd == null) {
+			cd = new ConsoleFEData();
+			extra.put(ConsoleFEData.signature, cd);
+		}
+		cd.setLanguage(s);
+		return this;
 	}
 }

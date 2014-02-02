@@ -185,8 +185,8 @@ public class LinkInfo implements Serializable {
 	 * Set LocalBasePath and creates new VolumeID (if it not exists), clears CommonNetworkRelativeLink and CommonPathSuffix.
 	 * If s is null takes no effect 
 	 */
-	public void setLocalBasePath(String s) {
-		if (s == null) return;
+	public LinkInfo setLocalBasePath(String s) {
+		if (s == null) return this;
 		
 		localBasePath = s;
 		if (vid == null) vid = new VolumeID();
@@ -195,6 +195,7 @@ public class LinkInfo implements Serializable {
 		cnrlink = null;
 		commonPathSuffix = null;
 		lif.clearCommonNetworkRelativeLinkAndPathSuffix();
+		return this;
 	}
 	
 	public CNRLink getCommonNetworkRelativeLink() { return cnrlink; }
@@ -218,8 +219,8 @@ public class LinkInfo implements Serializable {
 	 * Set CommonPathSuffix and creates new CommonNetworkRelativeLink (if it not exists), clears VolumeID and LocalBasePath.
 	 * If s is null takes no effect 
 	 */
-	public void setCommonPathSuffix(String s) {
-		if (s == null) return;
+	public LinkInfo setCommonPathSuffix(String s) {
+		if (s == null) return this;
 		
 		localBasePath = null;
 		vid = null;
@@ -228,5 +229,6 @@ public class LinkInfo implements Serializable {
 		commonPathSuffix = s;
 		if (cnrlink == null) cnrlink = new CNRLink();		
 		lif.setCommonNetworkRelativeLinkAndPathSuffix();
+		return this;
 	}
 }

@@ -69,16 +69,17 @@ public class ShellLinkHeader implements Serializable {
 	public HotKeyFlags getHotKeyFlags() { return hkf; }
 	
 	public int getFileSize() { return fileSize; }
-	public void setFileSize(long n) { fileSize = (int)n; }
+	public ShellLinkHeader setFileSize(long n) { fileSize = (int)n; return this; }
 	
 	public int getIconIndex() { return iconIndex; }
-	public void setIconIndex(int n) { iconIndex = n; }
+	public ShellLinkHeader setIconIndex(int n) { iconIndex = n; return this; }
 	
 	public int getShowCommand() { return showCommand; }
-	public void setShowCommand(int n) throws ShellLinkException { 
-		if (n == SW_SHOWNORMAL || n == SW_SHOWMAXIMIZED || n == SW_SHOWMINNOACTIVE)
+	public ShellLinkHeader setShowCommand(int n) throws ShellLinkException { 
+		if (n == SW_SHOWNORMAL || n == SW_SHOWMAXIMIZED || n == SW_SHOWMINNOACTIVE) {
 			showCommand = n;
-		else 
+			return this; 
+		} else 
 			throw new ShellLinkException();
 	}
 

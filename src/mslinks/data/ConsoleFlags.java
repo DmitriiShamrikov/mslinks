@@ -21,18 +21,18 @@ public class ConsoleFlags extends BitSet32 {
 	public boolean isAutoPosition() { return get(4); }
 	public boolean isHistoryDup() { return get(5); }
 	
-	public void setBoldFont() { set(0); }
-	public void setFullscreen() { set(1); }
-	public void setQuickEdit() { set(2); }
-	public void setInsertMode() { set(3); }
-	public void setAutoPosition() { set(4); }
-	public void setHistoryDup() { set(5); }
+	public ConsoleFlags setBoldFont() { set(0); return this; }
+	public ConsoleFlags setFullscreen() { set(1); return this; }
+	public ConsoleFlags setQuickEdit() { set(2); return this; }
+	public ConsoleFlags setInsertMode() { set(3); return this; }
+	public ConsoleFlags setAutoPosition() { set(4); return this; }
+	public ConsoleFlags setHistoryDup() { set(5); return this; }
 	
-	public void clearBoldFont() { clear(0); }
-	public void clearFullscreen() { clear(1); }
-	public void clearQuickEdit() { clear(2); }
-	public void clearInsertMode() { clear(3); }
-	public void clearAutoPosition() { clear(4); }
-	public void clearHistoryDup() { clear(5); }
+	public ConsoleFlags clearBoldFont() { clear(0); return this; }
+	public ConsoleFlags clearFullscreen() { clear(1); return this; }
+	public ConsoleFlags clearQuickEdit() { clear(2); return this; }
+	public ConsoleFlags clearInsertMode() { clear(3); return this; }
+	public ConsoleFlags clearAutoPosition() { clear(4); return this; }
+	public ConsoleFlags clearHistoryDup() { clear(5); return this; }
 
 }
