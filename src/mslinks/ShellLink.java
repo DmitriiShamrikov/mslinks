@@ -16,6 +16,7 @@ import java.util.HashMap;
 import mslinks.data.LinkFlags;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
+import mslinks.extra.EnvironmentVariable;
 import mslinks.extra.Tracker;
 import mslinks.extra.VistaIDList;
 
@@ -25,6 +26,7 @@ public class ShellLink {
 		put(ConsoleFEData.signature, ConsoleFEData.class);
 		put(Tracker.signature, Tracker.class);
 		put(VistaIDList.signature, VistaIDList.class);
+		put(EnvironmentVariable.signature, EnvironmentVariable.class);
 	}};
 	
 	
@@ -68,7 +70,7 @@ public class ShellLink {
 			cmdArgs = data.readUnicodeString();
 		if (lf.hasIconLocation())
 			iconLocation = data.readUnicodeString();
-				
+		
 		while (true) {
 			int size = (int)data.read4bytes();
 			if (size < 4) break;

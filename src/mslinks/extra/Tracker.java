@@ -56,9 +56,10 @@ public class Tracker implements Serializable {
 	}
 	
 	public String getNetbiosName() { return netbios; }
-	public void setNetbiosName(String s) throws ShellLinkException {
+	public Tracker setNetbiosName(String s) throws ShellLinkException {
 		if (s.length() > 16)
 			throw new ShellLinkException("netbios name length must be <= 16");
 		netbios = s;
+		return this;
 	}
 }
