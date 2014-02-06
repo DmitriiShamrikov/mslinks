@@ -16,11 +16,15 @@ import java.util.HashMap;
 import mslinks.data.LinkFlags;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
+import mslinks.extra.Tracker;
+import mslinks.extra.VistaIDList;
 
 public class ShellLink {
 	private static HashMap<Integer, Class> extraTypes = new HashMap<Integer, Class>() {{
 		put(ConsoleData.signature, ConsoleData.class);
 		put(ConsoleFEData.signature, ConsoleFEData.class);
+		put(Tracker.signature, Tracker.class);
+		put(VistaIDList.signature, VistaIDList.class);
 	}};
 	
 	

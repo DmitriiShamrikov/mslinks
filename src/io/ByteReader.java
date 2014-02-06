@@ -149,7 +149,7 @@ public class ByteReader extends InputStream {
 		if (sz == 0) return null;
 		byte[] buf = new byte[sz];
 		int i = 0;
-		for (;; i++) {
+		for (; i<sz; i++) {
 			int b = read();
 			if (b == 0) break;
 			buf[i] = (byte)b;
@@ -166,7 +166,7 @@ public class ByteReader extends InputStream {
 		if (sz == 0) return null;
 		char[] buf = new char[sz];		
 		int i = 0;
-		for (;; i++) {
+		for (; i<sz; i++) {
 			char c = (char)read2bytes();
 			if (c == 0) break;
 			buf[i] = c;

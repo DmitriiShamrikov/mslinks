@@ -5,13 +5,24 @@ import io.ByteWriter;
 import io.Bytes;
 
 import java.io.IOException;
+import java.util.Random;
 
 import mslinks.Serializable;
 
 public class GUID implements Serializable {
+	private static Random r = new Random();
+	
 	private int d1;
 	private short d2, d3, d4;
 	private long d5;
+	
+	public GUID() {
+		d1 = r.nextInt();
+		d2 = (short)r.nextInt();
+		d3 = (short)r.nextInt();
+		d4 = (short)r.nextInt();
+		d5 = r.nextLong() & 0xffffffffffffL;
+	}
 	
 	public GUID(byte[] d) {
 		d1 = Bytes.makeIntL(d[0], d[1], d[2], d[3]);
