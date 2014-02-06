@@ -16,13 +16,11 @@ import java.util.HashMap;
 import mslinks.data.LinkFlags;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
-import mslinks.extra.PropertyStore;
 
 public class ShellLink {
 	private static HashMap<Integer, Class> extraTypes = new HashMap<Integer, Class>() {{
 		put(ConsoleData.signature, ConsoleData.class);
 		put(ConsoleFEData.signature, ConsoleFEData.class);
-		put(PropertyStore.signature, PropertyStore.class);
 	}};
 	
 	
@@ -71,6 +69,7 @@ public class ShellLink {
 			int size = (int)data.read4bytes();
 			if (size < 4) break;
 			int sign = (int)data.read4bytes();
+			System.out.println("0x" + Integer.toHexString(sign));
 			try {
 				Class cl = extraTypes.get(sign);
 				if (cl != null)
