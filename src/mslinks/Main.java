@@ -13,13 +13,13 @@ public class Main {
 		//	System.out.println(i);
 		//if (true) return;
 		
-		ShellLink link = new ShellLink("test.lnk");
-		link.setName("Test name");
+		ShellLink link = new ShellLink("testlink4.lnk");
+		//link.setName("Test name");
 		Filetime ft = link.getHeader().getWriteTime();
 		System.out.println(String.format("%d:%d:%d %d.%d.%d", ft.get(GregorianCalendar.HOUR_OF_DAY), ft.get(GregorianCalendar.MINUTE), ft.get(GregorianCalendar.SECOND),
 				ft.get(GregorianCalendar.DAY_OF_MONTH), ft.get(GregorianCalendar.MONTH) + 1, ft.get(GregorianCalendar.YEAR)));
 		
-		link.getConsoleData().setTextColor(2);
+		//link.getConsoleData().setTextColor(2);
 		
 		link.serialize(Files.newOutputStream(Paths.get("test.lnk")));
 	}

@@ -160,7 +160,7 @@ public class ByteReader extends InputStream {
 	
 	/**
 	 * reads 0-terminated string in unicode
-	 * @param sz - maximum size in bytes
+	 * @param sz - maximum size in charcters
 	 */
 	public String readUnicodeString(int sz) throws IOException {
 		if (sz == 0) return null;

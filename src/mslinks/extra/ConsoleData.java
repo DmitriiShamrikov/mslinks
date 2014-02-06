@@ -1,4 +1,4 @@
-package mslinks.data;
+package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
@@ -7,6 +7,8 @@ import java.io.IOException;
 
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
+import mslinks.data.ConsoleFlags;
+import mslinks.data.Size;
 
 public class ConsoleData implements Serializable {
 	

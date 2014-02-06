@@ -1,4 +1,4 @@
-package mslinks.data;
+package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
