@@ -189,15 +189,15 @@ public class ConsoleData implements Serializable {
 	
 	public int getHistoryBuffers() { return historybuffers; }
 	public ConsoleData setHistoryBuffers(int n) { historybuffers = n; return this; }
-}
-
-/**
- * only this fonts are working...
- */
-enum Font {
-	Terminal, LucindaConsole, Consolas
-}
-
-enum CursorSize {
-	Small, Medium, Large
+	
+	/**
+	 * only this fonts are working...
+	 */
+	public enum Font {
+		Terminal, LucindaConsole, Consolas
+	}
+	
+	public enum CursorSize {
+		Small, Medium, Large
+	}
 }

@@ -87,6 +87,10 @@ public class HotKeyFlags implements Serializable {
 	private byte low;
 	private byte high;
 	
+	public HotKeyFlags() {
+		low = high = 0;
+	}
+	
 	public HotKeyFlags(ByteReader data) throws IOException {
 		low = (byte)data.read();
 		high = (byte)data.read();

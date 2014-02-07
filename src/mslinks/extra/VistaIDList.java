@@ -43,5 +43,11 @@ public class VistaIDList implements Serializable {
 		}
 		bw.write2bytes(0);
 	}
-
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (byte[] b : list)
+			sb.append(new String(b) + "\n");
+		return sb.toString();
+	}
 }

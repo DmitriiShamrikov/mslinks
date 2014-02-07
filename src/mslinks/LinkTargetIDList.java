@@ -3,45 +3,72 @@ package mslinks;
 import io.ByteReader;
 import io.ByteWriter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 
-public class LinkTargetIDList implements Serializable {
-	private LinkedList<byte[]> list = new LinkedList<>();
+import mslinks.data.ItemID;
+
+public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable {
+	
+	public LinkTargetIDList() {}
 	
 	public LinkTargetIDList(ByteReader data) throws IOException, ShellLinkException {
 		int size = (int)data.read2bytes();
 		
 		int pos = data.getPosition(); 
 		
+		boolean binary = false;
 		int s = (int)data.read2bytes();
 		while (s != 0) {
 			s -= 2;
-			byte[] b = new byte[s];
-			for (int i=0; i<s; i++)
-				b[i] = (byte)data.read();
-			list.add(b);
+			if (binary) {
+				byte[] b = new byte[s];
+				for (int i=0; i<s; i++)
+					b[i] = (byte)data.read();
+				add(new ItemID(b));
+			} else try {
+				add(new ItemID(data));
+			} catch (UnsupportedCLSIDException e) {
+				System.err.println("unsupported CLSID");
+				binary = true;
+			}
 			s = (int)data.read2bytes();
 		}
 		
 		pos = data.getPosition() - pos;
 		if (pos != size) 
 			throw new ShellLinkException();
-		
-		//for (byte[] b : list)
-		//	System.out.println(new String(b));
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
 		int size = 2;
-		for (byte[] i : list)
-			size += i.length + 2;
+		byte[][] b = new byte[size()][];
+		int i = 0;
+		for (ItemID j : this) {
+			ByteArrayOutputStream ba = new ByteArrayOutputStream();
+			ByteWriter w = new ByteWriter(ba);
+			if (bw.isLitteEndian()) w.setLittleEndian();
+			else w.setBigEndian();
+			
+			j.serialize(w);			
+			b[i++] = ba.toByteArray();					
+		}			
+		for (byte[] j : b)
+			size += j.length + 2;
+		
 		bw.write2bytes(size);
-		for (byte[] i : list) {
-			bw.write2bytes(i.length + 2);
-			for (byte j : i)
-				bw.write(j);
+		for (byte[] j : b) {
+			bw.write2bytes(j.length + 2);
+			bw.writeBytes(j);
 		}
 		bw.write2bytes(0);
+	}
+	
+	public boolean isCorrect() {
+		for (ItemID i : this) 
+			if (i.getType() == ItemID.TYPE_UNKNOWN)
+				return false;
+		return true;
 	}
 }

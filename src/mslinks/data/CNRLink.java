@@ -60,6 +60,8 @@ public class CNRLink implements Serializable {
 	private String netname, devname;
 
 	public CNRLink() {
+		flags = new CNRLinkFlags(0).setValidNetType();
+		nptype = WNNC_NET_DECORB;
 		netname = "";
 	}
 	
@@ -165,7 +167,7 @@ public class CNRLink implements Serializable {
 	/**
 	 * pass zero to switch off network type
 	 */
-	public CNRLink setNetworlType(int n) throws ShellLinkException {
+	public CNRLink setNetworkType(int n) throws ShellLinkException {
 		if (n == 0) {
 			flags.clearValidNetType();
 			nptype = n;
@@ -181,7 +183,7 @@ public class CNRLink implements Serializable {
 	/** 
 	 * if s is null take no effect
 	 */
-	public CNRLink setNetName(String s) throws ShellLinkException {
+	public CNRLink setNetName(String s) {
 		if (s != null)
 			netname = s; 
 		return this;

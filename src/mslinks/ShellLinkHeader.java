@@ -13,14 +13,8 @@ import mslinks.data.HotKeyFlags;
 import mslinks.data.LinkFlags;
 
 public class ShellLinkHeader implements Serializable {
-	private static byte b(int i) { return (byte)i; }
 	private static int headerSize = 0x0000004C;
-	private static GUID clsid = new GUID(new byte[] {
-			b(0x01),  b(0x14),  b(0x02),  b(0x00),  
-			b(0x00),  b(0x00),  
-			b(0x00),  b(0x00),  
-			b(0xc0), b(0x00),  
-			b(0x00),  b(0x00),  b(0x00),  b(0x00),  b(0x00),  b(0x46) });
+	private static GUID clsid = new GUID("00021401-0000-0000-C000-000000000046");
 	
 	public static final int SW_SHOWNORMAL = 1;
 	public static final int SW_SHOWMAXIMIZED = 3;
@@ -32,7 +26,15 @@ public class ShellLinkHeader implements Serializable {
 	private int fileSize, iconIndex, showCommand;
 	private HotKeyFlags hkf;
 	
-	
+	public ShellLinkHeader() {
+		lf = new LinkFlags(0);
+		faf = new FileAttributesFlags(0);
+		creationTime = new Filetime();
+		accessTime = new Filetime();
+		writeTime = new Filetime();
+		showCommand = SW_SHOWNORMAL;
+		hkf = new HotKeyFlags();
+	}
 	
 	public ShellLinkHeader(ByteReader data) throws ShellLinkException, IOException {
 		int size = (int)data.read4bytes();

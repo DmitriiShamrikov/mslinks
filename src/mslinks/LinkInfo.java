@@ -18,7 +18,7 @@ public class LinkInfo implements Serializable {
 	private String commonPathSuffix;
 	
 	public LinkInfo() {
-		createVolumeID();
+		lif = new LinkInfoFlags(0);
 	}
 	
 	public LinkInfo(ByteReader data) throws IOException, ShellLinkException {

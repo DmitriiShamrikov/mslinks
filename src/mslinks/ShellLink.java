@@ -8,12 +8,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+import mslinks.data.CNRLink;
+import mslinks.data.ItemID;
 import mslinks.data.LinkFlags;
+import mslinks.data.VolumeID;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
 import mslinks.extra.EnvironmentVariable;
@@ -37,6 +41,14 @@ public class ShellLink {
 	private String name, relativePath, workingDir, cmdArgs, iconLocation;
 	private HashMap<Integer, Serializable> extra = new HashMap<>();
 	
+	private Path linkFileSource;
+	
+	private ShellLink() {
+		le = true;
+		header = new ShellLinkHeader();
+		header.getLinkFlags().setIsUnicode();
+	}
+	
 	public ShellLink(String file) throws IOException, ShellLinkException {
 		this(Paths.get(file));
 	}
@@ -47,6 +59,7 @@ public class ShellLink {
 	
 	public ShellLink(Path file) throws IOException, ShellLinkException {
 		this(Files.newInputStream(file));
+		linkFileSource = file.toAbsolutePath();
 	}
 	
 	public ShellLink(InputStream in) throws IOException, ShellLinkException {
@@ -75,7 +88,7 @@ public class ShellLink {
 			int size = (int)data.read4bytes();
 			if (size < 4) break;
 			int sign = (int)data.read4bytes();
-			System.out.println("0x" + Integer.toHexString(sign));
+			//System.out.println("0x" + Integer.toHexString(sign));
 			try {
 				Class cl = extraTypes.get(sign);
 				if (cl != null)
@@ -91,7 +104,7 @@ public class ShellLink {
 		le = data.isLitteEndian();
 	}
 		
-	public void serialize(OutputStream out) throws IOException {
+	private void serialize(OutputStream out) throws IOException {
 		LinkFlags lf = header.getLinkFlags();
 		ByteWriter bw = new ByteWriter(out);
 		if (le) bw.setLittleEndian();
@@ -99,6 +112,7 @@ public class ShellLink {
 		header.serialize(bw);
 		if (lf.hasLinkTargetIDList())
 			idlist.serialize(bw);
+		
 		if (lf.hasLinkInfo())
 			info.serialize(bw);
 		if (lf.hasName())
@@ -114,6 +128,7 @@ public class ShellLink {
 		
 		for (Serializable i : extra.values())
 			i.serialize(bw);
+		
 		bw.write4bytes(0);
 	}
 	
@@ -140,8 +155,11 @@ public class ShellLink {
 	public ShellLink setRelativePath(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasRelativePath();
-		else 
+		else { 
 			header.getLinkFlags().setHasRelativePath();
+			if (!s.startsWith("."))
+				s = ".\\" + s;
+		}
 		relativePath = s;
 		return this;
 	}
@@ -150,8 +168,10 @@ public class ShellLink {
 	public ShellLink setWorkingDir(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasWorkingDir();
-		else 
+		else {
 			header.getLinkFlags().setHasWorkingDir();
+			s = Paths.get(s).toAbsolutePath().normalize().toString();
+		}
 		workingDir = s;
 		return this;
 	}
@@ -184,7 +204,7 @@ public class ShellLink {
 		}
 		return cd;
 	}
-	
+		
 	public String getLanguage() { 
 		ConsoleFEData cd = (ConsoleFEData)extra.get(ConsoleFEData.signature);
 		if (cd == null) {
@@ -202,5 +222,120 @@ public class ShellLink {
 		}
 		cd.setLanguage(s);
 		return this;
+	}
+	
+	public ShellLink saveTo(String path) throws IOException {
+		return saveTo(path, le);
+	}
+	
+	public ShellLink saveTo(String path, boolean littleendiand) throws IOException {
+		le = littleendiand;
+		linkFileSource = Paths.get(path).toAbsolutePath().normalize();
+		if (Files.isDirectory(linkFileSource))
+			throw new IOException("path is directory!");
+		
+		if (!header.getLinkFlags().hasRelativePath()) {
+			Path target = Paths.get(resolveTarget());
+			Path origin = linkFileSource.getParent();
+			if (target.getRoot().equals(origin.getRoot())) 
+				setRelativePath(origin.relativize(target).toString());
+		}
+		
+		if (!header.getLinkFlags().hasWorkingDir()) {
+			Path target = Paths.get(resolveTarget());
+			if (!Files.isDirectory(target))
+				setWorkingDir(target.getParent().toString());
+		}
+		
+		serialize(Files.newOutputStream(linkFileSource));
+		return this;
+	}
+	
+	public String resolveTarget() {
+		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.isCorrect()) {
+			String path = "";
+			for (ItemID i : idlist) {
+				if (i.getType() == ItemID.TYPE_DRIVE)
+					path = i.getName();
+				else if (i.getType() == ItemID.TYPE_DIRECTORY) 
+					path += i.getName() + File.separator;
+				else if (i.getType() == ItemID.TYPE_FILE)
+					path += i.getName();				
+			}
+			return path;
+		}
+		
+		if (header.getLinkFlags().hasLinkInfo() && info != null) {
+			CNRLink l = info.getCommonNetworkRelativeLink();
+			String cps = info.getCommonPathSuffix();
+			String lbp = info.getLocalBasePath();
+			
+			if (lbp != null) {
+				String path = lbp;
+				if (cps != null && !cps.equals("")) {
+					if (path.charAt(path.length() - 1) != File.separatorChar)
+						path += File.separatorChar;
+					path += cps;
+				}
+				return path;
+			}			
+			
+			if (l != null && cps != null)
+				return l.getNetName() + File.separator + cps;			
+		}
+		
+		if (linkFileSource != null && header.getLinkFlags().hasRelativePath() && relativePath != null) 
+			return linkFileSource.resolveSibling(relativePath).normalize().toString();
+		
+		return "<unknown>";
+	}
+	
+	public static ShellLink createLink(String target) {
+		ShellLink sl = new ShellLink();
+		Path tar = Paths.get(target).toAbsolutePath();
+		target = tar.toString();
+		
+		if (target.startsWith("\\\\")) {
+			int p1 = target.indexOf('\\', 2);
+			int p2 = target.indexOf('\\', p1+1);
+			
+			LinkInfo inf = sl.createLinkInfo();
+			inf.createCommonNetworkRelativeLink().setNetName(target.substring(0, p2));
+			inf.setCommonPathSuffix(target.substring(p2+1));
+			
+			if (Files.isDirectory(Paths.get(target)))
+				sl.header.getFileAttributesFlags().setDirecory();
+			
+			sl.header.getLinkFlags().setHasExpString();
+			sl.extra.put(EnvironmentVariable.signature, new EnvironmentVariable().setVariable(target));
+			
+		} else try {
+			sl.header.getLinkFlags().setHasLinkTargetIDList();
+			sl.idlist = new LinkTargetIDList();			
+			String[] path = target.split("\\\\");
+			sl.idlist.add(new ItemID().setType(ItemID.TYPE_CLSID));
+			sl.idlist.add(new ItemID().setType(ItemID.TYPE_DRIVE).setName(path[0]));
+			for (int i=1; i<path.length; i++)
+				sl.idlist.add(new ItemID().setType(ItemID.TYPE_DIRECTORY).setName(path[i]));
+			
+			LinkInfo inf = sl.createLinkInfo();
+			inf.createVolumeID().setDriveType(VolumeID.DRIVE_FIXED);
+			inf.setLocalBasePath(target);
+			
+			if (Files.isDirectory(tar))
+				sl.header.getFileAttributesFlags().setDirecory();
+			else 
+				sl.idlist.getLast().setType(ItemID.TYPE_FILE);
+
+		} catch (ShellLinkException e) {}
+		
+		return sl;
+	}
+	
+	/**
+	 * equivalent to createLink(target).saveTo(linkpath)
+	 */
+	public static ShellLink createLink(String target, String linkpath) throws IOException {
+		return createLink(target).saveTo(linkpath);
 	}
 }
