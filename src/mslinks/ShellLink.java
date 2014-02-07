@@ -8,11 +8,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import mslinks.data.CNRLink;
 import mslinks.data.ItemID;
@@ -25,6 +26,8 @@ import mslinks.extra.Tracker;
 import mslinks.extra.VistaIDList;
 
 public class ShellLink {
+	private static Map<String, String> env = System.getenv();
+	
 	private static HashMap<Integer, Class> extraTypes = new HashMap<Integer, Class>() {{
 		put(ConsoleData.signature, ConsoleData.class);
 		put(ConsoleFEData.signature, ConsoleFEData.class);
@@ -292,6 +295,10 @@ public class ShellLink {
 	
 	public static ShellLink createLink(String target) {
 		ShellLink sl = new ShellLink();
+		
+		for (String i : env.keySet())
+			target = Pattern.compile("%"+i+"%", Pattern.CASE_INSENSITIVE).matcher(target).replaceAll(env.get(i));
+		
 		Path tar = Paths.get(target).toAbsolutePath();
 		target = tar.toString();
 		

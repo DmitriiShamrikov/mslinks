@@ -128,11 +128,6 @@ public class ItemID implements Serializable {
 	public ItemID setName(String s) throws ShellLinkException {
 		if (s == null) 
 			return this;
-		if (s.startsWith("%") && s.endsWith("%")) {
-			String value = System.getenv(s.substring(1, s.length() - 2));
-			if (value != null)
-				s = value;
-		}
 		
 		if (type == TYPE_FILE || type == TYPE_DIRECTORY) {
 			if (s.contains("\\"))
