@@ -22,6 +22,7 @@ import mslinks.data.VolumeID;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
 import mslinks.extra.EnvironmentVariable;
+import mslinks.extra.Stub;
 import mslinks.extra.Tracker;
 import mslinks.extra.VistaIDList;
 
@@ -91,13 +92,12 @@ public class ShellLink {
 			int size = (int)data.read4bytes();
 			if (size < 4) break;
 			int sign = (int)data.read4bytes();
-			//System.out.println("0x" + Integer.toHexString(sign));
 			try {
 				Class cl = extraTypes.get(sign);
 				if (cl != null)
 					extra.put(sign, (Serializable)cl.getConstructor(ByteReader.class, int.class).newInstance(data, size));
 				else
-					data.seek(size - 8);
+					extra.put(sign, new Stub(data, size, sign));
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
 				e.printStackTrace();
