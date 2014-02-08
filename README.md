@@ -9,8 +9,7 @@ You can edit most properties of the link such as working directory, tooltip text
 
 * extra data blocks: Darwin, IconEnvironment, KnownFolder, PropertyStore, Shim, SpecialFolder
 * most options in LinkTargetIDList because it not documented, only key parts for resolving links implemented, others are zero stub
-* relative path property not working, dont know why =(
-* you can use environment variables and relative paths, but it resolves at creation time and not stores in the lnk file
+* you can use environment variables but they are resolved at creation time and not stores in the lnk file
 
 Easiest way to create link with default parameters: `ShellLink.createLink("targetfile", "linkfile.lnk")`
 
@@ -35,4 +34,19 @@ public class Main {
 	}
 }
 
+```
+
+Final example creates recursive link that blocks explorer on Windows 7 while trying to get into the containing directory :D
+```
+package mslinks;
+
+import java.io.IOException;
+
+public class Main {
+	public static void main(String[] args) throws IOException {
+		ShellLink sl = ShellLink.createLink("test.lnk");
+		sl.getHeader().getLinkFlags().setAllowLinkToLink();
+		sl.saveTo("test.lnk");
+	}
+}
 ```
