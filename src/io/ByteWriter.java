@@ -2,11 +2,12 @@ package io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 
 public class ByteWriter extends OutputStream {
+	private static boolean le = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 
 	private OutputStream stream;
-	private Endianness end = Endianness.LITTLE_ENDIAN;
 	private int pos = 0;
 	
 	
@@ -14,34 +15,13 @@ public class ByteWriter extends OutputStream {
 		stream = out;
 	}
 	
-	public ByteWriter setBigEndian() {
-		end = Endianness.BIG_ENDIAN;
-		return this;
-	}
-	
-	public ByteWriter setLittleEndian() {
-		end = Endianness.LITTLE_ENDIAN;
-		return this;
+	public int getPosition() {
+		return pos;
 	}
 	
 	public ByteWriter changeEndiannes() {
-		if (isLitteEndian())
-			setBigEndian();
-		else 
-			setLittleEndian();
+		le = !le;
 		return this;
-	}
-	
-	public boolean isBigEndian() {
-		return end == Endianness.BIG_ENDIAN;
-	}
-	
-	public boolean isLitteEndian() {
-		return end == Endianness.LITTLE_ENDIAN;
-	}
-	
-	public int getPosition() {
-		return pos;
 	}
 	
 	@Override
@@ -57,7 +37,7 @@ public class ByteWriter extends OutputStream {
 	public void write2bytes(long n) throws IOException {
 		long b0 = n & 0xff;
 		long b1 = (n & 0xff00) >> 8;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1);
 		} else {
 			write(b1); write(b0);
@@ -68,7 +48,7 @@ public class ByteWriter extends OutputStream {
 		long b0 = n & 0xff;
 		long b1 = (n & 0xff00) >> 8;
 		long b2 = (n & 0xff0000) >> 16;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1); write(b2);
 		} else {
 			write(b2); write(b1); write(b0);
@@ -80,7 +60,7 @@ public class ByteWriter extends OutputStream {
 		long b1 = (n & 0xff00) >> 8;
 		long b2 = (n & 0xff0000) >> 16;
 		long b3 = (n & 0xff000000) >>> 24;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1); write(b2); write(b3);
 		} else {
 			write(b3); write(b2); write(b1); write(b0);
@@ -93,7 +73,7 @@ public class ByteWriter extends OutputStream {
 		long b2 = (n & 0xff0000) >> 16;
 		long b3 = (n & 0xff000000) >>> 24;
 		long b4 = (n & 0xff00000000L) >> 32;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1); write(b2); write(b3); write(b4);
 		} else {
 			write(b4); write(b3); write(b2); write(b1); write(b0);
@@ -107,7 +87,7 @@ public class ByteWriter extends OutputStream {
 		long b3 = (n & 0xff000000) >>> 24;
 		long b4 = (n & 0xff00000000L) >> 32;
 		long b5 = (n & 0xff0000000000L) >> 40;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5);
 		} else {
 			write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
@@ -122,7 +102,7 @@ public class ByteWriter extends OutputStream {
 		long b4 = (n & 0xff00000000L) >> 32;
 		long b5 = (n & 0xff0000000000L) >> 40;
 		long b6 = (n & 0xff000000000000L) >> 48;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5); write(b6);
 		} else {
 			write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
@@ -138,7 +118,7 @@ public class ByteWriter extends OutputStream {
 		long b5 = (n & 0xff0000000000L) >> 40;
 		long b6 = (n & 0xff000000000000L) >> 48;
 		long b7 = (n & 0xff00000000000000L) >>> 56;
-		if (isLitteEndian()) {
+		if (le) {
 			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5); write(b6); write(b7);
 		} else {
 			write(b7); write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);

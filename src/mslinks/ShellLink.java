@@ -38,7 +38,6 @@ public class ShellLink {
 	}};
 	
 	
-	private boolean le;
 	private ShellLinkHeader header;
 	private LinkTargetIDList idlist;
 	private LinkInfo info;
@@ -48,7 +47,6 @@ public class ShellLink {
 	private Path linkFileSource;
 	
 	private ShellLink() {
-		le = true;
 		header = new ShellLinkHeader();
 		header.getLinkFlags().setIsUnicode();
 	}
@@ -103,15 +101,11 @@ public class ShellLink {
 				e.printStackTrace();
 			}
 		}
-		
-		le = data.isLitteEndian();
 	}
 		
 	private void serialize(OutputStream out) throws IOException {
 		LinkFlags lf = header.getLinkFlags();
 		ByteWriter bw = new ByteWriter(out);
-		if (le) bw.setLittleEndian();
-		else bw.setBigEndian();
 		header.serialize(bw);
 		if (lf.hasLinkTargetIDList())
 			idlist.serialize(bw);
@@ -226,13 +220,8 @@ public class ShellLink {
 		cd.setLanguage(s);
 		return this;
 	}
-	
+		
 	public ShellLink saveTo(String path) throws IOException {
-		return saveTo(path, le);
-	}
-	
-	public ShellLink saveTo(String path, boolean littleendiand) throws IOException {
-		le = littleendiand;
 		linkFileSource = Paths.get(path).toAbsolutePath().normalize();
 		if (Files.isDirectory(linkFileSource))
 			throw new IOException("path is directory!");

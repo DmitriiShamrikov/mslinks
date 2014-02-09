@@ -69,12 +69,12 @@ public class LinkInfo implements Serializable {
 		
 		byte[] vid_b = null, localBasePath_b = null, cnrlink_b = null, commonPathSuffix_b = null;
 		if (lif.hasVolumeIDAndLocalBasePath()) {
-			vid_b = toByteArray(vid, bw.isLitteEndian());
+			vid_b = toByteArray(vid);
 			localBasePath_b = localBasePath.getBytes();
 			commonPathSuffix_b = new byte[0];
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			cnrlink_b = toByteArray(cnrlink, bw.isLitteEndian());
+			cnrlink_b = toByteArray(cnrlink);
 			commonPathSuffix_b = commonPathSuffix.getBytes();
 		}
 		
@@ -157,11 +157,9 @@ public class LinkInfo implements Serializable {
 			bw.write(0);		
 	}
 	
-	private byte[] toByteArray(Serializable o, boolean le) throws IOException {
+	private byte[] toByteArray(Serializable o) throws IOException {
 		ByteArrayOutputStream arr = new ByteArrayOutputStream();
 		ByteWriter bt = new ByteWriter(arr);
-		if (le) bt.setLittleEndian();
-		else bt.setBigEndian();
 		o.serialize(bt);
 		return arr.toByteArray();
 	}

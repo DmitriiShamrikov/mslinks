@@ -2,7 +2,6 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
-import io.Bytes;
 
 import java.io.IOException;
 
@@ -38,13 +37,8 @@ public class ShellLinkHeader implements Serializable {
 	
 	public ShellLinkHeader(ByteReader data) throws ShellLinkException, IOException {
 		int size = (int)data.read4bytes();
-		if (size != headerSize) {
-			size = Bytes.reverse(size);			
-			if (size != headerSize) 
-				throw new ShellLinkException();
-			data.changeEndiannes();
-		}
-		
+		if (size != headerSize)
+			throw new ShellLinkException();		
 		GUID g = new GUID(data);
 		if (!g.equals(clsid))
 			throw new ShellLinkException();

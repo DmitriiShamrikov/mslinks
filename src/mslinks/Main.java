@@ -3,7 +3,7 @@ package mslinks;
 import java.io.IOException;
 
 public class Main {
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException {		
 		ShellLink sl = ShellLink.createLink("pause.bat")
 			.setWorkingDir("..");
 		sl.getConsoleData()

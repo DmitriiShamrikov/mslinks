@@ -48,8 +48,6 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 		for (ItemID j : this) {
 			ByteArrayOutputStream ba = new ByteArrayOutputStream();
 			ByteWriter w = new ByteWriter(ba);
-			if (bw.isLitteEndian()) w.setLittleEndian();
-			else w.setBigEndian();
 			
 			j.serialize(w);			
 			b[i++] = ba.toByteArray();					
