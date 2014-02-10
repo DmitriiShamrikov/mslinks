@@ -3,9 +3,11 @@ package mslinks;
 import java.io.IOException;
 
 public class Main {
-	public static void main(String[] args) throws IOException {		
+	public static void main(String[] args) throws IOException {
 		ShellLink sl = ShellLink.createLink("pause.bat")
-			.setWorkingDir("..");
+			.setWorkingDir("..")
+			.setIconLocation("%SystemRoot%\\system32\\SHELL32.dll");
+		sl.getHeader().setIconIndex(128);
 		sl.getConsoleData()
 			.setFont(mslinks.extra.ConsoleData.Font.Consolas)
 			.setFontSize(24)

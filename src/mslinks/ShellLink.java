@@ -189,8 +189,12 @@ public class ShellLink {
 	public ShellLink setIconLocation(String s) {
 		if (s == null) 
 			header.getLinkFlags().clearHasIconLocation();
-		else 
+		else {
 			header.getLinkFlags().setHasIconLocation();
+			String t = resolveEnvVariables(s);
+			if (!Paths.get(t).isAbsolute())
+				s = Paths.get(s).toAbsolutePath().toString();
+		}
 		iconLocation = s;
 		return this;
 	}
@@ -287,8 +291,7 @@ public class ShellLink {
 	public static ShellLink createLink(String target) {
 		ShellLink sl = new ShellLink();
 		
-		for (String i : env.keySet())
-			target = Pattern.compile("%"+i+"%", Pattern.CASE_INSENSITIVE).matcher(target).replaceAll(env.get(i));
+		target = resolveEnvVariables(target);
 		
 		Path tar = Paths.get(target).toAbsolutePath();
 		target = tar.toString();
@@ -335,5 +338,14 @@ public class ShellLink {
 	 */
 	public static ShellLink createLink(String target, String linkpath) throws IOException {
 		return createLink(target).saveTo(linkpath);
+	}
+	
+	private static String resolveEnvVariables(String path) {
+		for (String i : env.keySet()) {
+			String p = i.replace("(", "\\(").replace(")", "\\)");
+			String r = env.get(i).replace("\\", "\\\\");
+			path = Pattern.compile("%"+p+"%", Pattern.CASE_INSENSITIVE).matcher(path).replaceAll(r);
+		}
+		return path;
 	}
 }
