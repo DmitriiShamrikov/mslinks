@@ -85,7 +85,7 @@ public class ConsoleData implements Serializable {
 			flags.setBoldFont();
 		switch ((char)br.read()) {
 			case 'T': font = Font.Terminal; break;
-			case 'L': font = Font.LucindaConsole; break;
+			case 'L': font = Font.LucidaConsole; break;
 			case 'C': font = Font.Consolas; break;
 		}
 		br.seek(63);
@@ -127,7 +127,7 @@ public class ConsoleData implements Serializable {
 		String fn = "";
 		switch (font) {
 			case Terminal: fn = "Terminal"; break;
-			case LucindaConsole: fn = "Lucinda Console"; break;
+			case LucidaConsole: fn = "Lucida Console"; break;
 			case Consolas: fn = "Consolas"; break;
 		}
 		bw.writeUnicodeString(fn, true);
@@ -194,7 +194,7 @@ public class ConsoleData implements Serializable {
 	 * only this fonts are working...
 	 */
 	public enum Font {
-		Terminal, LucindaConsole, Consolas
+		Terminal, LucidaConsole, Consolas
 	}
 	
 	public enum CursorSize {
