@@ -27,8 +27,13 @@ import mslinks.UnsupportedCLSIDException;
 public class ItemID implements Serializable {
 	
 	private static final GUID mycomputer = new GUID("20d04fe0-3aea-1069-a2d8-08002b30309d");
-	private static byte[] ub1 = new byte[] {8, 0, 4, 0, -17, -66}; // unknown bytes
+	private static byte[] ub1 = new byte[] {4, 0, -17, -66}; // unknown bytes
 	private static byte[] ub2 = new byte[] {42, 0, 0, 0}; // unknown bytes
+
+	private static final int EXT_VERSION_WINXP = 3;
+	private static final int EXT_VERSION_VISTA = 7;
+	private static final int EXT_VERSION_WIN7 = 8;
+	private static final int EXT_VERSION_WIN8 = 9; // same for win10
 	
 	public static final int TYPE_UNKNOWN = 0;
 	public static final int TYPE_FILE = 0x32;
@@ -67,11 +72,19 @@ public class ItemID implements Serializable {
 				br.read();
 			pos = br.getPosition();
 			int sz = (int)br.read2bytes();
-			br.read6bytes(); // unknown
+			int extensionVersion = (int)br.read2bytes();
+			br.read4bytes(); // unknown
 			br.read4bytes(); // date created
 			br.read4bytes(); // last accessed
-			br.seek(26); // unknown
-			longname = br.readUnicodeString(sz - 44);
+			// unknown blocks depended on os version
+			switch (extensionVersion) {
+				case EXT_VERSION_WINXP: br.seek(4); break;
+				case EXT_VERSION_VISTA: br.seek(22); break;
+				case EXT_VERSION_WIN7: br.seek(26); break;
+				case EXT_VERSION_WIN8: br.seek(30); break;
+				default: throw new ShellLinkException("Unknown extension version");
+			}
+			longname = br.readUnicodeString(pos + sz - br.getPosition());
 			br.seek(pos + sz - br.getPosition()); // unknown
 		} else if (type == TYPE_CLSID) {
 			br.read(); // unknown
@@ -121,16 +134,15 @@ public class ItemID implements Serializable {
 		if (((bw.getPosition() - pos) & 1) != 0) 
 			bw.write(0);
 		
-		bw.write2bytes(46 + longname.length() * 2);
+		bw.write2bytes(2 + 2 + ub1.length + 4 + 4 + ub2.length + 4 + (longname.length() + 1) * 2 + 2);
+		bw.write2bytes(EXT_VERSION_WINXP);
 		bw.writeBytes(ub1);
 		bw.write4bytes(0); // date created
 		bw.write4bytes(0); // last accessed
 		bw.writeBytes(ub2);
-		for (int i=0; i<22; i++) // unknown
-			bw.write(0);
+		bw.write4bytes(0); // unknown block depended on os version (always use WinXP)
 		bw.writeUnicodeString(longname, true);
 		bw.write2bytes((shortname.length() & ~1) + 16);
-		
 	}
 	
 	public String getName() {
