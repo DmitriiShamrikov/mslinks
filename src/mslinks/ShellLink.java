@@ -267,7 +267,7 @@ public class ShellLink {
 		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.isCorrect()) {
 			String path = "";
 			for (ItemID i : idlist) {
-				if (i.getType() == ItemID.TYPE_DRIVE)
+				if (i.getType() == ItemID.TYPE_DRIVE || i.getType() == ItemID.TYPE_DRIVE_OLD)
 					path = i.getName();
 				else if (i.getType() == ItemID.TYPE_DIRECTORY) 
 					path += i.getName() + File.separator;

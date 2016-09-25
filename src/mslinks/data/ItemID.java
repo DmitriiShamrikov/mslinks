@@ -38,6 +38,7 @@ public class ItemID implements Serializable {
 	public static final int TYPE_UNKNOWN = 0;
 	public static final int TYPE_FILE = 0x32;
 	public static final int TYPE_DIRECTORY = 0x31;
+	public static final int TYPE_DRIVE_OLD = 0x23;
 	public static final int TYPE_DRIVE = 0x2f;
 	public static final int TYPE_CLSID = 0x1f;
 	
@@ -45,23 +46,25 @@ public class ItemID implements Serializable {
 	private int size;
 	private String shortname, longname;
 	private GUID clsid;
+	private boolean hasExtension;
 	private byte[] data;
 	
 	public ItemID() {
 		shortname = "";
 		longname = "";
+		hasExtension = true;
 	}
 	
 	public ItemID(byte[] d) {
 		data = d;
 	}
 	
-	public ItemID(ByteReader br) throws IOException, ShellLinkException {
+	public ItemID(ByteReader br, int maxSize) throws IOException, ShellLinkException {
 		int pos = br.getPosition();
 		type = br.read();
-		if (type == TYPE_DRIVE) {
-			setName(br.readString(22));
-			br.seek(pos + 23 - br.getPosition());
+		if (type == TYPE_DRIVE || type == TYPE_DRIVE_OLD) {
+			setName(br.readString(maxSize - 1));
+			br.seek(pos + maxSize - br.getPosition());
 		} else if (type == TYPE_FILE || type == TYPE_DIRECTORY) {
 			br.read(); // unknown
 			size = (int)br.read4bytes();
@@ -70,8 +73,14 @@ public class ItemID implements Serializable {
 			shortname = br.readString(13);
 			if (((br.getPosition() - pos) & 1) != 0)
 				br.read();
+			if (pos + maxSize - br.getPosition() < 2) {
+				br.seek(pos + maxSize - br.getPosition());
+				hasExtension = false;
+				return;
+			}
+
 			pos = br.getPosition();
-			int sz = (int)br.read2bytes();
+			int extSize = (int)br.read2bytes();
 			int extensionVersion = (int)br.read2bytes();
 			br.read4bytes(); // unknown
 			br.read4bytes(); // date created
@@ -84,8 +93,8 @@ public class ItemID implements Serializable {
 				case EXT_VERSION_WIN8: br.seek(30); break;
 				default: throw new ShellLinkException("Unknown extension version");
 			}
-			longname = br.readUnicodeString(pos + sz - br.getPosition());
-			br.seek(pos + sz - br.getPosition()); // unknown
+			longname = br.readUnicodeString(pos + extSize - br.getPosition());
+			br.seek(pos + extSize - br.getPosition()); // unknown
 		} else if (type == TYPE_CLSID) {
 			br.read(); // unknown
 			clsid = new GUID(br);
@@ -111,6 +120,7 @@ public class ItemID implements Serializable {
 				clsid.serialize(bw);				
 				return;
 			case TYPE_DRIVE:
+			case TYPE_DRIVE_OLD:
 				byte[] b = getName().getBytes();
 				bw.write(b);
 				for (int i=0; i<22-b.length; i++)
@@ -133,6 +143,8 @@ public class ItemID implements Serializable {
 		bw.write(0);
 		if (((bw.getPosition() - pos) & 1) != 0) 
 			bw.write(0);
+		if (!hasExtension)
+			return;
 		
 		bw.write2bytes(2 + 2 + ub1.length + 4 + 4 + ub2.length + 4 + (longname.length() + 1) * 2 + 2);
 		bw.write2bytes(EXT_VERSION_WINXP);
@@ -173,7 +185,7 @@ public class ItemID implements Serializable {
 			
 			shortname = name + ext;			
 		}
-		if (type == TYPE_DRIVE) {
+		if (type == TYPE_DRIVE || type == TYPE_DRIVE_OLD) {
 			if (Pattern.matches("\\w+:\\\\", s))
 				shortname = longname = s;
 			else if (Pattern.matches("\\w+:", s))
@@ -200,7 +212,7 @@ public class ItemID implements Serializable {
 			clsid = mycomputer;
 			return this;
 		}
-		if (t == TYPE_FILE || t == TYPE_DIRECTORY || t == TYPE_DRIVE) {
+		if (t == TYPE_FILE || t == TYPE_DIRECTORY || t == TYPE_DRIVE || t == TYPE_DRIVE_OLD) {
 			type = t;
 			return this;
 		}

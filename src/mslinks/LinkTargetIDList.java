@@ -42,7 +42,7 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 					b[i] = (byte)data.read();
 				add(new ItemID(b));
 			} else try {
-				add(new ItemID(data));
+				add(new ItemID(data, s));
 			} catch (UnsupportedCLSIDException e) {
 				System.err.println("unsupported CLSID");
 				binary = true;
