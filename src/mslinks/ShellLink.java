@@ -269,9 +269,9 @@ public class ShellLink {
 			for (ItemID i : idlist) {
 				if (i.getType() == ItemID.TYPE_DRIVE || i.getType() == ItemID.TYPE_DRIVE_OLD)
 					path = i.getName();
-				else if (i.getType() == ItemID.TYPE_DIRECTORY) 
+				else if (i.getType() == ItemID.TYPE_DIRECTORY || i.getType() == ItemID.TYPE_DIRECTORY_OLD)
 					path += i.getName() + File.separator;
-				else if (i.getType() == ItemID.TYPE_FILE)
+				else if (i.getType() == ItemID.TYPE_FILE || i.getType() == ItemID.TYPE_FILE_OLD)
 					path += i.getName();				
 			}
 			return path;
