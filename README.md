@@ -1,19 +1,22 @@
 mslinks
 =======
-Library for parsing and creating Windows shortcut files (.lnk)
-***
 
+### Summary
+Library for parsing and creating Windows shortcut files (.lnk)
+
+### Description
 Partial implementation of [Shell Link (.LNK) Binary File Format](http://msdn.microsoft.com/en-us/library/dd871305.aspx)
 
-You can edit most properties of the link such as working directory, tooltip text, icon, command line arguments, hotkeys, create links to LAN shared files and directories but followed features are not implemented:
+This library allows you create new and read and modify existing .lnk files. It can edit most properties of the link such as working directory, tooltip text, icon, command line arguments, hotkeys, create links to LAN shared files and directories but following features are not implemented:
 
 * extra data blocks: Darwin, IconEnvironment, KnownFolder, PropertyStore, Shim, SpecialFolder
-* most options in LinkTargetIDList because it not documented, only key parts for resolving links are implemented, others are zero stub
-* you can use environment variables in target path but they are resolved at creation time and not stored in the lnk file
+* some options in LinkTargetIDList because this section is not documented
+* environment variables: you can use it in target path but it resolves while creating link and not stored in the lnk file (the reason is previous item)
 
+### Examples
 Easiest way to create link with default parameters: `ShellLink.createLink("targetfile", "linkfile.lnk")`
 
-Next sample demonstrates creating link for .bat file with setting working directory, icon and tune font parameters for console
+Following example demonstrates creating link for .bat file and setting working directory, icon and setting up font parameters for console
 ```
 package mslinks;
 
@@ -38,7 +41,7 @@ public class Main {
 
 ```
 
-Final example creates recursive link that blocks explorer on Windows 7 while trying to get into the containing directory :D
+Final example creates cyclic link that blocks explorer on Windows 7 while trying to get into the containing directory
 ```
 package mslinks;
 
@@ -52,3 +55,7 @@ public class Main {
 	}
 }
 ```
+
+### Download
+* [releases page](https://github.com/BlackOverlord666/mslinks/releases)
+* [Maven Central Repository](http://search.maven.org/#artifactdetails%7Ccom.github.vatbub%7Cmslinks%7C0.0.2%7Cjar)
