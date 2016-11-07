@@ -58,4 +58,4 @@ public class Main {
 
 ### Download
 * [releases page](https://github.com/BlackOverlord666/mslinks/releases)
-* [Maven Central Repository](http://search.maven.org/#artifactdetails%7Ccom.github.vatbub%7Cmslinks%7C0.0.2%7Cjar)
+* [Maven Central Repository](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.vatbub%22%20AND%20a%3A%22mslinks%22)
