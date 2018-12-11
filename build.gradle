@@ -1,5 +1,5 @@
 apply plugin: 'java'
-apply plugin:'application'
+apply plugin: 'application'
 
 sourceSets {
 	main {
@@ -10,3 +10,11 @@ sourceSets {
 }
 
 mainClassName = 'mslinks.Main'
+
+/*
+jar {
+	manifest {
+		attributes 'Main-Class': 'mslinks.Main'
+	}
+}
+*/
