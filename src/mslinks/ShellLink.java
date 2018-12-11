@@ -82,11 +82,14 @@ public class ShellLink {
 	}
 	
 	public ShellLink(InputStream in) throws IOException, ShellLinkException {
-		this(new ByteReader(in));
-		in.close();
+		try {
+			Parse(new ByteReader(in));
+		} finally {
+			in.close();
+		}
 	}
 	
-	private ShellLink(ByteReader data) throws ShellLinkException, IOException {
+	private void Parse(ByteReader data) throws ShellLinkException, IOException {
 		header = new ShellLinkHeader(data);
 		LinkFlags lf = header.getLinkFlags();
 		if (lf.hasLinkTargetIDList()) 
