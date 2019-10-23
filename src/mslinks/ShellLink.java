@@ -312,7 +312,7 @@ public class ShellLink {
 	 * Set path of target file of directory. Function accepts local paths and network paths.
 	 * Environment variables are accepted but resolved here and aren't kept in link.
 	 */
-	public ShellLink setTarget(String target) {
+	public ShellLink setTarget(String target, boolean forceMappedDrive, boolean forceDirectory) {
 		target = resolveEnvVariables(target);
 		
 		Path tar = Paths.get(target).toAbsolutePath();
@@ -342,10 +342,10 @@ public class ShellLink {
 				idlist.add(new ItemID().setType(ItemID.TYPE_DIRECTORY).setName(path[i]));
 			
 			LinkInfo inf = createLinkInfo();
-			inf.createVolumeID().setDriveType(VolumeID.DRIVE_FIXED);
+			inf.createVolumeID().setDriveType(forceMappedDrive ? VolumeID.DRIVE_REMOTE : VolumeID.DRIVE_FIXED);
 			inf.setLocalBasePath(target);
 			
-			if (Files.isDirectory(tar))
+			if (forceDirectory || Files.isDirectory(tar))
 				header.getFileAttributesFlags().setDirecory();
 			else 
 				idlist.getLast().setType(ItemID.TYPE_FILE);
@@ -355,9 +355,19 @@ public class ShellLink {
 		return this;
 	}
 	
+	public ShellLink setTarget(String target) {
+		return setTarget(target, false, false);
+	}
+	
 	public static ShellLink createLink(String target) {
 		ShellLink sl = new ShellLink();
 		sl.setTarget( target );
+		return sl;
+	}
+	
+	public static ShellLink createLink(String target, boolean forceMappedDrive, boolean forceDirectory) {
+		ShellLink sl = new ShellLink();
+		sl.setTarget(target, forceMappedDrive, forceDirectory);
 		return sl;
 	}
 	
