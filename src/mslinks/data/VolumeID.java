@@ -38,7 +38,7 @@ public class VolumeID implements Serializable {
 
 	public VolumeID() {
 		dt = DRIVE_UNKNOWN;
-		dsn = (int)(Math.random() * Long.MAX_VALUE);
+		dsn = 0;
 		label = "";
 	}
 	

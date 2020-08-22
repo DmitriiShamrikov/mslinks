@@ -19,7 +19,7 @@ import java.io.OutputStream;
 import java.nio.ByteOrder;
 
 public class ByteWriter extends OutputStream {
-	private static boolean le = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
+	private boolean le = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 
 	private OutputStream stream;
 	private int pos = 0;
@@ -37,13 +37,27 @@ public class ByteWriter extends OutputStream {
 		le = !le;
 		return this;
 	}
+
+	@Override
+	public void close() throws IOException
+	{
+		stream.close();
+		super.close();
+	}
+
+	@Override
+	public void write(byte[] b, int off, int len) throws IOException
+	{
+		pos += len;
+		stream.write(b, off, len);
+	}
 	
 	@Override
 	public void write(int b) throws IOException {
 		pos++;
 		stream.write(b);
 	}
-	
+
 	public void write(long b) throws IOException {
 		write((int)b);
 	}

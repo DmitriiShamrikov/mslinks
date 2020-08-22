@@ -41,8 +41,23 @@ public class ByteReader extends InputStream {
 	public boolean seek(int n) throws IOException {
 		if (n <= 0) return false;
 		for (int i=0; i<n; i++)
-			read();		
+			read();
 		return true;
+	}
+
+	@Override
+	public void close() throws IOException
+	{
+		stream.close();
+		super.close();
+	}
+
+	@Override
+	public int read(byte[] b, int off, int len) throws IOException
+	{
+		int result = stream.read(b, off, len);
+		pos += result;
+		return result;
 	}
 	
 	@Override

@@ -45,6 +45,6 @@ public class BitSet32 implements Serializable {
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(d);		
+		bw.write4bytes(d);
 	}
 }

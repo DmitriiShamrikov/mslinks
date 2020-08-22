@@ -46,19 +46,23 @@ public class ShellLink {
 
 	private static Map<String, String> env = System.getenv();
 	
-	private static HashMap<Integer, Class> extraTypes = new HashMap<Integer, Class>() {{
-		put(ConsoleData.signature, ConsoleData.class);
-		put(ConsoleFEData.signature, ConsoleFEData.class);
-		put(Tracker.signature, Tracker.class);
-		put(VistaIDList.signature, VistaIDList.class);
-		put(EnvironmentVariable.signature, EnvironmentVariable.class);
-	}};
+	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.of(
+		ConsoleData.signature, ConsoleData.class,
+		ConsoleFEData.signature, ConsoleFEData.class,
+		Tracker.signature, Tracker.class,
+		VistaIDList.signature, VistaIDList.class,
+		EnvironmentVariable.signature, EnvironmentVariable.class
+	));
 	
 	
 	private ShellLinkHeader header;
 	private LinkTargetIDList idlist;
 	private LinkInfo info;
-	private String name, relativePath, workingDir, cmdArgs, iconLocation;
+	private String name;
+	private String relativePath;
+	private String workingDir;
+	private String cmdArgs;
+	private String iconLocation;
 	private HashMap<Integer, Serializable> extra = new HashMap<>();
 	
 	private Path linkFileSource;
@@ -82,14 +86,12 @@ public class ShellLink {
 	}
 	
 	public ShellLink(InputStream in) throws IOException, ShellLinkException {
-		try {
-			Parse(new ByteReader(in));
-		} finally {
-			in.close();
+		try (var reader = new ByteReader(in)) {
+			parse(reader);
 		}
 	}
 	
-	private void Parse(ByteReader data) throws ShellLinkException, IOException {
+	private void parse(ByteReader data) throws ShellLinkException, IOException {
 		header = new ShellLinkHeader(data);
 		LinkFlags lf = header.getLinkFlags();
 		if (lf.hasLinkTargetIDList()) 
@@ -112,7 +114,7 @@ public class ShellLink {
 			if (size < 4) break;
 			int sign = (int)data.read4bytes();
 			try {
-				Class cl = extraTypes.get(sign);
+				Class<?> cl = extraTypes.get(sign);
 				if (cl != null)
 					extra.put(sign, (Serializable)cl.getConstructor(ByteReader.class, int.class).newInstance(data, size));
 				else
@@ -271,16 +273,7 @@ public class ShellLink {
 	
 	public String resolveTarget() {
 		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.isCorrect()) {
-			String path = "";
-			for (ItemID i : idlist) {
-				if (i.getType() == ItemID.TYPE_DRIVE || i.getType() == ItemID.TYPE_DRIVE_OLD)
-					path = i.getName();
-				else if (i.getType() == ItemID.TYPE_DIRECTORY || i.getType() == ItemID.TYPE_DIRECTORY_OLD)
-					path += i.getName() + File.separator;
-				else if (i.getType() == ItemID.TYPE_FILE || i.getType() == ItemID.TYPE_FILE_OLD)
-					path += i.getName();				
-			}
-			return path;
+			return idlist.buildPath();
 		}
 		
 		if (header.getLinkFlags().hasLinkInfo() && info != null) {
@@ -296,10 +289,10 @@ public class ShellLink {
 					path += cps;
 				}
 				return path;
-			}			
+			}
 			
 			if (l != null && cps != null)
-				return l.getNetName() + File.separator + cps;			
+				return l.getNetName() + File.separator + cps;
 		}
 		
 		if (linkFileSource != null && header.getLinkFlags().hasRelativePath() && relativePath != null) 
@@ -369,9 +362,9 @@ public class ShellLink {
 	}
 	
 	private static String resolveEnvVariables(String path) {
-		for (String i : env.keySet()) {
-			String p = i.replace("(", "\\(").replace(")", "\\)");
-			String r = env.get(i).replace("\\", "\\\\");
+		for (var i : env.entrySet()) {
+			String p = i.getKey().replace("(", "\\(").replace(")", "\\)");
+			String r = i.getValue().replace("\\", "\\\\");
 			path = Pattern.compile("%"+p+"%", Pattern.CASE_INSENSITIVE).matcher(path).replaceAll(r);
 		}
 		return path;

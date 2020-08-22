@@ -37,12 +37,18 @@ public class ConsoleData implements Serializable {
 	public static int b(int rgb) { return (rgb & 0xff0000) >> 16; }
 	
 	private ConsoleFlags flags = new ConsoleFlags(0);
-	private int textFG, textBG, popupFG, popupBG;
-	private Size buffer, window, windowpos;
+	private int textFG;
+	private int textBG;
+	private int popupFG;
+	private int popupBG;
+	private Size buffer;
+	private Size window;
+	private Size windowpos;
 	private int fontsize;
 	private Font font;
 	private CursorSize cursize;
-	private int historysize, historybuffers;
+	private int historysize;
+	private int historybuffers;
 	private int[] colors = new int[16];
 	
 	public ConsoleData() {
@@ -77,7 +83,7 @@ public class ConsoleData implements Serializable {
 		colors[i++] = rgb(255, 0,   0);
 		colors[i++] = rgb(255, 0,   255);
 		colors[i++] = rgb(255, 255,   0);
-		colors[i++] = rgb(255, 255, 255);		
+		colors[i++] = rgb(255, 255, 255);
 	}
 	
 	public ConsoleData(ByteReader br, int sz) throws ShellLinkException, IOException {
@@ -101,6 +107,7 @@ public class ConsoleData implements Serializable {
 			case 'T': font = Font.Terminal; break;
 			case 'L': font = Font.LucidaConsole; break;
 			case 'C': font = Font.Consolas; break;
+			default: throw new ShellLinkException("unknown font type");
 		}
 		br.seek(63);
 		
@@ -183,8 +190,8 @@ public class ConsoleData implements Serializable {
 	/** set index in array returned by getColorTable() method */
 	public ConsoleData setPopupTextBackground(int n) { popupBG = n; return this; }
 	
-	public Size getBufferSize() { return buffer; }	
-	public Size getWindowSize() { return window; }	
+	public Size getBufferSize() { return buffer; }
+	public Size getWindowSize() { return window; }
 	public Size getWindowPos() { return windowpos; }
 	
 	public ConsoleFlags getConsoleFlags() { return flags; }

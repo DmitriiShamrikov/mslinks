@@ -27,7 +27,9 @@ public class GUID implements Serializable {
 	private static Random r = new Random();
 	
 	private int d1;
-	private short d2, d3, d4;
+	private short d2;
+	private short d3;
+	private short d4;
 	private long d5;
 	
 	public GUID() {
@@ -66,9 +68,9 @@ public class GUID implements Serializable {
 		b = parse(p[1]);
 		d2 = Bytes.makeShortB(b[0], b[1]);
 		b = parse(p[2]);
-		d3 = Bytes.makeShortB(b[0], b[1]);		
+		d3 = Bytes.makeShortB(b[0], b[1]);
 		d4 = (short)Long.parseLong(p[3], 16);
-		d5 = Long.parseLong(p[4], 16);		
+		d5 = Long.parseLong(p[4], 16);
 	}
 	
 	private byte[] parse(String s) {
@@ -83,8 +85,20 @@ public class GUID implements Serializable {
 	}
 	
 	public boolean equals(Object o) {
+		if (o == this)
+			return true;
+
+		if (o == null || getClass() != o.getClass())
+			return false;
+
 		GUID g = (GUID)o;
 		return d1 == g.d1 && d2 == g.d2 && d3 == g.d3 && d4 == g.d4 && d5 == g.d5;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return (int)(d1 ^ d2 ^ d3 ^ d4 ^ ((d5 & 0xffffffff00000000l) >> 32) ^ (d5 & 0xffffffffl));
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
@@ -94,6 +108,6 @@ public class GUID implements Serializable {
 		bw.changeEndiannes();
 		bw.write2bytes(d4);
 		bw.write6bytes(d5);
-		bw.changeEndiannes();		
+		bw.changeEndiannes();
 	}
 }

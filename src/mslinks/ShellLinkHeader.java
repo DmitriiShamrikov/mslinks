@@ -35,8 +35,12 @@ public class ShellLinkHeader implements Serializable {
 	
 	private LinkFlags lf;
 	private FileAttributesFlags faf;
-	private Filetime creationTime, accessTime, writeTime;
-	private int fileSize, iconIndex, showCommand;
+	private Filetime creationTime;
+	private Filetime accessTime;
+	private Filetime writeTime;
+	private int fileSize;
+	private int iconIndex;
+	private int showCommand;
 	private HotKeyFlags hkf;
 	
 	public ShellLinkHeader() {
@@ -52,7 +56,7 @@ public class ShellLinkHeader implements Serializable {
 	public ShellLinkHeader(ByteReader data) throws ShellLinkException, IOException {
 		int size = (int)data.read4bytes();
 		if (size != headerSize)
-			throw new ShellLinkException();		
+			throw new ShellLinkException();
 		GUID g = new GUID(data);
 		if (!g.equals(clsid))
 			throw new ShellLinkException();
