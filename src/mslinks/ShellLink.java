@@ -363,7 +363,7 @@ public class ShellLink {
 	
 	private static String resolveEnvVariables(String path) {
 		for (var i : env.entrySet()) {
-			String p = i.getKey().replace("(", "\\(").replace(")", "\\)");
+			String p = Pattern.quote(i.getKey());
 			String r = i.getValue().replace("\\", "\\\\");
 			path = Pattern.compile("%"+p+"%", Pattern.CASE_INSENSITIVE).matcher(path).replaceAll(r);
 		}
