@@ -27,12 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import mslinks.data.CNRLink;
-import mslinks.data.ItemID;
 import mslinks.data.LinkFlags;
-import mslinks.data.VolumeID;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
 import mslinks.extra.EnvironmentVariable;
@@ -43,8 +39,6 @@ import mslinks.extra.VistaIDList;
 public class ShellLink {
 
 	public static final String VERSION = "1.0.6";
-
-	private static Map<String, String> env = System.getenv();
 	
 	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.of(
 		ConsoleData.signature, ConsoleData.class,
@@ -126,7 +120,7 @@ public class ShellLink {
 		}
 	}
 		
-	private void serialize(OutputStream out) throws IOException {
+	public void serialize(OutputStream out) throws IOException {
 		LinkFlags lf = header.getLinkFlags();
 		ByteWriter bw = new ByteWriter(out);
 		header.serialize(bw);
@@ -161,6 +155,25 @@ public class ShellLink {
 		header.getLinkFlags().setHasLinkInfo();
 		return info;
 	}
+	public ShellLink removeLinkInfo() {
+		info = null;
+		header.getLinkFlags().clearHasLinkInfo();
+		return this;
+	}
+
+	public LinkTargetIDList getTargetIdList() { return idlist; }
+	public LinkTargetIDList createTargetIdList() {
+		if (idlist == null) {
+			idlist = new LinkTargetIDList();
+			header.getLinkFlags().setHasLinkTargetIDList();
+		}
+		return idlist;
+	}
+	public ShellLink removeTargetIdList() {
+		idlist = null;
+		header.getLinkFlags().clearHasLinkTargetIDList();
+		return this;
+	}
 	
 	public String getName() { return name; }
 	public ShellLink setName(String s) {
@@ -191,7 +204,6 @@ public class ShellLink {
 			header.getLinkFlags().clearHasWorkingDir();
 		else {
 			header.getLinkFlags().setHasWorkingDir();
-			s = Paths.get(s).toAbsolutePath().normalize().toString();
 		}
 		workingDir = s;
 		return this;
@@ -213,61 +225,67 @@ public class ShellLink {
 			header.getLinkFlags().clearHasIconLocation();
 		else {
 			header.getLinkFlags().setHasIconLocation();
-			String t = resolveEnvVariables(s);
-			if (!Paths.get(t).isAbsolute())
-				s = Paths.get(s).toAbsolutePath().toString();
 		}
 		iconLocation = s;
 		return this;
 	}
-	
-	public ConsoleData getConsoleData() {
-		ConsoleData cd = (ConsoleData)extra.get(ConsoleData.signature);
-		if (cd == null) {
-			cd = new ConsoleData();
-			extra.put(ConsoleData.signature, cd);
-		}
-		return cd;
-	}
-		
+
 	public String getLanguage() { 
-		ConsoleFEData cd = (ConsoleFEData)extra.get(ConsoleFEData.signature);
-		if (cd == null) {
-			cd = new ConsoleFEData();
-			extra.put(ConsoleFEData.signature, cd);
-		}
-		return cd.getLanguage();
+		return getConsoleFEData().getLanguage();
 	}
 	
 	public ShellLink setLanguage(String s) { 
-		ConsoleFEData cd = (ConsoleFEData)extra.get(ConsoleFEData.signature);
-		if (cd == null) {
-			cd = new ConsoleFEData();
-			extra.put(ConsoleFEData.signature, cd);
-		}
-		cd.setLanguage(s);
+		getConsoleFEData().setLanguage(s);
 		return this;
 	}
-		
-	public ShellLink saveTo(String path) throws IOException {
-		linkFileSource = Paths.get(path).toAbsolutePath().normalize();
-		if (Files.isDirectory(linkFileSource))
-			throw new IOException("path is directory!");
-		
-		if (!header.getLinkFlags().hasRelativePath()) {
-			Path target = Paths.get(resolveTarget());
-			Path origin = linkFileSource.getParent();
-			if (target.getRoot().equals(origin.getRoot())) 
-				setRelativePath(origin.relativize(target).toString());
-		}
-		
-		if (!header.getLinkFlags().hasWorkingDir()) {
-			Path target = Paths.get(resolveTarget());
-			if (!Files.isDirectory(target))
-				setWorkingDir(target.getParent().toString());
-		}
-		
-		serialize(Files.newOutputStream(linkFileSource));
+	
+	public ConsoleData getConsoleData() {
+		return (ConsoleData)getExtraDataBlock(ConsoleData.signature);
+	}
+	public ShellLink removeConsoleData() {
+		extra.remove(ConsoleData.signature);
+		return this;
+	}
+
+	public ConsoleFEData getConsoleFEData() {
+		return (ConsoleFEData)getExtraDataBlock(ConsoleFEData.signature);
+	}
+	public ShellLink removeConsoleFEData() {
+		extra.remove(ConsoleFEData.signature);
+		return this;
+	}
+
+	public EnvironmentVariable getEnvironmentVariable() {
+		return (EnvironmentVariable)getExtraDataBlock(EnvironmentVariable.signature);
+	}
+	public ShellLink removeEnvironmentVariable() {
+		extra.remove(EnvironmentVariable.signature);
+		return this;
+	}
+
+	public Tracker getTracker() {
+		return (Tracker)getExtraDataBlock(Tracker.signature);
+	}
+	public ShellLink removeTracker() {
+		extra.remove(Tracker.signature);
+		return this;
+	}
+
+	public VistaIDList getVistaIDList() {
+		return (VistaIDList)getExtraDataBlock(VistaIDList.signature);
+	}
+	public ShellLink removeVistaIDList() {
+		extra.remove(VistaIDList.signature);
+		return this;
+	}
+
+	/**
+	 * linkFileSource is the location where the lnk file is stored
+	 * used only to build relative path and is not serialized
+	 */
+	public Path getLinkFileSource() { return linkFileSource; }
+	public ShellLink setLinkFileSource(Path path) {
+		linkFileSource = path;
 		return this;
 	}
 	
@@ -277,96 +295,76 @@ public class ShellLink {
 		}
 		
 		if (header.getLinkFlags().hasLinkInfo() && info != null) {
-			CNRLink l = info.getCommonNetworkRelativeLink();
-			String cps = info.getCommonPathSuffix();
-			String lbp = info.getLocalBasePath();
-			
-			if (lbp != null) {
-				String path = lbp;
-				if (cps != null && !cps.equals("")) {
-					if (path.charAt(path.length() - 1) != File.separatorChar)
-						path += File.separatorChar;
-					path += cps;
-				}
+			String path = info.buildPath();
+			if (path != null)
 				return path;
-			}
-			
-			if (l != null && cps != null)
-				return l.getNetName() + File.separator + cps;
 		}
 		
 		if (linkFileSource != null && header.getLinkFlags().hasRelativePath() && relativePath != null) 
 			return linkFileSource.resolveSibling(relativePath).normalize().toString();
+
+		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
+		if (envBlock != null && !envBlock.getVariable().isEmpty())
+			return envBlock.getVariable();
 		
 		return "<unknown>";
+	}
+
+	private Serializable getExtraDataBlock(int signature) {
+		Serializable block = extra.get(signature);
+		if (block == null) {
+			Class<?> type = extraTypes.get(signature);
+			try {
+				block = (Serializable)type.getConstructor().newInstance();
+				extra.put(signature, block);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException	| SecurityException e) {
+				e.printStackTrace();
+			}
+		}
+		return block;
+	}
+
+	@Deprecated(since = "1.0.7", forRemoval = true)
+	public ShellLink saveTo(String path) throws IOException {
+		new ShellLinkHelper(this).saveTo(path);
+		return this;
 	}
 
 	/**
 	 * Set path of target file of directory. Function accepts local paths and network paths.
 	 * Environment variables are accepted but resolved here and aren't kept in link.
 	 */
+	@Deprecated(since = "1.0.7", forRemoval = true)
 	public ShellLink setTarget(String target) {
-		target = resolveEnvVariables(target);
-		
-		Path tar = Paths.get(target).toAbsolutePath();
-		target = tar.toString();
-		
-		if (target.startsWith("\\\\")) {
-			int p1 = target.indexOf('\\', 2);
-			int p2 = target.indexOf('\\', p1+1);
-			
-			LinkInfo inf = createLinkInfo();
-			inf.createCommonNetworkRelativeLink().setNetName(target.substring(0, p2));
-			inf.setCommonPathSuffix(target.substring(p2+1));
-			
-			if (Files.isDirectory(Paths.get(target)))
-				header.getFileAttributesFlags().setDirecory();
-			
-			header.getLinkFlags().setHasExpString();
-			extra.put(EnvironmentVariable.signature, new EnvironmentVariable().setVariable(target));
-			
-		} else try {
-			header.getLinkFlags().setHasLinkTargetIDList();
-			idlist = new LinkTargetIDList();
-			String[] path = target.split("\\\\");
-			idlist.add(new ItemID().setType(ItemID.TYPE_CLSID));
-			idlist.add(new ItemID().setType(ItemID.TYPE_DRIVE).setName(path[0]));
-			for (int i=1; i<path.length; i++)
-				idlist.add(new ItemID().setType(ItemID.TYPE_DIRECTORY).setName(path[i]));
-			
-			LinkInfo inf = createLinkInfo();
-			inf.createVolumeID().setDriveType(VolumeID.DRIVE_FIXED);
-			inf.setLocalBasePath(target);
-			
-			if (Files.isDirectory(tar))
-				header.getFileAttributesFlags().setDirecory();
-			else 
-				idlist.getLast().setType(ItemID.TYPE_FILE);
+		target = ShellLinkHelper.resolveEnvVariables(target);
+		String targetAbsPath = Paths.get(target).toAbsolutePath().toString();
 
+		try {
+			var helper = new ShellLinkHelper(new ShellLink());
+			if (targetAbsPath.startsWith("\\\\")) {
+				helper.setNetworkTarget(targetAbsPath);
+			} else {
+				String[] parts = targetAbsPath.split(":");
+				if (parts.length == 2)
+					helper.setLocalTarget(parts[0], parts[1]);
+			}
 		} catch (ShellLinkException e) {}
 		
 		return this;
 	}
 	
+	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target) {
 		ShellLink sl = new ShellLink();
 		sl.setTarget( target );
 		return sl;
 	}
 	
-	/**
-	 * equivalent to createLink(target).saveTo(linkpath)
-	 */
+	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target, String linkpath) throws IOException {
 		return createLink(target).saveTo(linkpath);
 	}
 	
-	private static String resolveEnvVariables(String path) {
-		for (var i : env.entrySet()) {
-			String p = Pattern.quote(i.getKey());
-			String r = i.getValue().replace("\\", "\\\\");
-			path = Pattern.compile("%"+p+"%", Pattern.CASE_INSENSITIVE).matcher(path).replaceAll(r);
-		}
-		return path;
-	}
+
 }

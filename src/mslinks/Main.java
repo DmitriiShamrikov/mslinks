@@ -15,10 +15,14 @@
 package mslinks;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import mslinks.ShellLinkHelper.Options;
 
 public class Main {
-	public static void main(String[] args) throws IOException {
-		ShellLink sl = ShellLink.createLink("pause.bat")
+	public static void main(String[] args) throws IOException, ShellLinkException {
+		var sl = new ShellLink()
 			.setWorkingDir("..")
 			.setIconLocation("%SystemRoot%\\system32\\SHELL32.dll");
 		sl.getHeader().setIconIndex(128);
@@ -26,8 +30,14 @@ public class Main {
 			.setFont(mslinks.extra.ConsoleData.Font.Consolas)
 			.setFontSize(24)
 			.setTextColor(5);
-				
-		sl.saveTo("testlink.lnk");
+
+		Path targetPath = Paths.get("pause.bat").toAbsolutePath();
+		String root = targetPath.getRoot().toString();
+		String pathWithoutRoot = targetPath.subpath(0, targetPath.getNameCount()).toString();
+
+		var helper = new ShellLinkHelper(sl)
+			.setLocalTarget(root, pathWithoutRoot, Options.None)
+			.saveTo("testlink.lnk");
 		System.out.println(sl.getWorkingDir());
 		System.out.println(sl.resolveTarget());
 	}

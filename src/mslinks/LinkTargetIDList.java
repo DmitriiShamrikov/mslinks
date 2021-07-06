@@ -18,7 +18,6 @@ import io.ByteReader;
 import io.ByteWriter;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 
@@ -92,7 +91,7 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 			if (i.getType() == ItemID.TYPE_DRIVE || i.getType() == ItemID.TYPE_DRIVE_OLD)
 				path.append(i.getName());
 			else if (i.getType() == ItemID.TYPE_DIRECTORY || i.getType() == ItemID.TYPE_DIRECTORY_OLD)
-				path.append(i.getName() + File.separator);
+				path.append(i.getName() + "\\");
 			else if (i.getType() == ItemID.TYPE_FILE || i.getType() == ItemID.TYPE_FILE_OLD)
 				path.append(i.getName());
 		}

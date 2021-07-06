@@ -18,6 +18,7 @@ import io.ByteReader;
 import io.ByteWriter;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -199,7 +200,7 @@ public class LinkInfo implements Serializable {
 		
 		localBasePath = s;
 		if (vid == null) vid = new VolumeID();
-		lif.setVolumeIDAndLocalBasePath();		
+		lif.setVolumeIDAndLocalBasePath();
 		return this;
 	}
 	
@@ -225,5 +226,22 @@ public class LinkInfo implements Serializable {
 		if (cnrlink == null) cnrlink = new CNRLink();
 		lif.setCommonNetworkRelativeLinkAndPathSuffix();
 		return this;
+	}
+
+	public String buildPath() {
+		if (localBasePath != null) {
+			String path = localBasePath;
+			if (commonPathSuffix != null && !commonPathSuffix.equals("")) {
+				if (path.charAt(path.length() - 1) != File.separatorChar)
+					path += File.separatorChar;
+				path += commonPathSuffix;
+			}
+			return path;
+		}
+		
+		if (cnrlink != null && commonPathSuffix != null)
+			return cnrlink.getNetName() + "\\" + commonPathSuffix;
+
+		return null;
 	}
 }
