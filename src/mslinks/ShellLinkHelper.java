@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import mslinks.data.ItemID;
+import mslinks.data.ItemIDDrive;
+import mslinks.data.ItemIDFS;
+import mslinks.data.ItemIDRoot;
 import mslinks.data.VolumeID;
 
 /**
@@ -113,14 +116,20 @@ public class ShellLinkHelper {
 	public ShellLinkHelper setLocalTarget(String drive, String absolutePath, Options options) throws ShellLinkException {
 		link.getHeader().getLinkFlags().setHasLinkTargetIDList();
 		var idList = link.createTargetIdList();
-		idList.add(new ItemID().setType(ItemID.TYPE_CLSID)); // this computer - the only supported class id so far
-		idList.add(new ItemID().setType(ItemID.TYPE_DRIVE).setName(drive));
+		// root is computer
+		idList.add(new ItemIDRoot().setClsid(ItemIDRoot.CLSID_COMPUTER));
 
+		// drive
+		// TODO: check if it works with ItemID.TYPE_DRIVE_FIXED
+		var driveItem = new ItemIDDrive(ItemID.TYPE_DRIVE_MISC).setName(drive);
+		idList.add(driveItem);
+
+		// each segment of the path is directory
 		absolutePath = absolutePath.replaceAll("^(\\\\|\\/)", "");
-		String absoluteTargetPath = idList.get(1).getName() + absolutePath;
+		String absoluteTargetPath = driveItem.getName() + absolutePath;
 		String[] path = absolutePath.split("\\\\|\\/");
 		for (String i : path)
-			idList.add(new ItemID().setType(ItemID.TYPE_DIRECTORY).setName(i));
+			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(i));
 		
 		LinkInfo info = link.getHeader().getLinkFlags().hasLinkInfo() ? link.getLinkInfo() : link.createLinkInfo();
 		info.createVolumeID().setDriveType(VolumeID.DRIVE_FIXED);
@@ -132,7 +141,7 @@ public class ShellLinkHelper {
 		boolean forceDirectory = options == Options.ForceTypeDirectory;
 		if (forceFile || !forceDirectory && Files.isRegularFile(Paths.get(absoluteTargetPath))) {
 			link.getHeader().getFileAttributesFlags().clearDirecory();
-			idList.getLast().setType(ItemID.TYPE_FILE);
+			idList.getLast().setTypeFlags(ItemID.TYPE_FS_FILE);
 		}
 
 		return this;

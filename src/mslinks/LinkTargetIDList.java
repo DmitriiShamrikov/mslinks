@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import mslinks.data.ItemID;
+import mslinks.data.ItemIDUnknown;
 
 public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable {
 	
@@ -29,30 +30,22 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	
 	public LinkTargetIDList(ByteReader data) throws IOException, ShellLinkException {
 		int size = (int)data.read2bytes();
-		
 		int pos = data.getPosition(); 
 		
-		boolean binary = false;
-		int s = (int)data.read2bytes();
-		while (s != 0) {
-			s -= 2;
-			if (binary) {
-				byte[] b = new byte[s];
-				for (int i=0; i<s; i++)
-					b[i] = (byte)data.read();
-				add(new ItemID(b));
-			} else try {
-				add(new ItemID(data, s));
-			} catch (UnsupportedCLSIDException e) {
-				System.err.println("unsupported CLSID");
-				binary = true;
-			}
-			s = (int)data.read2bytes();
+		while (true) {
+			int itemSize = (int)data.read2bytes();
+			if (itemSize == 0)
+				break;
+
+			int typeFlags = data.read();
+			var item = ItemID.createItem(typeFlags);
+			item.load(data, itemSize - 3);
+			add(item);
 		}
 		
 		pos = data.getPosition() - pos;
 		if (pos != size) 
-			throw new ShellLinkException();
+			throw new ShellLinkException("unexpected size of LinkTargetIDList");
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
@@ -79,21 +72,15 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	
 	public boolean isCorrect() {
 		for (ItemID i : this)
-			if (i.getType() == ItemID.TYPE_UNKNOWN)
+			if (i instanceof ItemIDUnknown)
 				return false;
 		return true;
 	}
 
-	public String buildPath()
-	{
+	public String buildPath() {
 		var path = new StringBuilder();
 		for (ItemID i : this) {
-			if (i.getType() == ItemID.TYPE_DRIVE || i.getType() == ItemID.TYPE_DRIVE_OLD)
-				path.append(i.getName());
-			else if (i.getType() == ItemID.TYPE_DIRECTORY || i.getType() == ItemID.TYPE_DIRECTORY_OLD)
-				path.append(i.getName() + "\\");
-			else if (i.getType() == ItemID.TYPE_FILE || i.getType() == ItemID.TYPE_FILE_OLD)
-				path.append(i.getName());
+			path.append(i.toString());
 		}
 		return path.toString();
 	}
