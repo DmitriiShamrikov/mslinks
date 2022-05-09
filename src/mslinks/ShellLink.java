@@ -341,7 +341,7 @@ public class ShellLink {
 		String targetAbsPath = Paths.get(target).toAbsolutePath().toString();
 
 		try {
-			var helper = new ShellLinkHelper(new ShellLink());
+			var helper = new ShellLinkHelper(this);
 			if (targetAbsPath.startsWith("\\\\")) {
 				helper.setNetworkTarget(targetAbsPath);
 			} else {
