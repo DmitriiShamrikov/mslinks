@@ -5,6 +5,9 @@ plugins {
 
 version = '1.0.7'
 
+sourceCompatibility = 11.0
+targetCompatibility = 11.0
+
 sourceSets {
     main {
         java {
