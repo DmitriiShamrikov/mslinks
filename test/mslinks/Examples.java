@@ -54,7 +54,7 @@ public class Examples {
 	}
 
 	@Test
-	public void LinixExample() throws IOException, ShellLinkException {
+	public void LinuxExample() throws IOException, ShellLinkException {
 		assumeFalse(isRunningOnWindows());
 
 		String workingDir = Paths.get("").toAbsolutePath().toString();
