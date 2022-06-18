@@ -15,6 +15,7 @@
 package mslinks;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import mslinks.ShellLinkHelper.Options;
 
@@ -28,6 +29,7 @@ import java.nio.file.Paths;
 
 public class Examples {
 	@Test
+	@Category(Examples.class)
 	public void WindowsExample() throws IOException, ShellLinkException {
 		assumeTrue(isRunningOnWindows());
 
@@ -54,12 +56,13 @@ public class Examples {
 	}
 
 	@Test
+	@Category(Examples.class)
 	public void LinuxExample() throws IOException, ShellLinkException {
 		assumeFalse(isRunningOnWindows());
 
 		String workingDir = Paths.get("").toAbsolutePath().toString();
 		String driveLetter = getWslDriveLetter(workingDir);
-		assertNotNull("this test supposed to run in WSL", driveLetter);
+		assertNotNull("this test is supposed to run in WSL", driveLetter);
 		workingDir = workingDir.replace("/mnt/" + driveLetter + "/", driveLetter.toUpperCase() + ":\\").replaceAll("\\/", "\\\\");
 		String linkWorkingDir = workingDir.substring(0, workingDir.lastIndexOf('\\'));
 

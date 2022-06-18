@@ -17,6 +17,7 @@ package mslinks;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 // Test data in this file is created by OS
 
@@ -871,6 +872,7 @@ public class ReadTestData extends TestUtils {
 	}
 
 	@Test
+	@Category(ReadTestData.class)
 	public void ExportLinkFiles() throws IllegalArgumentException, IllegalAccessException, IOException {
 		Path exportDir = Path.of(".working_dir", "export");
 		ExportLinkFiles(exportDir, this.getClass(), true);

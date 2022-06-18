@@ -18,9 +18,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 // Test data in this file is created by mslinks and used to check if mslinks generates the same output
-// In order to test generated link files in the OS run ExportLinkFiles test
+// In order to test generated link files in the OS run ExportLinkFiles test (skipped by default)
 
 public class WriteTestData extends TestUtils {
 
@@ -472,6 +473,7 @@ public class WriteTestData extends TestUtils {
 	}
 
 	@Test
+	@Category(WriteTestData.class)
 	public void ExportLinkFiles() throws IllegalArgumentException, IllegalAccessException, IOException {
 		Path exportDir = Path.of(".working_dir", "export");
 		ExportLinkFiles(exportDir, this.getClass(), true);
