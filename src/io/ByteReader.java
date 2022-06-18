@@ -37,6 +37,16 @@ public class ByteReader extends InputStream {
 		le = !le;
 		return this;
 	}
+
+	public ByteReader setLittleEndian() {
+		le = true;
+		return this;
+	}
+
+	public ByteReader setBigEndian() {
+		le = false;
+		return this;
+	}
 	
 	public boolean seek(int n) throws IOException {
 		if (n <= 0) return false;

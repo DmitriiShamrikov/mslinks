@@ -84,6 +84,12 @@ public class ShellLink {
 			parse(reader);
 		}
 	}
+
+	public ShellLink(ByteReader reader) throws IOException, ShellLinkException {
+		try (reader) {
+			parse(reader);
+		}
+	}
 	
 	private void parse(ByteReader data) throws ShellLinkException, IOException {
 		header = new ShellLinkHeader(data);
@@ -119,10 +125,15 @@ public class ShellLink {
 			}
 		}
 	}
-		
+
 	public void serialize(OutputStream out) throws IOException {
+		var bw = new ByteWriter(out);
+		serialize(bw);
+		out.close();
+	}
+
+	public void serialize(ByteWriter bw) throws IOException {
 		LinkFlags lf = header.getLinkFlags();
-		ByteWriter bw = new ByteWriter(out);
 		header.serialize(bw);
 		if (lf.hasLinkTargetIDList())
 			idlist.serialize(bw);
@@ -144,7 +155,6 @@ public class ShellLink {
 			i.serialize(bw);
 		
 		bw.write4bytes(0);
-		out.close();
 	}
 	
 	public ShellLinkHeader getHeader() { return header; }

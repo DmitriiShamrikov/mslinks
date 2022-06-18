@@ -38,6 +38,16 @@ public class ByteWriter extends OutputStream {
 		return this;
 	}
 
+	public ByteWriter setLittleEndian() {
+		le = true;
+		return this;
+	}
+
+	public ByteWriter setBigEndian() {
+		le = false;
+		return this;
+	}
+
 	@Override
 	public void close() throws IOException
 	{
