@@ -106,8 +106,16 @@ public class CNRLink implements Serializable {
 			data.seek(pos + dnoffset - data.getPosition());
 			devname = data.readString(pos + size - data.getPosition());
 		}
-		if (nnoffset_u != 0) netname = data.readUnicodeString((pos + size - data.getPosition())>>1);
-		if (dnoffset_u != 0) devname = data.readUnicodeString((pos + size - data.getPosition())>>1);
+
+		if (nnoffset_u != 0) {
+			data.seek(pos + nnoffset_u - data.getPosition());
+			netname = data.readUnicodeString(pos + size - data.getPosition());
+		}
+		
+		if (dnoffset_u != 0) {
+			data.seek(pos + dnoffset_u - data.getPosition());
+			devname = data.readUnicodeString(pos + size - data.getPosition());
+		}
 	}
 	
 	private void checkNptype(int type) throws ShellLinkException {
