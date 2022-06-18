@@ -74,7 +74,7 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 	
 	public String toString() {
-		return String.format("%d:%d:%d %d.%d.%d", 
+		return String.format("%02d:%02d:%02d %02d.%02d.%04d", 
 				get(Calendar.HOUR_OF_DAY), get(Calendar.MINUTE), get(Calendar.SECOND),
 				get(Calendar.DAY_OF_MONTH), get(Calendar.MONTH) + 1, get(Calendar.YEAR));
 	}
