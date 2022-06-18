@@ -90,10 +90,10 @@ public class ConsoleData implements Serializable {
 		if (sz != size) throw new ShellLinkException();
 		int t = (int)br.read2bytes();
 		textFG = t & 0xf;
-		textBG = t & 0xf0;
+		textBG = (t & 0xf0) >> 4;
 		t = (int)br.read2bytes();
 		popupFG = t & 0xf;
-		popupBG = t & 0xf0;
+		popupBG = (t & 0xf0) >> 4;
 		buffer = new Size((int)br.read2bytes(), (int)br.read2bytes());
 		window = new Size((int)br.read2bytes(), (int)br.read2bytes());
 		windowpos = new Size((int)br.read2bytes(), (int)br.read2bytes());
