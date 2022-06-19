@@ -38,7 +38,7 @@ public class Stub implements Serializable {
 	public void serialize(ByteWriter bw) throws IOException {
 		bw.write4bytes(data.length + 8);
 		bw.write4bytes(sign);
-		bw.writeBytes(data);
+		bw.write(data);
 	}
 
 }

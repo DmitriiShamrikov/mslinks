@@ -72,7 +72,7 @@ public class ItemID implements Serializable {
 			size = (int)br.read4bytes();
 			br.read4bytes(); //last modified
 			br.read2bytes(); // folder attributes
-			longname = br.readUnicodeString(endPos - br.getPosition());
+			longname = br.readUnicodeStringNullTerm(endPos - br.getPosition());
 			shortname = br.readString(endPos - br.getPosition());
 			br.seek(endPos - br.getPosition());
 		} else if (type == TYPE_FILE || type == TYPE_DIRECTORY) {
@@ -109,7 +109,7 @@ public class ItemID implements Serializable {
 				case EXT_VERSION_WIN8: br.seek(30); break;
 				default: throw new ShellLinkException("Unknown extension version");
 			}
-			longname = br.readUnicodeString(pos + extSize - br.getPosition());
+			longname = br.readUnicodeStringNullTerm(pos + extSize - br.getPosition());
 			br.seek(pos + extSize - br.getPosition()); // unknown
 		} else if (type == TYPE_CLSID) {
 			br.read(); // unknown
@@ -123,7 +123,7 @@ public class ItemID implements Serializable {
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
 		if (data != null) {
-			bw.writeBytes(data);
+			bw.write(data);
 			return;
 		}
 
@@ -166,12 +166,10 @@ public class ItemID implements Serializable {
 		// use simple old format without extension used in versions before xp
 		// it seems like there are no problems on newer systems, also it supports long unicode names on old ones
 		if (unicodeName) {
-			bw.writeUnicodeString(longname, true);
-			bw.writeBytes(shortname.getBytes());
-			bw.write(0);
+			bw.writeUnicodeStringNullTerm(longname);
+			bw.writeString(shortname);
 		} else {
-			bw.writeBytes(shortname.getBytes());
-			bw.write(0);
+			bw.writeString(shortname);
 			bw.write(0);
 		}
 	}

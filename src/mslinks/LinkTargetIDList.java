@@ -72,7 +72,7 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 		bw.write2bytes(size);
 		for (byte[] j : b) {
 			bw.write2bytes(j.length + 2);
-			bw.writeBytes(j);
+			bw.write(j);
 		}
 		bw.write2bytes(0);
 	}

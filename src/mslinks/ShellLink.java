@@ -99,15 +99,15 @@ public class ShellLink {
 		if (lf.hasLinkInfo())
 			info = new LinkInfo(data);
 		if (lf.hasName())
-			name = data.readUnicodeString();
+			name = data.readUnicodeStringSizePadded();
 		if (lf.hasRelativePath())
-			relativePath = data.readUnicodeString();
+			relativePath = data.readUnicodeStringSizePadded();
 		if (lf.hasWorkingDir()) 
-			workingDir = data.readUnicodeString();
+			workingDir = data.readUnicodeStringSizePadded();
 		if (lf.hasArguments()) 
-			cmdArgs = data.readUnicodeString();
+			cmdArgs = data.readUnicodeStringSizePadded();
 		if (lf.hasIconLocation())
-			iconLocation = data.readUnicodeString();
+			iconLocation = data.readUnicodeStringSizePadded();
 		
 		while (true) {
 			int size = (int)data.read4bytes();
@@ -141,15 +141,15 @@ public class ShellLink {
 		if (lf.hasLinkInfo())
 			info.serialize(bw);
 		if (lf.hasName())
-			bw.writeUnicodeString(name);
+			bw.writeUnicodeStringSizePadded(name);
 		if (lf.hasRelativePath())
-			bw.writeUnicodeString(relativePath);
+			bw.writeUnicodeStringSizePadded(relativePath);
 		if (lf.hasWorkingDir()) 
-			bw.writeUnicodeString(workingDir);
+			bw.writeUnicodeStringSizePadded(workingDir);
 		if (lf.hasArguments()) 
-			bw.writeUnicodeString(cmdArgs);
+			bw.writeUnicodeStringSizePadded(cmdArgs);
 		if (lf.hasIconLocation())
-			bw.writeUnicodeString(iconLocation);
+			bw.writeUnicodeStringSizePadded(iconLocation);
 		
 		for (Serializable i : extra.values())
 			i.serialize(bw);

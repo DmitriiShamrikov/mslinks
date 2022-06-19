@@ -42,7 +42,7 @@ public class EnvironmentVariable implements Serializable {
 		br.seek(pos + 260 - br.getPosition());
 		
 		pos = br.getPosition();
-		variable = br.readUnicodeString(260);
+		variable = br.readUnicodeStringNullTerm(260);
 		br.seek(pos + 520 - br.getPosition());
 	}
 	
@@ -51,7 +51,7 @@ public class EnvironmentVariable implements Serializable {
 		bw.write4bytes(size);
 		bw.write4bytes(signature);
 		byte[] b = variable.getBytes();
-		bw.writeBytes(b);
+		bw.write(b);
 		for (int i=0; i<260-b.length; i++)
 			bw.write(0);
 		for (int i=0; i<variable.length(); i++)

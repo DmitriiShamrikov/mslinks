@@ -65,11 +65,11 @@ public class LinkInfo implements Serializable {
 		}
 		if (lif.hasVolumeIDAndLocalBasePath() && lbpoffset_u != 0) {
 			data.seek(pos + lbpoffset_u - data.getPosition());
-			localBasePath = data.readUnicodeString((pos + size - data.getPosition())>>1);
+			localBasePath = data.readUnicodeStringNullTerm((pos + size - data.getPosition())>>1);
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix() && cpfoffset_u != 0) {
 			data.seek(pos + cpfoffset_u - data.getPosition());
-			commonPathSuffix = data.readUnicodeString((pos + size - data.getPosition())>>1);
+			commonPathSuffix = data.readUnicodeStringNullTerm((pos + size - data.getPosition())>>1);
 		}
 		
 		data.seek(pos + size - data.getPosition());
@@ -145,13 +145,13 @@ public class LinkInfo implements Serializable {
 		}
 		
 		if (lif.hasVolumeIDAndLocalBasePath()) {
-			bw.writeBytes(vid_b);
-			bw.writeBytes(localBasePath_b);
+			bw.write(vid_b);
+			bw.write(localBasePath_b);
 			bw.write(0);
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			bw.writeBytes(cnrlink_b);
-			bw.writeBytes(commonPathSuffix_b);
+			bw.write(cnrlink_b);
+			bw.write(commonPathSuffix_b);
 			bw.write(0);
 		}
 		

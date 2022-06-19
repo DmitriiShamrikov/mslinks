@@ -105,7 +105,7 @@ public class VolumeID implements Serializable {
 			off += label.length() * 2 + 2;
 		}
 		
-		bw.writeBytes(label_b);
+		bw.write(label_b);
 		bw.write(0);
 		if (u) {
 			bw.write(0);

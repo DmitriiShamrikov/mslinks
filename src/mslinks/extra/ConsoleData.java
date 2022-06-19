@@ -151,7 +151,7 @@ public class ConsoleData implements Serializable {
 			case LucidaConsole: fn = "Lucida Console"; break;
 			case Consolas: fn = "Consolas"; break;
 		}
-		bw.writeUnicodeString(fn, true);
+		bw.writeUnicodeStringNullTerm(fn);
 		for (int i=fn.length()+1; i<32; i++)
 			bw.write2bytes(0);
 		switch (cursize) {

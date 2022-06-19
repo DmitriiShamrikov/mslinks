@@ -63,7 +63,7 @@ public class Tracker implements Serializable {
 		bw.write4bytes(0x58);
 		bw.write4bytes(0);
 		byte[] b = netbios.getBytes();
-		bw.writeBytes(b);
+		bw.write(b);
 		for (int i=0; i<16-b.length; i++)
 			bw.write(0);
 		d1.serialize(bw);

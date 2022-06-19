@@ -162,20 +162,21 @@ public class ByteWriter extends OutputStream {
 			write(b7); write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
 		}
 	}
-	
-	public void writeBytes(byte[] b) throws IOException {
-		for (byte i : b) 
-			write(i);
+
+	public void writeString(String s) throws IOException {
+		write(s.getBytes());
+		write(0);
 	}
-	
-	public void writeUnicodeString(String s) throws IOException {
-		writeUnicodeString(s, false);
-	}
-	
-	public void writeUnicodeString(String s, boolean nullterm) throws IOException {
-		if (!nullterm) write2bytes(s.length());
+
+	public void writeUnicodeStringNullTerm(String s) throws IOException {
 		for (int i=0; i<s.length(); i++)
 			write2bytes(s.charAt(i));
-		if (nullterm) write2bytes(0);
+		write2bytes(0);
+	}
+
+	public void writeUnicodeStringSizePadded(String s) throws IOException {
+		write2bytes(s.length());
+		for (int i=0; i<s.length(); i++)
+			write2bytes(s.charAt(i));
 	}
 }

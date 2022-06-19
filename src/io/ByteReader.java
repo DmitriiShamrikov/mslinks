@@ -181,9 +181,9 @@ public class ByteReader extends InputStream {
 	 * reads 0-terminated string in unicode
 	 * @param sz - maximum size in charcters
 	 */
-	public String readUnicodeString(int sz) throws IOException {
+	public String readUnicodeStringNullTerm(int sz) throws IOException {
 		if (sz == 0) return null;
-		char[] buf = new char[sz];		
+		char[] buf = new char[sz];
 		int i = 0;
 		for (; i<sz; i++) {
 			char c = (char)read2bytes();
@@ -197,7 +197,7 @@ public class ByteReader extends InputStream {
 	/**
 	 * reads unicode string that has 2 bytes at start indicates length of string
 	 */
-	public String readUnicodeString() throws IOException {
+	public String readUnicodeStringSizePadded() throws IOException {
 		int c = (int)read2bytes();
 		char[] buf = new char[c];
 		for (int i=0; i<c; i++)

@@ -109,12 +109,12 @@ public class CNRLink implements Serializable {
 
 		if (nnoffset_u != 0) {
 			data.seek(pos + nnoffset_u - data.getPosition());
-			netname = data.readUnicodeString(pos + size - data.getPosition());
+			netname = data.readUnicodeStringNullTerm(pos + size - data.getPosition());
 		}
 		
 		if (dnoffset_u != 0) {
 			data.seek(pos + dnoffset_u - data.getPosition());
-			devname = data.readUnicodeString(pos + size - data.getPosition());
+			devname = data.readUnicodeStringNullTerm(pos + size - data.getPosition());
 		}
 	}
 	
@@ -167,10 +167,10 @@ public class CNRLink implements Serializable {
 				off += devname.length() * 2 + 2;
 			} else bw.write4bytes(0);
 		}
-		bw.writeBytes(netname_b);
+		bw.write(netname_b);
 		bw.write(0);
 		if (devname_b != null) {
-			bw.writeBytes(devname_b);
+			bw.write(devname_b);
 			bw.write(0);
 		}
 		if (u) {
