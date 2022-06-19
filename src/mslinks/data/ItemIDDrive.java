@@ -41,27 +41,24 @@ public class ItemIDDrive extends ItemID {
 
 		super.load(br, maxSize);
 
-		int stringEndPos = br.getPosition() + 4;
 		setName(br.readString(4));
-		br.seek(stringEndPos - br.getPosition());
-
 		// 8 bytes: drive size
 		// 8 bytes: drive free size
 		// 1 byte: 0/1 - has drive extension
 		// 1 byte: 0/1 - drive extension has class id
 		// 16 bytes: clsid - only possible value is CDBurn
-		br.seek(endPos - br.getPosition());
+		br.seekTo(endPos);
 	}
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
 		super.serialize(bw);
 
-		byte[] b = name.getBytes();
-		bw.write(b);
-		// TODO: check if this stuff is really needed 
-		for (int i=0; i<22-b.length; i++)
-			bw.write(0);
+		bw.writeString(name);
+		bw.write8bytes(0); // drive size
+		bw.write8bytes(0); // drive free size
+		bw.write(0); // no extension
+		bw.write(0); // no clsid
 	}
 
 	@Override
@@ -77,11 +74,11 @@ public class ItemIDDrive extends ItemID {
 		if (s == null) 
 			return this;
 		
-		if (Pattern.matches("\\w+:\\\\", s))
+		if (Pattern.matches("\\w:\\\\", s))
 			name = s;
-		else if (Pattern.matches("\\w+:", s))
+		else if (Pattern.matches("\\w:", s))
 			name = s + "\\";
-		else if (Pattern.matches("\\w+", s))
+		else if (Pattern.matches("\\w", s))
 			name = s + ":\\";
 		else 
 			throw new ShellLinkException("wrong drive name: " + s);
