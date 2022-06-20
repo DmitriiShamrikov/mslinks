@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'com.adarshr.test-logger' version '3.0.0'
+    id 'eclipse'
 }
 
 version = '1.0.8'
@@ -33,5 +34,18 @@ dependencies {
 test {
     useJUnit {
         excludeCategories = ['mslinks.ReadTestData', 'mslinks.WriteTestData', 'mslinks.Examples']
+    }
+}
+
+eclipse {
+    classpath {
+        defaultOutputDir = file('build/eclipse-default')
+        file.whenMerged {
+            entries.each { entry ->
+                if (entry.kind == 'src' && entry.hasProperty('output')) {
+                    entry.output = entry.output.replace('bin/', "build/eclipse/")
+                }
+            }
+        }
     }
 }
