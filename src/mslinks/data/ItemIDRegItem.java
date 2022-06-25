@@ -19,34 +19,49 @@ import java.io.IOException;
 import io.ByteReader;
 import io.ByteWriter;
 import mslinks.ShellLinkException;
+import mslinks.UnsupportedCLSIDException;
 
-public class ItemIDUnknown extends ItemID {
+public abstract class ItemIDRegItem extends ItemID {
+	
+	protected GUID clsid;
 
-	protected byte[] data;
-
-	public ItemIDUnknown(int flags) {
+	public ItemIDRegItem(int flags) {
 		super(flags);
 	}
 
 	@Override
 	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
-		int startPos = br.getPosition();
-		
 		super.load(br, maxSize);
-		
-		int bytesRead = br.getPosition() - startPos;
-		data = new byte[maxSize - bytesRead];
-		br.read(data);
+		br.read(); // order
+		setClsid(new GUID(br));
 	}
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
 		super.serialize(bw);
-		bw.write(data);
+		bw.write(0); // order
+		clsid.serialize(bw);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("<ItemIDUnknown 0x%02X>", typeFlags);
+		String name;
+		try {
+			name = Registry.getName(clsid);
+		} catch (UnsupportedCLSIDException e) {
+			name = this.getClass().getSimpleName();
+		}
+		return "<" + name + ">\\";
+	}
+
+	public GUID getClsid() {
+		return clsid;
+	}
+
+	public ItemIDRegItem setClsid(GUID clsid) throws UnsupportedCLSIDException {
+		if (!Registry.canUseClsidIn(clsid, this.getClass()))
+			throw new UnsupportedCLSIDException(clsid);
+		this.clsid = clsid;
+		return this;
 	}
 }

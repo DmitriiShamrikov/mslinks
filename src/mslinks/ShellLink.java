@@ -300,9 +300,8 @@ public class ShellLink {
 	}
 	
 	public String resolveTarget() {
-		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.isCorrect()) {
+		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildAbsolutePath())
 			return idlist.buildPath();
-		}
 		
 		if (header.getLinkFlags().hasLinkInfo() && info != null) {
 			String path = info.buildPath();
@@ -316,6 +315,9 @@ public class ShellLink {
 		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
 		if (envBlock != null && !envBlock.getVariable().isEmpty())
 			return envBlock.getVariable();
+
+		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildPath())
+			return idlist.buildPath();
 		
 		return "<unknown>";
 	}

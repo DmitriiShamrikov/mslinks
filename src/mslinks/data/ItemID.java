@@ -91,18 +91,19 @@ public abstract class ItemID implements Serializable {
 			throw new ShellLinkException("junctions are not supported");
 
 		int group = typeFlags & ID_TYPE_GROUPMASK;
+		int subGroup = typeFlags & ID_TYPE_INGROUPMASK;
 		switch (group) {
 		case GROUP_ROOT:
 			return new ItemIDRoot(typeFlags);
 		case GROUP_COMPUTER: 
+			if (subGroup == TYPE_DRIVE_REGITEM)
+				return new ItemIDRegFolder(typeFlags);
 			return new ItemIDDrive(typeFlags);
 		case GROUP_FS:
 			return new ItemIDFS(typeFlags);
 		default:
 			return new ItemIDUnknown(typeFlags);
 		}
-
-		//throw new UnsupportedItemIDException(typeFlags);
 	}
 
 

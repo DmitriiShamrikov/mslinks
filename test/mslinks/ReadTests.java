@@ -43,7 +43,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\pause.bat";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals("%SystemRoot%\\System32\\SHELL32.dll", link.getIconLocation());
@@ -223,7 +223,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\Program Files\\7-Zip\\7zFM.exe";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals(null, link.getIconLocation());
@@ -237,7 +237,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\textfile.txt";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals(null, link.getIconLocation());
@@ -251,7 +251,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\\u03B1\u03B1\u03B1.txt";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 	}
@@ -296,7 +296,7 @@ public class ReadTests {
 
 		String expectedTarget = "Z:\\testfile.txt";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 	}
@@ -345,7 +345,7 @@ public class ReadTests {
 		String expectedTarget = "C:\\linktest\\folder\\";
 
 		assertTrue(link.getHeader().getFileAttributesFlags().isDirecory());
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 	}
@@ -356,7 +356,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\pause.bat";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals("%SystemRoot%\\system32\\SHELL32.dll", link.getIconLocation());

@@ -14,6 +14,10 @@
 */
 package mslinks;
 
-public class UnsupportedCLSIDException extends ShellLinkException {
+import mslinks.data.GUID;
 
+public class UnsupportedCLSIDException extends ShellLinkException {
+	public UnsupportedCLSIDException(GUID clsid) {
+		super(clsid.toString());
+	}
 }

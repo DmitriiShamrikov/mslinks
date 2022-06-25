@@ -14,16 +14,16 @@
 */
 package mslinks;
 
+import static org.junit.Assert.assertArrayEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import org.junit.Test;
 
 import io.ByteWriter;
 import mslinks.ShellLinkHelper.Options;
 import mslinks.extra.ConsoleData.Font;
-
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 public class WriteTests {
 
@@ -90,7 +90,7 @@ public class WriteTests {
 	@Test
 	public void TestLinkIcon() throws ShellLinkException, IOException {
 		var link = createLink();
-		link.setLocalTarget(PROJECT_DRIVE, PROJECT_DIR + "\\pause.bat")
+		link.setLocalTarget(PROJECT_DRIVE, PROJECT_DIR + "\\pause.bat", Options.ForceTypeFile)
 			.getLink()
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat")
 				.setWorkingDir(PROJECT_PATH)
@@ -98,7 +98,6 @@ public class WriteTests {
 				.getHeader()
 					.setIconIndex(64);
 		
-		//link.saveTo(".working_dir\\testlink");
 		assertArrayEquals(WriteTestData.linkicon, serializeLink(link.getLink()));
 	}
 
