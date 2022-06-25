@@ -20,8 +20,8 @@ import io.ByteWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 
 import mslinks.data.*;
 
@@ -78,7 +78,7 @@ public class LinkInfo implements Serializable {
 	public void serialize(ByteWriter bw) throws IOException {
 		int pos = bw.getPosition();
 		int hsize = 28;
-		CharsetEncoder ce = Charset.defaultCharset().newEncoder();
+		CharsetEncoder ce = StandardCharsets.US_ASCII.newEncoder();
 		if (localBasePath != null && !ce.canEncode(localBasePath) || commonPathSuffix != null && !ce.canEncode(commonPathSuffix)) 
 			hsize += 8;
 		
@@ -157,14 +157,10 @@ public class LinkInfo implements Serializable {
 		
 		if (hsize > 28) {
 			if (lif.hasVolumeIDAndLocalBasePath()) {
-				for (int i=0; i<localBasePath.length(); i++)
-					bw.write2bytes(localBasePath.charAt(i));
-				bw.write2bytes(0);
+				bw.writeUnicodeStringNullTerm(localBasePath);
 			}
 			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-				for (int i=0; i<commonPathSuffix.length(); i++)
-					bw.write2bytes(commonPathSuffix.charAt(i));
-				bw.write2bytes(0);
+				bw.writeUnicodeStringNullTerm(commonPathSuffix);
 			}
 		}
 		

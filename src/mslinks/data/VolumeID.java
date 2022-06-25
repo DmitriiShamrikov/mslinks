@@ -16,6 +16,7 @@ package mslinks.data;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
@@ -87,7 +88,7 @@ public class VolumeID implements Serializable {
 		byte[] label_b = label.getBytes();
 		size += label_b.length + 1;
 		boolean u = false;
-		if (!Charset.defaultCharset().newEncoder().canEncode(label)) { 
+		if (!StandardCharsets.US_ASCII.newEncoder().canEncode(label)) { 
 			size += 4 + 1 + label.length() * 2 + 2;
 			u = true;
 		}

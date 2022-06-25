@@ -55,6 +55,10 @@ public class ByteReader extends InputStream {
 		return true;
 	}
 
+	public boolean seekTo(int newPos) throws IOException {
+		return seek(newPos - pos);
+	}
+
 	@Override
 	public void close() throws IOException
 	{

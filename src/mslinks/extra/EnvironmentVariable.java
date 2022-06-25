@@ -39,11 +39,13 @@ public class EnvironmentVariable implements Serializable {
 		
 		int pos = br.getPosition();
 		variable = br.readString(260);
-		br.seek(pos + 260 - br.getPosition());
+		br.seekTo(pos + 260);
 		
 		pos = br.getPosition();
-		variable = br.readUnicodeStringNullTerm(260);
-		br.seek(pos + 520 - br.getPosition());
+		String unicodeStr = br.readUnicodeStringNullTerm(260);
+		br.seekTo(pos + 520);
+		if (unicodeStr != null && !unicodeStr.equals(""))
+			variable = unicodeStr;
 	}
 	
 	@Override

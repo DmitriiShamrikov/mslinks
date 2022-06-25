@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
@@ -133,7 +134,7 @@ public class CNRLink implements Serializable {
 	public void serialize(ByteWriter bw) throws IOException {
 		int size = 20;
 		boolean u = false;
-		CharsetEncoder ce = Charset.defaultCharset().newEncoder();
+		CharsetEncoder ce = StandardCharsets.US_ASCII.newEncoder();
 		u = !ce.canEncode(netname) || devname != null && !ce.canEncode(devname);
 		
 		if (u) size += 8;
