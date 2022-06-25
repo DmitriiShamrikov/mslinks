@@ -51,7 +51,6 @@ public class ReadTests {
 		assertEquals("C:\\Windows", link.getWorkingDir());
 		assertEquals(".\\folder\\pause.bat", link.getRelativePath());
 		assertEquals(null, link.getName());
-		assertEquals("en-GB", link.getLanguage());
 	}
 
 	@Test
@@ -364,6 +363,5 @@ public class ReadTests {
 		assertEquals("C:\\Windows", link.getWorkingDir());
 		assertEquals(".\\folder\\pause.bat", link.getRelativePath());
 		assertEquals(null, link.getName());
-		assertEquals("en-GB", link.getLanguage());
 	}
 }
