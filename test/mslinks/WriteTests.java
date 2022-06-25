@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import io.ByteWriter;
 import mslinks.ShellLinkHelper.Options;
+import mslinks.data.Registry;
 import mslinks.extra.ConsoleData.Font;
 
 public class WriteTests {
@@ -179,5 +180,29 @@ public class WriteTests {
 				.setWorkingDir(PROJECT_PATH);
 
 		assertArrayEquals(WriteTestData.networkshareunicodelink, serializeLink(link.getLink()));
+	}
+
+	@Test
+	public void TestDesktopLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.CLSID_DESKTOP, "pause.bat", Options.ForceTypeFile);
+
+		assertArrayEquals(WriteTestData.desktoplink, serializeLink(link.getLink()));
+	}
+
+	@Test
+	public void TestDesktopLinkSimple() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setDesktopRelativeTarget("pause.bat", Options.ForceTypeFile);
+
+		assertArrayEquals(WriteTestData.desktoplink_simple, serializeLink(link.getLink()));
+	}
+
+	@Test
+	public void TestDocumentsLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "pause.bat", Options.ForceTypeFile);
+
+		assertArrayEquals(WriteTestData.documentslink, serializeLink(link.getLink()));
 	}
 }
