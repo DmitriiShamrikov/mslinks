@@ -17,13 +17,14 @@ package mslinks.data;
 import io.ByteReader;
 import io.ByteWriter;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
 
-public abstract class ItemID implements Serializable {
+public class ItemID implements Serializable {
 
 	// from NT\shell\shell32\shitemid.h
 
@@ -108,9 +109,23 @@ public abstract class ItemID implements Serializable {
 
 
 	protected int typeFlags;
-	
-	protected ItemID(int flags) {
+
+	/**
+	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID(int flags) {
 		this.typeFlags = flags;
+
+		// for deprecated API: should not create instances of this class directly
+		if (this.getClass() == ItemID.class) {
+			try {
+				internalItemId = ItemID.createItem(flags);
+			}
+			catch (ShellLinkException e) {
+				internalItemId = new ItemIDUnknown(flags);
+			}
+		}
 	}
 
 	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
@@ -120,7 +135,10 @@ public abstract class ItemID implements Serializable {
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write(typeFlags);
+		if (internalItemId != null)
+			internalItemId.serialize(bw);
+		else
+			bw.write(typeFlags);
 	}
 
 	@Override
@@ -128,7 +146,12 @@ public abstract class ItemID implements Serializable {
 		return "";
 	}
 
-	public int getTypeFlags() { return typeFlags; }
+	public int getTypeFlags() {
+		if (internalItemId != null)
+			return internalItemId.getTypeFlags();
+		return typeFlags;
+	}
+
 	public ItemID setTypeFlags(int flags) throws ShellLinkException {
 		if ((flags & ID_TYPE_GROUPMASK) != 0) {
 			throw new ShellLinkException("ItemID group cannot be changed. " +
@@ -186,6 +209,161 @@ public abstract class ItemID implements Serializable {
 		}
 
 		return shortname.toString().toUpperCase();
+	}
+
+	//////////////////////////////////////////////////////
+	////////////// Deprecated old API ////////////////////
+	//////////////////////////////////////////////////////
+
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_UNKNOWN = 0;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_FILE_OLD      = GROUP_FS       | TYPE_FS_UNICODE | TYPE_FS_FILE;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_DIRECTORY_OLD = GROUP_FS       | TYPE_FS_UNICODE | TYPE_FS_DIRECTORY;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_FILE          = GROUP_FS       | TYPE_FS_FILE;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_DIRECTORY     = GROUP_FS       | TYPE_FS_DIRECTORY;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_DRIVE_OLD     = GROUP_COMPUTER | TYPE_DRIVE_FIXED;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_DRIVE         = GROUP_COMPUTER | TYPE_DRIVE_MISC;
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public static final int TYPE_CLSID         = GROUP_ROOT     | TYPE_ROOT_REGITEM;
+
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	private ItemID internalItemId;
+
+	/**
+	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID() {
+	}
+	
+	/**
+	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID(byte[] d) throws IOException, ShellLinkException {
+		var br = new ByteReader(new ByteArrayInputStream(d));
+		var flags = br.read();
+		internalItemId = ItemID.createItem(flags);
+		internalItemId.load(br, d.length - 1);
+	}
+	
+	/**
+	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID(ByteReader br, int maxSize) throws IOException, ShellLinkException {
+		var flags = br.read();
+		internalItemId = ItemID.createItem(flags);
+		internalItemId.load(br, maxSize - 1);
+	}
+
+	/**
+	 * @Deprecated Use {@link ItemIDDrive} or {@link ItemIDFS}
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public String getName() {
+		if (internalItemId instanceof ItemIDDrive) {
+			return ((ItemIDDrive)internalItemId).getName();
+		}
+		else if (internalItemId instanceof ItemIDFS) {
+			return ((ItemIDFS)internalItemId).getName();
+		}
+		return "";
+	}
+
+	/**
+	 * @Deprecated Use {@link ItemIDDrive} or {@link ItemIDFS}
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID setName(String s) throws ShellLinkException {
+		if (internalItemId instanceof ItemIDDrive) {
+			((ItemIDDrive)internalItemId).setName(s);
+		}
+		else if (internalItemId instanceof ItemIDFS) {
+			((ItemIDFS)internalItemId).setName(s);
+		}
+
+		return this;
+	}
+
+	/**
+	 * @Deprecated Use {@link ItemIDFS}
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public int getSize() {
+		if (internalItemId instanceof ItemIDFS) {
+			return ((ItemIDFS)internalItemId).getSize();
+		}
+		return 0;
+	}
+
+	/**
+	 * @Deprecated Use {@link ItemIDFS}
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID setSize(int s) throws ShellLinkException {
+		if (internalItemId instanceof ItemIDFS) {
+			((ItemIDFS)internalItemId).setSize(s);
+			return this;
+		}
+		throw new ShellLinkException("only files has size");
+	}
+
+	/**
+	 * @Deprecated Use {@link #getTypeFlags()}
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public int getType() {
+		return getTypeFlags();
+	}
+
+	/**
+	 * @Deprecated Use {@link #setTypeFlags(int flags)}. However, in new API you should create instances
+	 * of an appropriate class extending this one and use {@code setTypeFlags(int flags)} only to set
+	 * type-specific flags corresponding to the {@link #ID_TYPE_INGROUPMASK}
+	 */
+	@Deprecated(since = "1.0.9", forRemoval = true)
+	public ItemID setType(int t) throws ShellLinkException {
+		if (t == TYPE_CLSID) {
+			internalItemId = new ItemIDRoot().setClsid(Registry.CLSID_COMPUTER);
+			return this;
+		}
+
+		if (t == TYPE_FILE || t == TYPE_DIRECTORY || t == TYPE_FILE_OLD || t == TYPE_DIRECTORY_OLD) {
+			if (internalItemId instanceof ItemIDFS) {
+				((ItemIDFS)internalItemId).setTypeFlags(t & ItemID.ID_TYPE_INGROUPMASK);
+			}
+			else if (internalItemId instanceof ItemIDDrive) {
+				var driveId = (ItemIDDrive)internalItemId;
+				internalItemId = new ItemIDFS(t).setName(driveId.getName());
+			}
+			else if (internalItemId == null) {
+				internalItemId = new ItemIDFS(t);
+			}
+			return this;
+		}
+
+		if (t == TYPE_DRIVE || t == TYPE_DRIVE_OLD) {
+			if (internalItemId instanceof ItemIDDrive) {
+				((ItemIDDrive)internalItemId).setTypeFlags(t & ItemID.ID_TYPE_INGROUPMASK);
+			}
+			else if (internalItemId instanceof ItemIDFS) {
+				var fsId = (ItemIDFS)internalItemId;
+				internalItemId = new ItemIDDrive(t).setName(fsId.getName());
+			}
+			else if (internalItemId == null) {
+				internalItemId = new ItemIDDrive(t);
+			}
+			return this;
+		}
+
+		throw new ShellLinkException("wrong type");
 	}
 }
 
