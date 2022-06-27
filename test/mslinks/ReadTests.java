@@ -25,6 +25,7 @@ import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class ReadTests {
 	private ShellLink createLink(byte[] data) throws IOException, ShellLinkException {
@@ -43,7 +44,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\pause.bat";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals("%SystemRoot%\\System32\\SHELL32.dll", link.getIconLocation());
@@ -222,7 +223,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\Program Files\\7-Zip\\7zFM.exe";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals(null, link.getIconLocation());
@@ -236,7 +237,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\textfile.txt";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals(null, link.getIconLocation());
@@ -250,7 +251,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\\u03B1\u03B1\u03B1.txt";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 	}
@@ -295,7 +296,7 @@ public class ReadTests {
 
 		String expectedTarget = "Z:\\testfile.txt";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 	}
@@ -344,7 +345,7 @@ public class ReadTests {
 		String expectedTarget = "C:\\linktest\\folder\\";
 
 		assertTrue(link.getHeader().getFileAttributesFlags().isDirecory());
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 	}
@@ -355,7 +356,7 @@ public class ReadTests {
 
 		String expectedTarget = "C:\\linktest\\folder\\pause.bat";
 
-		assertTrue(link.getTargetIdList().isCorrect());
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(expectedTarget, link.resolveTarget());
 		assertEquals("%SystemRoot%\\system32\\SHELL32.dll", link.getIconLocation());
@@ -363,5 +364,115 @@ public class ReadTests {
 		assertEquals("C:\\Windows", link.getWorkingDir());
 		assertEquals(".\\folder\\pause.bat", link.getRelativePath());
 		assertEquals(null, link.getName());
+	}
+
+	@Test
+	public void TestDesktopScreenLinkWin10() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.desktop_win10);
+		
+		String expectedTarget = "<Desktop>\\pause.bat";
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(1, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\Desktop\\pause.bat", link.resolveTarget());
+	}
+
+	@Test
+	public void TestDesktopFolderLinkWin10() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.desktop_win10_folder);
+		
+		String expectedTarget = "<Desktop>\\pause.bat";
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(3, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\Desktop\\pause.bat", link.resolveTarget());
+	}
+
+	@Test
+	public void TestDesktopScreenLinkWinXP() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.desktop_winxp);
+		
+		String expectedTarget = "<Desktop>\\pause.bat";
+		String absoluteTarget = "C:\\Documents and Settings\\admin\\\u0420\u0430\u0431\u043e\u0447\u0438\u0439 \u0441\u0442\u043e\u043b\\pause.bat";
+		absoluteTarget = new String(absoluteTarget.getBytes(Charset.forName("windows-1251")));
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(1, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals(absoluteTarget, link.resolveTarget());
+	}
+
+	@Test
+	public void TestDesktopFolderLinkWinXP() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.desktop_winxp_folder);
+		
+		String expectedTarget = "C:\\Documents and Settings\\admin\\\u0420\u0430\u0431\u043e\u0447\u0438\u0439 \u0441\u0442\u043e\u043b\\pause.bat";
+
+		assertTrue(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(6, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals(expectedTarget, link.resolveTarget());
+	}
+
+	@Test
+	public void TestDocumentsLinkWin10() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.documents_win10);
+		
+		String expectedTarget = "<LocalDocuments>\\pause.bat";
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(3, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\Documents\\pause.bat", link.resolveTarget());
+	}
+
+	@Test
+	public void TestDocumentsLinkWinXP() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.documents_winxp);
+		
+		String expectedTarget = "<Documents>\\pause.bat";
+		String absoluteTarget = "C:\\Documents and Settings\\admin\\\u041c\u043e\u0438 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u044b\\pause.bat";
+		absoluteTarget = new String(absoluteTarget.getBytes(Charset.forName("windows-1251")));
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(2, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals(absoluteTarget, link.resolveTarget());
+	}
+
+	@Test
+	public void TestDownloadsLinkWin10() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.downloads_win10);
+		
+		String expectedTarget = "<LocalDownloads>\\pause.bat";
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(3, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\Downloads\\pause.bat", link.resolveTarget());
+	}
+
+	@Test
+	public void TestDownloadsLinkWinXP() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.downloads_winxp);
+		
+		String expectedTarget = "<Documents>\\Downloads\\pause.bat";
+		String absoluteTarget = "C:\\Documents and Settings\\admin\\\u041c\u043e\u0438 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u044b\\Downloads\\pause.bat";
+		absoluteTarget = new String(absoluteTarget.getBytes(Charset.forName("windows-1251")));
+
+		assertFalse(link.getTargetIdList().canBuildAbsolutePath());
+		assertTrue(link.getTargetIdList().canBuildPath());
+		assertEquals(3, link.getTargetIdList().size());
+		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
+		assertEquals(absoluteTarget, link.resolveTarget());
 	}
 }

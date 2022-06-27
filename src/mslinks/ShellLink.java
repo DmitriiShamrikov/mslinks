@@ -300,9 +300,8 @@ public class ShellLink {
 	}
 	
 	public String resolveTarget() {
-		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.isCorrect()) {
+		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildAbsolutePath())
 			return idlist.buildPath();
-		}
 		
 		if (header.getLinkFlags().hasLinkInfo() && info != null) {
 			String path = info.buildPath();
@@ -316,6 +315,9 @@ public class ShellLink {
 		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
 		if (envBlock != null && !envBlock.getVariable().isEmpty())
 			return envBlock.getVariable();
+
+		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildPath())
+			return idlist.buildPath();
 		
 		return "<unknown>";
 	}
@@ -335,6 +337,9 @@ public class ShellLink {
 		return block;
 	}
 
+	/**
+	 * @Deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#saveTo(String path) }
+	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public ShellLink saveTo(String path) throws IOException {
 		new ShellLinkHelper(this).saveTo(path);
@@ -342,8 +347,9 @@ public class ShellLink {
 	}
 
 	/**
-	 * Set path of target file of directory. Function accepts local paths and network paths.
-	 * Environment variables are accepted but resolved here and aren't kept in link.
+	 * Set path to target file or directory. Function accepts local paths and network paths.
+	 * Environment variables are accepted but resolved here and aren't kept in the link.
+	 * @Deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath)}
 	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public ShellLink setTarget(String target) {
@@ -363,18 +369,22 @@ public class ShellLink {
 		
 		return this;
 	}
-	
+
+	/**
+	 * @Deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath)}
+	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target) {
 		ShellLink sl = new ShellLink();
 		sl.setTarget( target );
 		return sl;
 	}
-	
+
+	/**
+	 * @Deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#createLink(String target, String linkpath)}
+	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target, String linkpath) throws IOException {
 		return createLink(target).saveTo(linkpath);
 	}
-	
-
 }

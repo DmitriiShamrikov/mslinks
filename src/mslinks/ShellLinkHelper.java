@@ -15,12 +15,18 @@
 package mslinks;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import mslinks.data.GUID;
 import mslinks.data.ItemID;
+import mslinks.data.ItemIDDrive;
+import mslinks.data.ItemIDFS;
+import mslinks.data.ItemIDRoot;
+import mslinks.data.Registry;
 import mslinks.data.VolumeID;
 
 /**
@@ -96,7 +102,6 @@ public class ShellLinkHelper {
 	 * Sets target on local computer, e.g. "C:\path\to\target"
 	 * @param drive is a letter part of the path, e.g. "C" or "D"
 	 * @param absolutePath is a path in the specified drive, e.g. "path\to\target"
-	 * @return
 	 * @throws ShellLinkException
 	 */
 	public ShellLinkHelper setLocalTarget(String drive, String absolutePath) throws ShellLinkException {
@@ -107,20 +112,25 @@ public class ShellLinkHelper {
 	 * Sets target on local computer, e.g. "C:\path\to\target"
 	 * @param drive is a letter part of the path, e.g. "C" or "D"
 	 * @param absolutePath is a path in the specified drive, e.g. "path\to\target"
-	 * @return
 	 * @throws ShellLinkException
 	 */
 	public ShellLinkHelper setLocalTarget(String drive, String absolutePath, Options options) throws ShellLinkException {
 		link.getHeader().getLinkFlags().setHasLinkTargetIDList();
 		var idList = link.createTargetIdList();
-		idList.add(new ItemID().setType(ItemID.TYPE_CLSID)); // this computer - the only supported class id so far
-		idList.add(new ItemID().setType(ItemID.TYPE_DRIVE).setName(drive));
+		// root is computer
+		idList.add(new ItemIDRoot().setClsid(Registry.CLSID_COMPUTER));
 
+		// drive
+		// windows usually creates TYPE_DRIVE_MISC here but TYPE_DRIVE_FIXED also works fine
+		var driveItem = new ItemIDDrive(ItemID.TYPE_DRIVE_MISC).setName(drive);
+		idList.add(driveItem);
+
+		// each segment of the path is directory
 		absolutePath = absolutePath.replaceAll("^(\\\\|\\/)", "");
-		String absoluteTargetPath = idList.get(1).getName() + absolutePath;
+		String absoluteTargetPath = driveItem.getName() + absolutePath;
 		String[] path = absolutePath.split("\\\\|\\/");
 		for (String i : path)
-			idList.add(new ItemID().setType(ItemID.TYPE_DIRECTORY).setName(i));
+			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(i));
 		
 		LinkInfo info = link.getHeader().getLinkFlags().hasLinkInfo() ? link.getLinkInfo() : link.createLinkInfo();
 		info.createVolumeID().setDriveType(VolumeID.DRIVE_FIXED);
@@ -132,12 +142,75 @@ public class ShellLinkHelper {
 		boolean forceDirectory = options == Options.ForceTypeDirectory;
 		if (forceFile || !forceDirectory && Files.isRegularFile(Paths.get(absoluteTargetPath))) {
 			link.getHeader().getFileAttributesFlags().clearDirecory();
-			idList.getLast().setType(ItemID.TYPE_FILE);
+			idList.getLast().setTypeFlags(ItemID.TYPE_FS_FILE);
 		}
 
 		return this;
 	}
 
+	/**
+	 * Sets target relative to a special folder defined by a GUID.
+	 * Use {@link Registry} class to get an available GUID by name or predefined constants.
+	 * Note that you can add your own GUIDs available on your system
+	 * @param root a GUID defining a special folder, e.g. Registry.CLSID_DOCUMENTS. Must be registered in the {@link Registry}
+	 * @param path a path relative to the special folder, e.g. "path\to\target"
+	 * @throws ShellLinkException
+	 */
+	public ShellLinkHelper setSpecialFolderTarget(GUID root, String path, Options options) throws ShellLinkException {
+		if (options != Options.ForceTypeFile && options != Options.ForceTypeDirectory)
+			throw new ShellLinkException("The type of target is not specified. You have to specify whether it is a file or a directory.");
+		
+		link.getHeader().getLinkFlags().setHasLinkTargetIDList();
+		var idList = link.createTargetIdList();
+		// although later systems use ItemIDRoot(computer) + ItemIDRegFolder(root clsid) pair, always set root clsid as ItemIDRoot for simplicity
+		idList.add(new ItemIDRoot().setClsid(root));
+
+		// each segment of the path is directory
+		path = path.replaceAll("^(\\\\|\\/)", "");
+		String[] pathSegments = path.split("\\\\|\\/");
+		for (String i : pathSegments)
+			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(i));
+
+		link.getHeader().getFileAttributesFlags().setDirecory();
+
+		if (options == Options.ForceTypeFile) {
+			link.getHeader().getFileAttributesFlags().clearDirecory();
+			idList.getLast().setTypeFlags(ItemID.TYPE_FS_FILE);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Sets target relative to desktop directory of the user opening the link. This method is universal 
+	 * because it works without Registry.CLSID_DESKTOP which is available only on later systems
+	 * @param path a path relative to the desktop, e.g. "path\to\target"
+	 * @throws ShellLinkException
+	 */
+	public ShellLinkHelper setDesktopRelativeTarget(String path, Options options) throws ShellLinkException {
+		if (options != Options.ForceTypeFile && options != Options.ForceTypeDirectory)
+			throw new ShellLinkException("The type of target is not specified. You have to specify whether it is a file or a directory.");
+		
+		link.getHeader().getLinkFlags().setHasLinkTargetIDList();
+		var idList = link.createTargetIdList();
+
+		// no root item here
+
+		// each segment of the path is directory
+		path = path.replaceAll("^(\\\\|\\/)", "");
+		String[] pathSegments = path.split("\\\\|\\/");
+		for (String i : pathSegments)
+			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(i));
+
+		link.getHeader().getFileAttributesFlags().setDirecory();
+
+		if (options == Options.ForceTypeFile) {
+			link.getHeader().getFileAttributesFlags().clearDirecory();
+			idList.getLast().setTypeFlags(ItemID.TYPE_FS_FILE);
+		}
+
+		return this;
+	}
 
 	/**
 	 * Serializes {@code ShellLink} to specified {@code path}. Sets appropriate relative path 
@@ -150,20 +223,25 @@ public class ShellLinkHelper {
 
 		link.setLinkFileSource(savingPath);
 		
-		Path target = Paths.get(link.resolveTarget());
-		if (!link.getHeader().getLinkFlags().hasRelativePath()) {
-			Path savingDir = savingPath.getParent();
-			// this will always be false on linux
-			if (savingDir.getRoot().equals(target.getRoot()))
-				link.setRelativePath(savingDir.relativize(target).toString());
+		Path savingDir = savingPath.getParent();
+		try {
+			Path target = Paths.get(link.resolveTarget());
+			if (!link.getHeader().getLinkFlags().hasRelativePath()) {
+				// this will always be false on linux
+				if (savingDir.getRoot().equals(target.getRoot()))
+					link.setRelativePath(savingDir.relativize(target).toString());
+			}
+			
+			if (!link.getHeader().getLinkFlags().hasWorkingDir()) {
+				// this will always be false on linux
+				if (Files.isRegularFile(target))
+					link.setWorkingDir(target.getParent().toString());
+			}
+		} catch (InvalidPathException e) {
+			// skip automatic relative path and working dir if path is some special folder
 		}
 		
-		if (!link.getHeader().getLinkFlags().hasWorkingDir()) {
-			// this will always be false on linux
-			if (Files.isRegularFile(target))
-				link.setWorkingDir(target.getParent().toString());
-		}
-		
+		Files.createDirectories(savingDir);
 		link.serialize(Files.newOutputStream(savingPath));
 		return this;
 	}

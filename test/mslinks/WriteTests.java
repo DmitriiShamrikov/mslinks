@@ -14,16 +14,17 @@
 */
 package mslinks;
 
+import static org.junit.Assert.assertArrayEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import org.junit.Test;
 
 import io.ByteWriter;
 import mslinks.ShellLinkHelper.Options;
+import mslinks.data.Registry;
 import mslinks.extra.ConsoleData.Font;
-
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 public class WriteTests {
 
@@ -179,5 +180,29 @@ public class WriteTests {
 				.setWorkingDir(PROJECT_PATH);
 
 		assertArrayEquals(WriteTestData.networkshareunicodelink, serializeLink(link.getLink()));
+	}
+
+	@Test
+	public void TestDesktopLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.CLSID_DESKTOP, "pause.bat", Options.ForceTypeFile);
+
+		assertArrayEquals(WriteTestData.desktoplink, serializeLink(link.getLink()));
+	}
+
+	@Test
+	public void TestDesktopLinkSimple() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setDesktopRelativeTarget("pause.bat", Options.ForceTypeFile);
+
+		assertArrayEquals(WriteTestData.desktoplink_simple, serializeLink(link.getLink()));
+	}
+
+	@Test
+	public void TestDocumentsLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "pause.bat", Options.ForceTypeFile);
+
+		assertArrayEquals(WriteTestData.documentslink, serializeLink(link.getLink()));
 	}
 }
