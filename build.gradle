@@ -3,7 +3,7 @@ plugins {
     id 'com.adarshr.test-logger' version '3.0.0'
 }
 
-version = '1.0.8'
+version = '1.0.9'
 
 sourceCompatibility = 11.0
 targetCompatibility = 11.0
