@@ -19,7 +19,7 @@ What is not supported (yet):
 The composition of classes reflect the data layout described in the format [specification](http://msdn.microsoft.com/en-us/library/dd871305.aspx), so it's recommended to take a look there if you are looking for something specific or want a detailed explanation of flags and constants. Otherwise, you can use `ShellLinkHelper` class that provides methods for some general tasks.
 
 ### Examples
-The easiest way to create a link with default parameters: `ShellLinkHelper.createLink("targetfile", "linkfile.lnk")`
+The easiest way to create a link with default parameters: `ShellLinkHelper.createLink("C:\\path\\to\\targetfile", "linkfile.lnk")`
 
 The following example shows creation of a link for a local .bat file and sets up a working directory, icon and console font. Note that, the path has to be absolute and the drive letter has to be a separate parameter to enforce Windows-style paths. For simplicity, this example uses `java.nio.file.Path` to prepare the path assuming it runs on Windows. Take a look at [Examples.java](https://github.com/DmitriiShamrikov/mslinks/blob/master/test/mslinks/Examples.java) for a Linux compatible example.
 ```java
