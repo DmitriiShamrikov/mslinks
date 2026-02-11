@@ -111,7 +111,7 @@ public class ItemID implements Serializable {
 	protected int typeFlags;
 
 	/**
-	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 * @deprecated Instances of this class should not be created directly. The class is going to be abstract
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public ItemID(int flags) {
@@ -236,14 +236,14 @@ public class ItemID implements Serializable {
 	private ItemID internalItemId;
 
 	/**
-	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 * @deprecated Instances of this class should not be created directly. The class is going to be abstract
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public ItemID() {
 	}
 	
 	/**
-	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 * @deprecated Instances of this class should not be created directly. The class is going to be abstract
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public ItemID(byte[] d) throws IOException, ShellLinkException {
@@ -254,7 +254,7 @@ public class ItemID implements Serializable {
 	}
 	
 	/**
-	 * @Deprecated Instances of this class should not be created directly. The class is going to be abstract
+	 * @deprecated Instances of this class should not be created directly. The class is going to be abstract
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public ItemID(ByteReader br, int maxSize) throws IOException, ShellLinkException {
@@ -264,7 +264,7 @@ public class ItemID implements Serializable {
 	}
 
 	/**
-	 * @Deprecated Use {@link ItemIDDrive} or {@link ItemIDFS}
+	 * @deprecated Use {@link ItemIDDrive} or {@link ItemIDFS}
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public String getName() {
@@ -278,7 +278,7 @@ public class ItemID implements Serializable {
 	}
 
 	/**
-	 * @Deprecated Use {@link ItemIDDrive} or {@link ItemIDFS}
+	 * @deprecated Use {@link ItemIDDrive} or {@link ItemIDFS}
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public ItemID setName(String s) throws ShellLinkException {
@@ -293,7 +293,7 @@ public class ItemID implements Serializable {
 	}
 
 	/**
-	 * @Deprecated Use {@link ItemIDFS}
+	 * @deprecated Use {@link ItemIDFS}
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public int getSize() {
@@ -304,7 +304,7 @@ public class ItemID implements Serializable {
 	}
 
 	/**
-	 * @Deprecated Use {@link ItemIDFS}
+	 * @deprecated Use {@link ItemIDFS}
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public ItemID setSize(int s) throws ShellLinkException {
@@ -316,7 +316,7 @@ public class ItemID implements Serializable {
 	}
 
 	/**
-	 * @Deprecated Use {@link #getTypeFlags()}
+	 * @deprecated Use {@link #getTypeFlags()}
 	 */
 	@Deprecated(since = "1.0.9", forRemoval = true)
 	public int getType() {
@@ -324,7 +324,7 @@ public class ItemID implements Serializable {
 	}
 
 	/**
-	 * @Deprecated Use {@link #setTypeFlags(int flags)}. However, in new API you should create instances
+	 * @deprecated Use {@link #setTypeFlags(int flags)}. However, in new API you should create instances
 	 * of an appropriate class extending this one and use {@code setTypeFlags(int flags)} only to set
 	 * type-specific flags corresponding to the {@link #ID_TYPE_INGROUPMASK}
 	 */
