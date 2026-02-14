@@ -1,6 +1,6 @@
 plugins {
     id 'java-library'
-    id 'com.adarshr.test-logger' version '3.0.0'
+    id 'com.adarshr.test-logger' version '4.0.0'
     id 'eclipse'
 }
 
