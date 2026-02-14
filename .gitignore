@@ -2,6 +2,5 @@ bin/
 build/
 *.pdf
 
-.gradle
-.idea/
-.vscode/
+.*
+!.github/
