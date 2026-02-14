@@ -8,7 +8,12 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-arm, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v6
@@ -18,6 +23,11 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+      with:
+        gradle-version: '7.1.1'
 
     - name: Run checks with Gradle
-      run: ./gradlew check
+      # Use gradle from "Setup Gradle" for faster CI builds
+      run: gradle check
