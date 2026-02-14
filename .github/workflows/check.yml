@@ -16,7 +16,17 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6if
+
+    - name: Create target directory
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir C:\Programming\Java
+
+    - name: Copy repository
+      if: matrix.os == 'windows-latest'
+      run: |
+        xcopy "${{ github.workspace }}" "C:\Programming\Java" /E /I /Y
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -28,6 +38,12 @@ jobs:
       with:
         gradle-version: '7.1.1'
 
-    - name: Run checks with Gradle
+    - name: Run checks with Gradle (Linux, macOS)
+      if: matrix.os != 'windows-latest'
       # Use gradle from "Setup Gradle" for faster CI builds
       run: gradle check
+    - name: Run checks with Gradle (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd C:\Programming\Java
+        gradle check
