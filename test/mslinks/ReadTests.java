@@ -14,7 +14,6 @@
 */
 package mslinks;
 
-import org.junit.Assume;
 import org.junit.Test;
 
 import io.ByteReader;
@@ -57,9 +56,6 @@ public class ReadTests {
 
 	@Test
 	public void TestLinkHeaderProperties() throws IOException, ShellLinkException {
-		// skip on CI, because time zone offsets cause issues
-		Assume.assumeTrue(System.getenv("CI") == null);
-
 		var link = createLink(ReadTestData.consolelink);
 		var header = link.getHeader();
 
