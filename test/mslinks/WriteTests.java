@@ -19,9 +19,6 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.ByteWriter;
@@ -37,14 +34,6 @@ public class WriteTests {
 	private static final String PROJECT_DRIVE = "C";
 	private static final String PROJECT_DIR = "Programming\\Java\\mslinks";
 	private static final String RELATIVE_PATH = "..\\..";
-
-	/**
-	 * Disable tests on CI, because we cannot guarantee the checkout at C:\Programming\Java\mslinks
-	 */
-	@BeforeClass
-	public static void skipOnCi() {
-		Assume.assumeTrue(System.getenv("CI") == null);
-	}
 
 	private ShellLinkHelper createLink() {
 		var link = new ShellLink();
