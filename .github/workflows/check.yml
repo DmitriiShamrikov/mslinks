@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v6if
+    - uses: actions/checkout@v6
 
     - name: Create target directory
       if: matrix.os == 'windows-latest'
