@@ -39,6 +39,11 @@ test {
     }
 }
 
+testlogger {
+	theme 'mocha'
+	showStandardStreams true
+}
+
 eclipse {
     classpath {
         defaultOutputDir = file('build/eclipse-default')
