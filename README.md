@@ -1,5 +1,7 @@
 # mslinks
 
+[![Check](https://github.com/DmitriiShamrikov/mslinks/actions/workflows/check.yml/badge.svg)](https://github.com/DmitriiShamrikov/mslinks/actions/workflows/check.yml)
+
 ## Summary
 
 Library for parsing and creating Windows shortcut files (.lnk)
