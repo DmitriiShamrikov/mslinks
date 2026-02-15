@@ -78,7 +78,7 @@ publishing {
             pom {
                 name = 'mslinks'
                 description = 'Library for parsing and creating Windows shortcut files (.lnk)'
-                url = 'https://github.com/JabRef/mslinks'
+                url = 'https://github.com/DmitriiShamrikov/mslinks'
 
                 licenses {
                     license {
@@ -95,9 +95,9 @@ publishing {
                 }
 
                 scm {
-                    url = 'https://github.com/JabRef/mslinks'
-                    connection = 'scm:git:git://github.com/JabRef/mslinks.git'
-                    developerConnection = 'scm:git:git@github.com:JabRef/mslinks.git'
+                    url = 'https://github.com/DmitriiShamrikov/mslinks'
+                    connection = 'scm:git:git://github.com/DmitriiShamrikov/mslinks.git'
+                    developerConnection = 'scm:git:git@github.com:DmitriiShamrikov/mslinks.git'
                 }
             }
         }
