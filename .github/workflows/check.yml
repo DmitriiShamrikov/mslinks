@@ -1,0 +1,41 @@
+name: Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set up JDK
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+
+    - name: Run checks with Gradle
+      shell: bash
+      # gradle from "setup-gradle" is not the versionf from the wrapper - see https://github.com/gradle/actions/issues/273
+      run: ./gradlew check
