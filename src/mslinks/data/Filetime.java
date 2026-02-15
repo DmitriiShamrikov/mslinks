@@ -20,14 +20,20 @@ import io.ByteWriter;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import mslinks.Serializable;
 
 public class Filetime extends GregorianCalendar implements Serializable {
-	private long residue;
+	// From docs:
+	// The FILETIME structure is a 64-bit value that represents the number of 100-nanosecond intervals that
+	// have elapsed since January 1, 1601, Coordinated Universal Time (UTC).
+
+	private long fraction;
 	
 	public Filetime() {
 		super();
+		setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 	
 	public Filetime(ByteReader data) throws IOException {
@@ -35,9 +41,10 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 	
 	public Filetime(long time) {
-		long t = time / 10000;
-		residue = time - t;
-		setTimeInMillis(t);
+		this();
+		long millis = time / 10000;
+		fraction = time - millis;
+		setTimeInMillis(millis);
 		add(Calendar.YEAR, -369);
 	}
 
@@ -54,19 +61,19 @@ public class Filetime extends GregorianCalendar implements Serializable {
 			return false;
 
 		var obj = (Filetime)o;
-		return residue == obj.residue;
+		return fraction == obj.fraction;
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return (int)(super.hashCode() ^ ((residue & 0xffffffff00000000l) >> 32) ^ (residue & 0xffffffffl));
+		return (int)(super.hashCode() ^ ((fraction & 0xffffffff00000000l) >> 32) ^ (fraction & 0xffffffffl));
 	}
 	
 	public long toLong() {
 		GregorianCalendar tmp = (GregorianCalendar)clone();
 		tmp.add(Calendar.YEAR, 369);
-		return tmp.getTimeInMillis() + residue;
+		return tmp.getTimeInMillis() + fraction;
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {

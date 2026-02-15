@@ -163,17 +163,26 @@ public class ByteWriter extends OutputStream {
 		}
 	}
 
+	/**
+	 * writes 0-terminated string in default code page
+	 */
 	public void writeString(String s) throws IOException {
 		write(s.getBytes());
 		write(0);
 	}
 
+	/**
+	 * writes 0-terminated string in unicode
+	 */
 	public void writeUnicodeStringNullTerm(String s) throws IOException {
 		for (int i=0; i<s.length(); i++)
 			write2bytes(s.charAt(i));
 		write2bytes(0);
 	}
 
+	/**
+	 * writes unicode string with 2 bytes at the start indicating the length of the string
+	 */
 	public void writeUnicodeStringSizePadded(String s) throws IOException {
 		write2bytes(s.length());
 		for (int i=0; i<s.length(); i++)

@@ -17,9 +17,6 @@ package mslinks.data;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.StandardCharsets;
 
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
@@ -132,27 +129,17 @@ public class CNRLink implements Serializable {
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		int size = 20;
-		boolean u = false;
-		CharsetEncoder ce = StandardCharsets.US_ASCII.newEncoder();
-		u = !ce.canEncode(netname) || devname != null && !ce.canEncode(devname);
-		
-		if (u) size += 8;
+		int size = 28;
 		byte[] netname_b = null, devname_b = null;
 		netname_b = netname.getBytes();
 		if (devname != null) devname_b = devname.getBytes();
 		size += netname_b.length + 1;
 		if (devname_b != null) size += devname_b.length + 1;
-		
-		if (u) {
-			size += netname.length() * 2 + 2;
-			if (devname != null) size += devname.length() * 2 + 2;
-		}
-		
+		size += netname.length() * 2 + 2;
+		if (devname != null) size += devname.length() * 2 + 2;
 		bw.write4bytes(size);
 		flags.serialize(bw);
-		int off = 20;
-		if (u) off += 8;
+		int off = 28;
 		bw.write4bytes(off); // netname offset
 		off += netname_b.length + 1;
 		if (devname_b != null) {
@@ -160,29 +147,25 @@ public class CNRLink implements Serializable {
 			off += devname_b.length + 1;
 		} else bw.write4bytes(0);
 		bw.write4bytes(nptype);
-		if (u) {
+		bw.write4bytes(off);
+		off += netname.length() * 2 + 2;
+		if (devname != null) {
 			bw.write4bytes(off);
-			off += netname.length() * 2 + 2;
-			if (devname != null) {
-				bw.write4bytes(off);
-				off += devname.length() * 2 + 2;
-			} else bw.write4bytes(0);
-		}
+			off += devname.length() * 2 + 2;
+		} else bw.write4bytes(0);
 		bw.write(netname_b);
 		bw.write(0);
 		if (devname_b != null) {
 			bw.write(devname_b);
 			bw.write(0);
 		}
-		if (u) {
-			for (int i=0; i<netname.length(); i++)
-				bw.write2bytes(netname.charAt(i));
+		for (int i=0; i<netname.length(); i++)
+			bw.write2bytes(netname.charAt(i));
+		bw.write2bytes(0);
+		if (devname != null) {
+			for (int i=0; i<devname.length(); i++)
+				bw.write2bytes(devname.charAt(i));
 			bw.write2bytes(0);
-			if (devname != null) {
-				for (int i=0; i<devname.length(); i++)
-					bw.write2bytes(devname.charAt(i));
-				bw.write2bytes(0);
-			}
 		}
 	}
 	
