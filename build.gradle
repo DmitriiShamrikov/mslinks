@@ -19,10 +19,6 @@ java {
     withSourcesJar()
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
 tasks.withType(Javadoc).configureEach {
     // Ignore warnings because of missing elements
     options.addStringOption('Xdoclint:all,-missing', '-quiet')
