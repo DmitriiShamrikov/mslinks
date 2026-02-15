@@ -40,8 +40,8 @@ test {
 }
 
 testlogger {
-	theme 'mocha'
-	showStandardStreams true
+	theme = 'mocha'
+	showStandardStreams = true
 }
 
 eclipse {
