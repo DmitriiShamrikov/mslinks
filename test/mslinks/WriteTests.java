@@ -18,6 +18,9 @@ import static org.junit.Assert.assertArrayEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import org.junit.Test;
 
@@ -29,11 +32,12 @@ import mslinks.extra.ConsoleData.Font;
 public class WriteTests {
 
 	// need some real path to be able to test links in the OS
-	// also keep it static as the test data is static
 	private static final String PROJECT_PATH = "C:\\Programming\\Java\\mslinks";
 	private static final String PROJECT_DRIVE = "C";
 	private static final String PROJECT_DIR = "Programming\\Java\\mslinks";
 	private static final String RELATIVE_PATH = "..\\..";
+
+	private static final boolean DEBUG_EXPORT = false;
 
 	private ShellLinkHelper createLink() {
 		var link = new ShellLink();
@@ -57,6 +61,17 @@ public class WriteTests {
 		return stream.toByteArray();
 	}
 
+	private byte[] serializeLink(ShellLink link, String name) throws IOException
+	{
+		var data = serializeLink(link);
+		if (DEBUG_EXPORT) {
+			Path exportDir = Path.of(".working_dir", "export");
+			Files.createDirectories(exportDir);
+			Files.write(exportDir.resolve(name + ".lnk"), data, StandardOpenOption.CREATE);
+		}
+		return data;
+	}
+
 	@Test
 	public void TestBasicLink() throws ShellLinkException, IOException {
 		var link = createLink();
@@ -65,7 +80,7 @@ public class WriteTests {
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat")
 				.setWorkingDir(PROJECT_PATH);
 
-		assertArrayEquals(WriteTestData.basiclink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.basiclink, serializeLink(link.getLink(), "basiclink"));
 	}
 
 	@Test
@@ -85,7 +100,7 @@ public class WriteTests {
 						.setX(40)
 						.setY(20);
 		
-		assertArrayEquals(WriteTestData.consolelink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.consolelink, serializeLink(link.getLink(), "consolelink"));
 	}
 
 	@Test
@@ -99,7 +114,7 @@ public class WriteTests {
 				.getHeader()
 					.setIconIndex(64);
 		
-		assertArrayEquals(WriteTestData.linkicon, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.linkicon, serializeLink(link.getLink(), "linkicon"));
 	}
 
 	@Test
@@ -111,7 +126,7 @@ public class WriteTests {
 				.setWorkingDir(PROJECT_PATH)
 				.getHeader().getLinkFlags().setRunAsUser();
 
-		assertArrayEquals(WriteTestData.adminlink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.adminlink, serializeLink(link.getLink(), "adminlink"));
 	}
 
 	@Test
@@ -122,7 +137,7 @@ public class WriteTests {
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat")
 				.setWorkingDir(PROJECT_PATH);
 
-		assertArrayEquals(WriteTestData.unicodepathlink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.unicodepathlink, serializeLink(link.getLink(), "unicodepathlink"));
 	}
 
 	@Test
@@ -133,7 +148,7 @@ public class WriteTests {
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat")
 				.setWorkingDir(PROJECT_PATH);
 
-		assertArrayEquals(WriteTestData.networksharelink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.networksharelink, serializeLink(link.getLink(), "networksharelink"));
 	}
 
 	@Test
@@ -144,7 +159,7 @@ public class WriteTests {
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat")
 				.setWorkingDir(PROJECT_PATH);
 
-		assertArrayEquals(WriteTestData.networkdrivelink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.networkdrivelink, serializeLink(link.getLink(), "networkdrivelink"));
 	}
 
 	@Test
@@ -158,7 +173,7 @@ public class WriteTests {
 				.setWorkingDir(PROJECT_PATH)
 				.getLinkInfo().getCommonNetworkRelativeLink().setDeviceName("Z:");
 
-		assertArrayEquals(WriteTestData.networkdrivefulllink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.networkdrivefulllink, serializeLink(link.getLink(), "networkdrivefulllink"));
 	}
 
 	@Test
@@ -168,7 +183,7 @@ public class WriteTests {
 			.getLink()
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat");
 
-		assertArrayEquals(WriteTestData.directorylink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.directorylink, serializeLink(link.getLink(), "directorylink"));
 	}
 
 	@Test
@@ -179,7 +194,7 @@ public class WriteTests {
 				.setRelativePath(RELATIVE_PATH + "\\pause.bat")
 				.setWorkingDir(PROJECT_PATH);
 
-		assertArrayEquals(WriteTestData.networkshareunicodelink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.networkshareunicodelink, serializeLink(link.getLink(), "networkshareunicodelink"));
 	}
 
 	@Test
@@ -187,7 +202,7 @@ public class WriteTests {
 		var link = createLink();
 		link.setSpecialFolderTarget(Registry.CLSID_DESKTOP, "pause.bat", Options.ForceTypeFile);
 
-		assertArrayEquals(WriteTestData.desktoplink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.desktoplink, serializeLink(link.getLink(), "desktoplink"));
 	}
 
 	@Test
@@ -195,7 +210,7 @@ public class WriteTests {
 		var link = createLink();
 		link.setDesktopRelativeTarget("pause.bat", Options.ForceTypeFile);
 
-		assertArrayEquals(WriteTestData.desktoplink_simple, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.desktoplink_simple, serializeLink(link.getLink(), "desktoplink_simple"));
 	}
 
 	@Test
@@ -203,6 +218,6 @@ public class WriteTests {
 		var link = createLink();
 		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "pause.bat", Options.ForceTypeFile);
 
-		assertArrayEquals(WriteTestData.documentslink, serializeLink(link.getLink()));
+		assertArrayEquals(WriteTestData.documentslink, serializeLink(link.getLink(), "documentslink"));
 	}
 }

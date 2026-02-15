@@ -15,7 +15,6 @@
 package mslinks.data;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
@@ -86,33 +85,23 @@ public class VolumeID implements Serializable {
 		int size = 16;
 		byte[] label_b = label.getBytes();
 		size += label_b.length + 1;
-		boolean u = false;
-		if (!StandardCharsets.US_ASCII.newEncoder().canEncode(label)) { 
-			size += 4 + 1 + label.length() * 2 + 2;
-			u = true;
-		}
-		
+		size += 4 + 1 + label.length() * 2 + 2;
 		bw.write4bytes(size);
 		bw.write4bytes(dt);
 		bw.write4bytes(dsn);
-		int off = 16;
-		if (u) off += 4;
+		int off = 20;
 		bw.write4bytes(off);
 		off += label_b.length + 1;		
-		if (u) {
-			off++;
-			bw.write4bytes(off);
-			off += label.length() * 2 + 2;
-		}
+		off++;
+		bw.write4bytes(off);
+		off += label.length() * 2 + 2;
 		
 		bw.write(label_b);
 		bw.write(0);
-		if (u) {
-			bw.write(0);
-			for (int i=0; i<label.length(); i++)
-				bw.write2bytes(label.charAt(i));
-			bw.write2bytes(0);
-		}
+		bw.write(0);
+		for (int i=0; i<label.length(); i++)
+			bw.write2bytes(label.charAt(i));
+		bw.write2bytes(0);
 	}
 	
 	public int getDriveType() { return dt;}

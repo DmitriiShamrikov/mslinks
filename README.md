@@ -14,12 +14,16 @@ This library allows opening existing .lnk files as well as creating new ones fro
 * Files and directories in Samba shares (network paths like `\\host\share\path\to\target`)
 * Files and directories in special Windows folders, such as Desktop, Documents, Downloads, etc. See available [GUIDs](https://github.com/DmitriiShamrikov/mslinks/wiki/GUIDs-table)
 
-What is not supported (yet):
+Planned features:
 
-* Environment variables. They can be used in target path, but they are substituted at creation time, meaning the variables are taken from your (caller) environment, not the user's one
+* Environment variables
 * Non-filesystem targets like Control Panel, Printers, etc
 
 The composition of classes reflect the data layout described in the format [specification](http://msdn.microsoft.com/en-us/library/dd871305.aspx), so it's recommended to take a look there if you are looking for something specific or want a detailed explanation of flags and constants. Otherwise, you can use `ShellLinkHelper` class that provides methods for some general tasks.
+
+**Note regarding character encoding**:
+
+Even though paths can contain Unicode characters, Windows does not use Unicode format *if the characters can be encoded with the system locale* and it doesn't keep code page information inside .lnk files. That means, if you create a link naturally from Windows with non-ASCII characters in the target path, it may be broken when opening it with mslinks because the default encoding in Java is UTF-8 since Java 18 (unless you override it with `-Dfile.encoding` JVM arg) regardless of the system locale. mslinks always forces Unicode when saving links.
 
 ## Examples
 

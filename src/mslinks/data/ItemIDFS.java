@@ -200,8 +200,10 @@ public class ItemIDFS extends ItemID {
 		return this;
 	}
 
+	@Override
 	@SuppressWarnings("removal")
 	public int getSize() { return size; }
+	@Override
 	@SuppressWarnings("removal")
 	public ItemID setSize(int s) {
 		size = s;
@@ -221,6 +223,7 @@ public class ItemIDFS extends ItemID {
 		return this;
 	}
 
+	@Override
 	@SuppressWarnings("removal")
 	public String getName() {
 		if (longname != null && !longname.equals(""))
@@ -228,6 +231,7 @@ public class ItemIDFS extends ItemID {
 		return shortname;
 	}
 	
+	@Override
 	@SuppressWarnings("removal")
 	public ItemID setName(String s) throws ShellLinkException {
 		if (s == null) 
