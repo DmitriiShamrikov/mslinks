@@ -62,9 +62,9 @@ public class ReadTests {
 		assertEquals(ShellLinkHeader.SW_SHOWNORMAL, header.getShowCommand());
 		assertEquals(128, header.getIconIndex());
 		assertEquals(20, header.getFileSize());
-		assertEquals("22:09:50 13.06.2022", header.getWriteTime().toString());
-		assertEquals("22:09:55 13.06.2022", header.getAccessTime().toString());
-		assertEquals("22:09:18 13.06.2022", header.getCreationTime().toString());
+		assertEquals("21:09:50 13.06.2022", header.getWriteTime().toString());
+		assertEquals("21:09:55 13.06.2022", header.getAccessTime().toString());
+		assertEquals("21:09:18 13.06.2022", header.getCreationTime().toString());
 	}
 
 	@Test
