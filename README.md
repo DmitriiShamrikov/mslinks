@@ -97,4 +97,4 @@ public class Main {
 ## Download
 
 * [releases page](https://github.com/DmitriiShamrikov/mslinks/releases)
-* [Maven Central Repository](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.vatbub%22%20AND%20a%3A%22mslinks%22)
+* [Maven Central Repository](https://central.sonatype.com/artifact/org.jabref/mslinks/versions)
