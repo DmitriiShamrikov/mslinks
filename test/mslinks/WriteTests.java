@@ -15,9 +15,11 @@
 package mslinks;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -131,6 +133,8 @@ public class WriteTests {
 
 	@Test
 	public void TestUnicodePath() throws ShellLinkException, IOException {
+		assumeTrue("The default charset has to be UTF-8 for this test", Charset.defaultCharset().name().equals("UTF-8"));
+
 		var link = createLink();
 		link.setLocalTarget(PROJECT_DRIVE, PROJECT_DIR + "\\\u03B1\u03B1\u03B1.bat", Options.ForceTypeFile)
 			.getLink()
@@ -188,6 +192,8 @@ public class WriteTests {
 
 	@Test
 	public void TestNetworkShareUnicodePath() throws ShellLinkException, IOException {
+		assumeTrue("The default charset has to be UTF-8 for this test", Charset.defaultCharset().name().equals("UTF-8"));
+
 		var link = createLink();
 		link.setNetworkTarget("\\\\laptop\\\u03B1\u03B1\u03B1\\\u03B1\u03B1\u03B1.txt", Options.ForceTypeFile)
 			.getLink()
