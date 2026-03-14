@@ -15,6 +15,7 @@
 package mslinks.data;
 
 import io.ByteReader;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -26,7 +27,11 @@ public class CNRLinkFlags extends BitSet32 {
 	}
 
 	public CNRLinkFlags(ByteReader data) throws IOException {
-		super(data);
+		this(new Serializer<ByteReader>(data));
+	}
+
+	public CNRLinkFlags(Serializer<ByteReader> serializer) throws IOException {
+		super(serializer);
 		reset();
 	}
 	

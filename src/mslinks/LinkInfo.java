@@ -16,6 +16,7 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -33,44 +34,48 @@ public class LinkInfo implements Serializable {
 	public LinkInfo() {
 		lif = new LinkInfoFlags(0);
 	}
-	
+
 	public LinkInfo(ByteReader data) throws IOException, ShellLinkException {
-		int pos = data.getPosition();
-		int size = (int)data.read4bytes();
-		int hsize = (int)data.read4bytes();
-		lif = new LinkInfoFlags(data);
-		int vidoffset = (int)data.read4bytes();
-		int lbpoffset = (int)data.read4bytes();
-		int cnrloffset = (int)data.read4bytes();
-		int cpsoffset = (int)data.read4bytes();
+		this(new Serializer<>(data));
+	}
+	
+	public LinkInfo(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
+		int pos = serializer.getPosition();
+		int size = (int)serializer.read(4, "size");
+		int hsize = (int)serializer.read(4, "hsize");
+		lif = new LinkInfoFlags(serializer);
+		int vidoffset = (int)serializer.read(4, "vidoffset");
+		int lbpoffset = (int)serializer.read(4, "lbpoffset");
+		int cnrloffset = (int)serializer.read(4, "cnrloffset");
+		int cpsoffset = (int)serializer.read(4, "cpsoffset");
 		int lbpoffset_u = 0, cpfoffset_u = 0;
 		if (hsize >= 0x24) {
-			lbpoffset_u = (int)data.read4bytes();
-			cpfoffset_u = (int)data.read4bytes();
+			lbpoffset_u = (int)serializer.read(4, "lbpoffset (unicode)");
+			cpfoffset_u = (int)serializer.read(4, "cpfoffset (unicode)");
 		}
 		
 		if (lif.hasVolumeIDAndLocalBasePath()) {
-			data.seek(pos + vidoffset - data.getPosition());
-			vid = new VolumeID(data);
-			data.seek(pos + lbpoffset - data.getPosition());
-			localBasePath = data.readString(pos + size - data.getPosition());
+			serializer.seek(pos + vidoffset - serializer.getPosition());
+			vid = new VolumeID(serializer);
+			serializer.seek(pos + lbpoffset - serializer.getPosition());
+			localBasePath = serializer.readString(pos + size - serializer.getPosition(), "localBasePath");
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			data.seek(pos + cnrloffset - data.getPosition());
-			cnrlink = new CNRLink(data);
-			data.seek(pos + cpsoffset - data.getPosition());
-			commonPathSuffix = data.readString(pos + size - data.getPosition());
+			serializer.seek(pos + cnrloffset - serializer.getPosition());
+			cnrlink = new CNRLink(serializer);
+			serializer.seek(pos + cpsoffset - serializer.getPosition());
+			commonPathSuffix = serializer.readString(pos + size - serializer.getPosition(), "commonPathSuffix");
 		}
 		if (lif.hasVolumeIDAndLocalBasePath() && lbpoffset_u != 0) {
-			data.seek(pos + lbpoffset_u - data.getPosition());
-			localBasePath = data.readUnicodeStringNullTerm((pos + size - data.getPosition())>>1);
+			serializer.seek(pos + lbpoffset_u - serializer.getPosition());
+			localBasePath = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "localBasePath");
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix() && cpfoffset_u != 0) {
-			data.seek(pos + cpfoffset_u - data.getPosition());
-			commonPathSuffix = data.readUnicodeStringNullTerm((pos + size - data.getPosition())>>1);
+			serializer.seek(pos + cpfoffset_u - serializer.getPosition());
+			commonPathSuffix = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "commonPathSuffix");
 		}
 		
-		data.seek(pos + size - data.getPosition());
+		serializer.seek(pos + size - serializer.getPosition());
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {

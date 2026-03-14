@@ -15,6 +15,7 @@
 package mslinks.data;
 
 import io.ByteReader;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -24,9 +25,13 @@ public class LinkFlags extends BitSet32 {
 		super(n);
 		reset();
 	}
-	
+
 	public LinkFlags(ByteReader data) throws IOException {
-		super(data);
+		this(new Serializer<>(data));
+	}
+	
+	public LinkFlags(Serializer<ByteReader> serializer) throws IOException {
+		super(serializer);
 		reset();
 	}
 	

@@ -16,6 +16,7 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,21 +34,25 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	public LinkTargetIDList() {}
 	
 	public LinkTargetIDList(ByteReader data) throws IOException, ShellLinkException {
-		int size = (int)data.read2bytes();
-		int pos = data.getPosition(); 
+		this(new Serializer<ByteReader>(data));
+	}
+
+	public LinkTargetIDList(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
+		int size = (int)serializer.read(2, "size");
+		int pos = serializer.getPosition(); 
 		
 		while (true) {
-			int itemSize = (int)data.read2bytes();
+			int itemSize = (int)serializer.read(2, "itemSize");
 			if (itemSize == 0)
 				break;
 
-			int typeFlags = data.read();
+			int typeFlags = serializer.read("typeFlags");
 			var item = ItemID.createItem(typeFlags);
-			item.load(data, itemSize - 3);
+			item.load(serializer, itemSize - 3);
 			add(item);
 		}
 		
-		pos = data.getPosition() - pos;
+		pos = serializer.getPosition() - pos;
 		if (pos != size) 
 			throw new ShellLinkException("unexpected size of LinkTargetIDList");
 	}

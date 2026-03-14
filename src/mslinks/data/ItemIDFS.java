@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 import mslinks.ShellLinkException;
 import mslinks.UnsupportedItemIDException;
 
@@ -93,36 +94,36 @@ public class ItemIDFS extends ItemID {
 	}
 	
 	@Override
-	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
 		// 3 bytes are the size (2) and the type (1) initially parsed in LinkTargetIDList
 		// but they are considered part of the ItemID for calculating offsets
-		int startPos = br.getPosition() - 3;
+		int startPos = serializer.getPosition() - 3;
 		int endPos = startPos + maxSize + 3;
 
-		super.load(br, maxSize);
+		super.load(serializer, maxSize);
 
-		br.read(); // IDFOLDER struct doesn't have this byte but it does exist in data. Probably it's just padding
-		size = (int)br.read4bytes();
-		br.read2bytes(); // date modified
-		br.read2bytes(); // time modified
-		attributes = (short)br.read2bytes();
+		serializer.read("padding ?"); // IDFOLDER struct doesn't have this byte but it does exist in data. Probably it's just padding
+		size = (int)serializer.read(4, "size");
+		serializer.read(2, "date modified"); // date modified
+		serializer.read(2, "time modified"); // time modified
+		attributes = (short)serializer.read(2, "attributes");
 
 		if ((typeFlags & TYPE_FS_UNICODE) != 0) {
-			longname = br.readUnicodeStringNullTerm(endPos - br.getPosition());
+			longname = serializer.readUnicodeStringNullTerm(endPos - serializer.getPosition(), "longname");
 		}
-		shortname = br.readString(endPos - br.getPosition());
+		shortname = serializer.readString(endPos - serializer.getPosition(), "shortname");
 
-		int restOfDataSize = endPos - br.getPosition();
+		int restOfDataSize = endPos - serializer.getPosition();
 		if (restOfDataSize <= 2) {
-			br.seek(restOfDataSize);
+			serializer.seek(restOfDataSize);
 			return;
 		}
 
 		// last 2 bytes are the offset to the hidden list
-		int bytesParsed = br.getPosition() - startPos;
+		int bytesParsed = serializer.getPosition() - startPos;
 		byte[] dataChunk = new byte[restOfDataSize - 2];
-		br.read(dataChunk, 0, dataChunk.length);
-		int hiddenOffset = (int)br.read2bytes();
+		serializer.read(dataChunk, 0, dataChunk.length, "hidden chunk");
+		int hiddenOffset = (int)serializer.read(2, "hiddenOffset");
 		if (hiddenOffset == 0 || hiddenOffset < bytesParsed) {
 			return;
 		}

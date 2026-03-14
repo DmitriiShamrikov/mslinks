@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -39,21 +40,25 @@ public class Tracker implements Serializable {
 		d1 = db1 = new GUID();
 		d2 = db2 = new GUID("539D9DC6-8293-11E3-8FB0-005056C00008");
 	}
-	
+
 	public Tracker(ByteReader br, int sz) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), sz);
+	}
+	
+	public Tracker(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException {
 		if (sz != size)
 			throw new ShellLinkException();
-		int len = (int)br.read4bytes();
-		if (len < 0x58)
+		int len = (int)serializer.read(4, "length");
+		if (len != 0x58)
 			throw new ShellLinkException();
-		br.read4bytes();
-		int pos = br.getPosition();
-		netbios = br.readString(16);
-		br.seek(pos + 16 - br.getPosition());
-		d1 = new GUID(br);
-		d2 = new GUID(br);
-		db1 = new GUID(br);
-		db2 = new GUID(br);
+		serializer.read(4, "version");
+		int pos = serializer.getPosition();
+		netbios = serializer.readString(16, "netbios name");
+		serializer.seek(pos + 16 - serializer.getPosition());
+		d1 = new GUID(serializer);
+		d2 = new GUID(serializer);
+		db1 = new GUID(serializer);
+		db2 = new GUID(serializer);
 	}
 
 	@Override

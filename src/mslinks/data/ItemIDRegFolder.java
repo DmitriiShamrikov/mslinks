@@ -17,6 +17,7 @@ package mslinks.data;
 import java.io.IOException;
 
 import io.ByteReader;
+import io.Serializer;
 import mslinks.ShellLinkException;
 import mslinks.UnsupportedItemIDException;
 
@@ -35,9 +36,9 @@ public class ItemIDRegFolder extends ItemIDRegItem {
 	}
 	
 	@Override
-	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
-		int endPos = br.getPosition() + maxSize;
-		super.load(br, maxSize);
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
+		int endPos = serializer.getPosition() + maxSize;
+		super.load(serializer, maxSize);
 		// depending on ItemIDRoot there might be some padding before this item's clsid
 		// but it is 0 anyway since only CLSID_COMPUTER is supported for now
 		
@@ -45,6 +46,6 @@ public class ItemIDRegFolder extends ItemIDRegItem {
 		// search for CRegFolder_CreateInstance, there are several cases where regitem is used, not only 0x2e
 		// the padding and the legacy flags are actually used for TYPE_CONTROL_REGITEM/TYPE_CONTROL_REGITEM_EX
 
-		br.seekTo(endPos);
+		serializer.seekTo(endPos);
 	}
 }

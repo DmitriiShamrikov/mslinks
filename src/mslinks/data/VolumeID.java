@@ -20,6 +20,7 @@ import mslinks.Serializable;
 import mslinks.ShellLinkException;
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 public class VolumeID implements Serializable {
 	public static final int DRIVE_UNKNOWN = 0;
@@ -40,44 +41,35 @@ public class VolumeID implements Serializable {
 		dsn = 0;
 		label = "";
 	}
-	
+
 	public VolumeID(ByteReader data) throws ShellLinkException, IOException {
-		int pos = data.getPosition();
-		int size = (int)data.read4bytes();
+		this(new Serializer<ByteReader>(data));
+	}
+	
+	public VolumeID(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
+		int pos = serializer.getPosition();
+		int size = (int)serializer.read(4, "size");
 		if (size <= 0x10)
 			throw new ShellLinkException();
 		
-		dt = (int)data.read4bytes();
+		dt = (int)serializer.read(4, "drite type");
 		if (dt != DRIVE_NO_ROOT_DIR && dt != DRIVE_REMOVABLE && dt != DRIVE_FIXED 
 				&& dt != DRIVE_REMOTE && dt != DRIVE_CDROM && dt != DRIVE_RAMDISK)
 			dt = DRIVE_UNKNOWN;
-		dsn = (int)data.read4bytes();
-		int vloffset = (int)data.read4bytes();
+		dsn = (int)serializer.read(4, "serial number");
+		int vloffset = (int)serializer.read(4, "vloffset");
 		boolean u = false;
 		if (vloffset == 0x14) {
-			vloffset = (int)data.read4bytes();
+			vloffset = (int)serializer.read(4, "vloffset (unicode)");;
 			u = true;
 		}
 
-		data.seek(pos + vloffset - data.getPosition());
-		
-		int i=0;
+		serializer.seek(pos + vloffset - serializer.getPosition());
+
 		if (u) {
-			char[] buf = new char[(size-vloffset)>>1];
-			for (;; i++) {
-				char c = (char)data.read2bytes();
-				if (c == 0) break;
-				buf[i] = c;
-			}
-			label = new String(buf, 0, i);
+			label = serializer.readUnicodeStringNullTerm((size-vloffset) / 2, "label");
 		} else {
-			byte[] buf = new byte[size-vloffset];
-			for (;; i++) {
-				int b = data.read();
-				if (b == 0) break;
-				buf[i] = (byte)b;
-			}
-			label = new String(buf, 0, i);
+			label = serializer.readString(size-vloffset, "label");
 		}
 	}
 	

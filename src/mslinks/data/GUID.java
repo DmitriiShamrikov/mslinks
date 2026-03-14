@@ -17,6 +17,7 @@ package mslinks.data;
 import io.ByteReader;
 import io.ByteWriter;
 import io.Bytes;
+import io.Serializer;
 
 import java.io.IOException;
 import java.util.Random;
@@ -47,15 +48,19 @@ public class GUID implements Serializable {
 		d4 = Bytes.makeShortB(d[8], d[9]);
 		d5 = Bytes.makeLongB((byte)0, (byte)0, d[10], d[11], d[12], d[13], d[14], d[15]);
 	}
-	
+
 	public GUID(ByteReader data) throws IOException {
-		d1 = (int)data.read4bytes();
-		d2 = (short)data.read2bytes();
-		d3 = (short)data.read2bytes();
-		data.changeEndiannes();
-		d4 = (short)data.read2bytes();
-		d5 = data.read6bytes();
-		data.changeEndiannes();
+		this(new Serializer<>(data));
+	}
+	
+	public GUID(Serializer<ByteReader> serializer) throws IOException {
+		d1 = (int)serializer.read(4, "d1");
+		d2 = (short)serializer.read(2, "d2");
+		d3 = (short)serializer.read(2, "d3");
+		serializer.changeEndiannes();
+		d4 = (short)serializer.read(2, "d4");
+		d5 = serializer.read(6, "d5");
+		serializer.changeEndiannes();
 	}
 	
 	public GUID(String s) {

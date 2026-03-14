@@ -17,6 +17,7 @@ package mslinks;
 import org.junit.Test;
 
 import io.ByteReader;
+import io.Serializer;
 import mslinks.data.CNRLink;
 import mslinks.data.VolumeID;
 import mslinks.extra.ConsoleData;
@@ -28,10 +29,12 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class ReadTests {
+	private static final boolean ENABLE_LOGGING = false;
+
 	private ShellLink createLink(byte[] data) throws IOException, ShellLinkException {
-		var reader = new ByteReader(new ByteArrayInputStream(data));
-		reader.setLittleEndian();
-		return new ShellLink(reader);
+		var serializer = new Serializer<>(new ByteReader(new ByteArrayInputStream(data)), ENABLE_LOGGING);
+		serializer.setLittleEndian();
+		return new ShellLink(serializer);
 	}
 
 	// =====================================

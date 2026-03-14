@@ -16,6 +16,7 @@ package mslinks.data;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -105,10 +106,14 @@ public class HotKeyFlags implements Serializable {
 	public HotKeyFlags() {
 		low = high = 0;
 	}
-	
+
 	public HotKeyFlags(ByteReader data) throws IOException {
-		low = (byte)data.read();
-		high = (byte)data.read();
+		this(new Serializer<>(data));
+	}
+	
+	public HotKeyFlags(Serializer<ByteReader> serializer) throws IOException {
+		low = (byte)serializer.read("key");
+		high = (byte)serializer.read("modifiers");
 	}
 	
 	public String getKey() {

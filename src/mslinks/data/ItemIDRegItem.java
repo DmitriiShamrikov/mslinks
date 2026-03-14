@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 import mslinks.ShellLinkException;
 import mslinks.UnsupportedCLSIDException;
 
@@ -31,10 +32,10 @@ public abstract class ItemIDRegItem extends ItemID {
 	}
 
 	@Override
-	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
-		super.load(br, maxSize);
-		br.read(); // order
-		setClsid(new GUID(br));
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
+		super.load(serializer, maxSize);
+		serializer.read("order"); // order
+		setClsid(new GUID(serializer));
 	}
 
 	@Override

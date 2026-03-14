@@ -22,6 +22,7 @@ import mslinks.Serializable;
 import mslinks.ShellLinkException;
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 public class CNRLink implements Serializable {
 	
@@ -76,43 +77,47 @@ public class CNRLink implements Serializable {
 		nptype = WNNC_NET_DECORB;
 		netname = "";
 	}
-	
+
 	public CNRLink(ByteReader data) throws ShellLinkException, IOException {
-		int pos = data.getPosition();
-		int size = (int)data.read4bytes();
+		this(new Serializer<ByteReader>(data));
+	}
+	
+	public CNRLink(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
+		int pos = serializer.getPosition();
+		int size = (int)serializer.read(4, "size");
 		if (size < 0x14)
 			throw new ShellLinkException();
-		flags = new CNRLinkFlags(data);
-		int nnoffset = (int)data.read4bytes();
-		int dnoffset = (int)data.read4bytes();
+		flags = new CNRLinkFlags(serializer);
+		int nnoffset = (int)serializer.read(4, "net netame offset");
+		int dnoffset = (int)serializer.read(4, "dev netame offset");
 		if (!flags.isValidDevice())
 			dnoffset = 0;
-		nptype = (int)data.read4bytes();
+		nptype = (int)serializer.read(4, "nptype");
 		if (flags.isValidNetType())
 			checkNptype(nptype);
 		else nptype = 0;
 		
 		int nnoffset_u = 0, dnoffset_u = 0;
 		if (nnoffset > 0x14) {
-			nnoffset_u = (int)data.read4bytes();
-			dnoffset_u = (int)data.read4bytes();
+			nnoffset_u = (int)serializer.read(4, "net netame offset (unicode)");
+			dnoffset_u = (int)serializer.read(4, "dev netame offset (unicode)");
 		}
 		
-		data.seek(pos + nnoffset - data.getPosition());
-		netname = data.readString(pos + size - data.getPosition());
+		serializer.seek(pos + nnoffset - serializer.getPosition());
+		netname = serializer.readString(pos + size - serializer.getPosition(), "netname");
 		if (dnoffset != 0) {
-			data.seek(pos + dnoffset - data.getPosition());
-			devname = data.readString(pos + size - data.getPosition());
+			serializer.seek(pos + dnoffset - serializer.getPosition());
+			devname = serializer.readString(pos + size - serializer.getPosition(), "devname");
 		}
 
 		if (nnoffset_u != 0) {
-			data.seek(pos + nnoffset_u - data.getPosition());
-			netname = data.readUnicodeStringNullTerm(pos + size - data.getPosition());
+			serializer.seek(pos + nnoffset_u - serializer.getPosition());
+			netname = serializer.readUnicodeStringNullTerm(pos + size - serializer.getPosition(), "netname");
 		}
 		
 		if (dnoffset_u != 0) {
-			data.seek(pos + dnoffset_u - data.getPosition());
-			devname = data.readUnicodeStringNullTerm(pos + size - data.getPosition());
+			serializer.seek(pos + dnoffset_u - serializer.getPosition());
+			devname = serializer.readUnicodeStringNullTerm(pos + size - serializer.getPosition(), "devname");
 		}
 	}
 	

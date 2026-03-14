@@ -16,6 +16,7 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,50 +76,64 @@ public class ShellLink {
 	}
 	
 	public ShellLink(Path file) throws IOException, ShellLinkException {
-		this(Files.newInputStream(file));
+		parse(file);
+	}
+
+	private void parse(Path file) throws ShellLinkException, IOException {
+		try (InputStream in = Files.newInputStream(file)) {
+			parse(in);
+		}
 		linkFileSource = file.toAbsolutePath();
 	}
 	
 	public ShellLink(InputStream in) throws IOException, ShellLinkException {
-		try (var reader = new ByteReader(in)) {
-			parse(reader);
-		}
+		parse(in);
+	}
+
+	private void parse(InputStream in) throws ShellLinkException, IOException {
+		parse(new ByteReader(in));
 	}
 
 	public ShellLink(ByteReader reader) throws IOException, ShellLinkException {
-		try (reader) {
-			parse(reader);
-		}
+		parse(reader);
+	}
+
+	private void parse(ByteReader reader) throws ShellLinkException, IOException {
+		parse(new Serializer<>(reader));
+	}
+
+	public ShellLink(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
+		parse(serializer);
 	}
 	
-	private void parse(ByteReader data) throws ShellLinkException, IOException {
-		header = new ShellLinkHeader(data);
+	private void parse(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
+		header = new ShellLinkHeader(serializer);
 		LinkFlags lf = header.getLinkFlags();
 		if (lf.hasLinkTargetIDList()) 
-			idlist = new LinkTargetIDList(data);
+			idlist = new LinkTargetIDList(serializer);
 		if (lf.hasLinkInfo())
-			info = new LinkInfo(data);
+			info = new LinkInfo(serializer);
 		if (lf.hasName())
-			name = data.readUnicodeStringSizePadded();
+			name = serializer.readUnicodeStringSizePadded("name");
 		if (lf.hasRelativePath())
-			relativePath = data.readUnicodeStringSizePadded();
+			relativePath = serializer.readUnicodeStringSizePadded("relativePath");
 		if (lf.hasWorkingDir()) 
-			workingDir = data.readUnicodeStringSizePadded();
+			workingDir = serializer.readUnicodeStringSizePadded("workingDir");
 		if (lf.hasArguments()) 
-			cmdArgs = data.readUnicodeStringSizePadded();
+			cmdArgs = serializer.readUnicodeStringSizePadded("cmdArgs");
 		if (lf.hasIconLocation())
-			iconLocation = data.readUnicodeStringSizePadded();
+			iconLocation = serializer.readUnicodeStringSizePadded("cmdArgs");
 		
 		while (true) {
-			int size = (int)data.read4bytes();
+			int size = (int)serializer.read(4, "size");
 			if (size < 4) break;
-			int sign = (int)data.read4bytes();
+			int sign = (int)serializer.read(4, "signature");
 			try {
 				Class<?> cl = extraTypes.get(sign);
 				if (cl != null)
-					extra.put(sign, (Serializable)cl.getConstructor(ByteReader.class, int.class).newInstance(data, size));
+					extra.put(sign, (Serializable)cl.getConstructor(Serializer.class, int.class).newInstance(serializer, size));
 				else
-					extra.put(sign, new Stub(data, size, sign));
+					extra.put(sign, new Stub(serializer, size, sign));
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
 				e.printStackTrace();

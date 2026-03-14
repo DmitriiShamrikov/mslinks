@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -87,49 +88,54 @@ public class ConsoleData implements Serializable {
 	}
 	
 	public ConsoleData(ByteReader br, int sz) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), sz);
+	}
+	
+	public ConsoleData(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException {
 		if (sz != size) throw new ShellLinkException();
-		int t = (int)br.read2bytes();
+		int t = (int)serializer.read(2, "text flags");
 		textFG = t & 0xf;
 		textBG = (t & 0xf0) >> 4;
-		t = (int)br.read2bytes();
+		t = (int)serializer.read(2, "popup flags");
 		popupFG = t & 0xf;
 		popupBG = (t & 0xf0) >> 4;
-		buffer = new Size((int)br.read2bytes(), (int)br.read2bytes());
-		window = new Size((int)br.read2bytes(), (int)br.read2bytes());
-		windowpos = new Size((int)br.read2bytes(), (int)br.read2bytes());
-		br.read8bytes();
+		buffer = new Size((int)serializer.read(2, "buffer width"), (int)serializer.read(2, "buffer height"));
+		window = new Size((int)serializer.read(2, "window width"), (int)serializer.read(2, "window height"));
+		windowpos = new Size((int)serializer.read(2, "window pos X"), (int)serializer.read(2, "window pos Y"));
+		serializer.read(8, "unused space");
 		
-		fontsize = ((int)br.read4bytes()) >>> 16;
-		br.read4bytes();
-		if ((int)br.read4bytes() >= 700) 
+
+		fontsize = ((int)serializer.read(4, "font height and width")) >>> 16;
+		serializer.read(4, "font family");
+		if ((int)serializer.read(4, "font weight") >= 700) 
 			flags.setBoldFont();
-		switch ((char)br.read()) {
+		switch ((char)serializer.read("font name")) {
 			case 'T': font = Font.Terminal; break;
 			case 'L': font = Font.LucidaConsole; break;
 			case 'C': font = Font.Consolas; break;
 			default: throw new ShellLinkException("unknown font type");
 		}
-		br.seek(63);
+		serializer.seek(63);
 		
-		t = (int)br.read4bytes();
+		t = (int)serializer.read(4, "cursor size");
 		if (t <= 25) cursize = CursorSize.Small;
 		else if (t <= 50) cursize = CursorSize.Medium;
 		else cursize = CursorSize.Large;
 		
-		if ((int)br.read4bytes() != 0)
+		if ((int)serializer.read(4, "is fullscreen") != 0)
 			flags.setFullscreen();
-		if ((int)br.read4bytes() != 0)
+		if ((int)serializer.read(4, "is quckedit") != 0)
 			flags.setQuickEdit();
-		if ((int)br.read4bytes() != 0)
+		if ((int)serializer.read(4, "is insert mode") != 0)
 			flags.setInsertMode();
-		if ((int)br.read4bytes() != 0)
+		if ((int)serializer.read(4, "is auto-position enabled") != 0)
 			flags.setAutoPosition();
-		historysize = (int)br.read4bytes();
-		historybuffers = (int)br.read4bytes();
-		if ((int)br.read4bytes() != 0)
+		historysize = (int)serializer.read(4, "historysize");
+		historybuffers = (int)serializer.read(4, "number of historybuffers");
+		if ((int)serializer.read(4, "allow duplicates in history") != 0)
 			flags.setHistoryDup();
 		for (int i=0; i<16; i++)
-			colors[i] = (int)br.read4bytes();
+			colors[i] = (int)serializer.read(4, String.format("colort table color[%d]", i));
 	}
 
 	@Override

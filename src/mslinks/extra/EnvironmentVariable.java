@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -32,18 +33,22 @@ public class EnvironmentVariable implements Serializable {
 	public EnvironmentVariable() {
 		variable = "";
 	}
-	
+
 	public EnvironmentVariable(ByteReader br, int sz) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), sz);
+	}
+	
+	public EnvironmentVariable(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException {
 		if (sz != size)
 			throw new ShellLinkException();
 		
-		int pos = br.getPosition();
-		variable = br.readString(260);
-		br.seekTo(pos + 260);
+		int pos = serializer.getPosition();
+		variable = serializer.readString(260, "variable name");
+		serializer.seekTo(pos + 260);
 		
-		pos = br.getPosition();
-		String unicodeStr = br.readUnicodeStringNullTerm(260);
-		br.seekTo(pos + 520);
+		pos = serializer.getPosition();
+		String unicodeStr = serializer.readUnicodeStringNullTerm(260, "variable name (unicode)");
+		serializer.seekTo(pos + 520);
 		if (unicodeStr != null && !unicodeStr.equals(""))
 			variable = unicodeStr;
 	}

@@ -16,6 +16,7 @@ package mslinks.data;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -27,9 +28,13 @@ public class BitSet32 implements Serializable {
 	public BitSet32(int n) {
 		d = n;
 	}
-	
+
 	public BitSet32(ByteReader data) throws IOException {
-		d = (int)data.read4bytes();
+		this(new Serializer<>(data));
+	}
+
+	public BitSet32(Serializer<ByteReader> serializer) throws IOException {
+		d = (int)serializer.read(4, "bitset");
 	}
 	
 	protected boolean get(int i) {

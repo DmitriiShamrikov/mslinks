@@ -16,6 +16,7 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -52,27 +53,32 @@ public class ShellLinkHeader implements Serializable {
 		showCommand = SW_SHOWNORMAL;
 		hkf = new HotKeyFlags();
 	}
-	
+
 	public ShellLinkHeader(ByteReader data) throws ShellLinkException, IOException {
-		int size = (int)data.read4bytes();
+		this(new Serializer<>(data));
+	}
+
+	public ShellLinkHeader(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
+		int size = (int)serializer.read(4, "size");
 		if (size != headerSize)
 			throw new ShellLinkException();
-		GUID g = new GUID(data);
+		GUID g = new GUID(serializer);
 		if (!g.equals(clsid))
 			throw new ShellLinkException();
-		lf = new LinkFlags(data);
-		faf = new FileAttributesFlags(data);
-		creationTime = new Filetime(data);
-		accessTime = new Filetime(data);
-		writeTime = new Filetime(data);
-		fileSize = (int)data.read4bytes();
-		iconIndex = (int)data.read4bytes();
-		showCommand = (int)data.read4bytes();
+		lf = new LinkFlags(serializer);
+		faf = new FileAttributesFlags(serializer);
+		creationTime = new Filetime(serializer);
+		accessTime = new Filetime(serializer);
+		writeTime = new Filetime(serializer);
+		fileSize = (int)serializer.read(4, "fileSize");
+		iconIndex = (int)serializer.read(4, "iconIndex");
+		showCommand = (int)serializer.read(4, "showCommand");
 		if (showCommand != SW_SHOWNORMAL && showCommand != SW_SHOWMAXIMIZED && showCommand != SW_SHOWMINNOACTIVE)
 			throw new ShellLinkException();
-		hkf = new HotKeyFlags(data);
-		data.read2bytes();
-		data.read8bytes();
+		hkf = new HotKeyFlags(serializer);
+		serializer.read(2, "reserved1");
+		serializer.read(4, "reserved2");
+		serializer.read(4, "reserved3");
 	}
 	
 	public LinkFlags getLinkFlags() { return lf; }

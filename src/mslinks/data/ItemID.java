@@ -16,6 +16,7 @@ package mslinks.data;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -129,6 +130,10 @@ public class ItemID implements Serializable {
 	}
 
 	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
+		load(new Serializer<>(br), maxSize);
+	}
+
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
 		// DO NOT read type flags here as they have already been read
 		// in order to determine the type of this item id
 	}

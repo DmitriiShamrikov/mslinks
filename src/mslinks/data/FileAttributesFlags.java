@@ -15,6 +15,7 @@
 package mslinks.data;
 
 import io.ByteReader;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -23,9 +24,13 @@ public class FileAttributesFlags extends BitSet32 {
 		super(n);
 		reset();
 	}
-	
+
 	public FileAttributesFlags(ByteReader data) throws IOException {
-		super(data);
+		this(new Serializer<>(data));
+	}
+	
+	public FileAttributesFlags(Serializer<ByteReader> serializer) throws IOException {
+		super(serializer);
 		reset();
 	}
 	

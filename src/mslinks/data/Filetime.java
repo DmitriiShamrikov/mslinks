@@ -16,6 +16,7 @@ package mslinks.data;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -35,9 +36,13 @@ public class Filetime extends GregorianCalendar implements Serializable {
 		super();
 		setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
-	
+
 	public Filetime(ByteReader data) throws IOException {
-		this(data.read8bytes());
+		this(new Serializer<>(data));
+	}
+	
+	public Filetime(Serializer<ByteReader> serializer) throws IOException {
+		this(serializer.read(8, "timestamp"));
 	}
 	
 	public Filetime(long time) {

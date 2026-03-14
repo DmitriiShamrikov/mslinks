@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,10 +35,14 @@ public class ConsoleFEData implements Serializable {
 		Locale l = Locale.getDefault();
 		lang = l.getLanguage() + "-" + l.getCountry();
 	}
-	
+
 	public ConsoleFEData(ByteReader br, int sz) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), sz);
+	}
+	
+	public ConsoleFEData(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException {
 		if (sz != size) throw new ShellLinkException();
-		int t = (int)br.read4bytes();
+		int t = (int)serializer.read(4, "console language id");
 		lang = ids.get(t >>> 16);
 	}
 

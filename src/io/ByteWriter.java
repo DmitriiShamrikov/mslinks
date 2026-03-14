@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteOrder;
 
-public class ByteWriter extends OutputStream {
+public class ByteWriter extends OutputStream implements SerializerStream<ByteWriter> {
 	private boolean le = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 
 	private OutputStream stream;
@@ -28,24 +28,38 @@ public class ByteWriter extends OutputStream {
 	public ByteWriter(OutputStream out) {
 		stream = out;
 	}
-	
+
+	@Override
 	public int getPosition() {
 		return pos;
 	}
-	
+
+	@Override
 	public ByteWriter changeEndiannes() {
 		le = !le;
 		return this;
 	}
 
+	@Override
 	public ByteWriter setLittleEndian() {
 		le = true;
 		return this;
 	}
 
+	@Override
 	public ByteWriter setBigEndian() {
 		le = false;
 		return this;
+	}
+
+	@Override
+	public boolean isLittleEndian() {
+		return le;
+	}
+
+	@Override
+	public boolean isBigEndian() {
+		return !le;
 	}
 
 	@Override
@@ -68,7 +82,32 @@ public class ByteWriter extends OutputStream {
 		stream.write(b);
 	}
 
-	public void write(long b) throws IOException {
+	public void write(long value, int numBytes) throws IOException {
+		if (numBytes > 8)
+		{
+			throw new IOException(String.format("Can't write %d bytes at a time", numBytes));
+		}
+
+		int start = 0;
+		int end = numBytes;
+		int step = 1;
+		if (!le)
+		{
+			start = numBytes - 1;
+			end = -1;
+			step = -1;
+		}
+
+		for (int i = start; i != end; i += step)
+		{
+			long shift = i * 8;
+			long mask = 0xff << shift;
+			long b = (value & mask) >> shift;
+			write(b);
+		}
+	}
+
+	private void write(long b) throws IOException {
 		write((int)b);
 	}
 	

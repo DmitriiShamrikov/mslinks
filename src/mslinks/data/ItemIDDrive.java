@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 import mslinks.ShellLinkException;
 import mslinks.UnsupportedItemIDException;
 
@@ -34,21 +35,21 @@ public class ItemIDDrive extends ItemID {
 		if (subType == 0)
 			throw new UnsupportedItemIDException(typeFlags);
 	}
-	
+
 	@Override
-	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
-		int startPos = br.getPosition();
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
+		int startPos = serializer.getPosition();
 		int endPos = startPos + maxSize;
 
-		super.load(br, maxSize);
+		super.load(serializer, maxSize);
 
-		setName(br.readString(4));
+		setName(serializer.readString(4, "drive name"));
 		// 8 bytes: drive size
 		// 8 bytes: drive free size
 		// 1 byte: 0/1 - has drive extension
 		// 1 byte: 0/1 - drive extension has class id
 		// 16 bytes: clsid - only possible value is CDBurn
-		br.seekTo(endPos);
+		serializer.seekTo(endPos);
 	}
 
 	@Override

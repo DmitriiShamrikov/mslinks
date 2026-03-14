@@ -18,38 +18,54 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteOrder;
 
-public class ByteReader extends InputStream {
+public class ByteReader extends InputStream implements SerializerStream<ByteReader> {
 	private boolean le = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 	
 	private InputStream stream;
 	private int pos = 0;
+
+	private byte[] buffer = new byte[8];
 	
 	
 	public ByteReader(InputStream in) {
 		stream = in;
 	}
-	
+
+	@Override
 	public int getPosition() {
 		return pos;
 	}
-	
+
+	@Override
 	public ByteReader changeEndiannes() {
 		le = !le;
 		return this;
 	}
 
+	@Override
 	public ByteReader setLittleEndian() {
 		le = true;
 		return this;
 	}
 
+	@Override
 	public ByteReader setBigEndian() {
 		le = false;
 		return this;
 	}
+
+	@Override
+	public boolean isLittleEndian() {
+		return le;
+	}
+
+	@Override
+	public boolean isBigEndian() {
+		return !le;
+	}
 	
 	public boolean seek(int n) throws IOException {
-		if (n <= 0) return false;
+		if (n < 0) return false;
 		for (int i=0; i<n; i++)
 			read();
 		return true;
@@ -78,6 +94,39 @@ public class ByteReader extends InputStream {
 	public int read() throws IOException {
 		pos++;
 		return stream.read();
+	}
+
+	public long read(int numBytes) throws IOException
+	{
+		if (numBytes > buffer.length)
+		{
+			throw new IOException(String.format("Can't read %d bytes at a time", numBytes));
+		}
+
+		int numBytesRead = read(buffer, 0, numBytes);
+		if (numBytesRead != numBytes)
+		{
+			throw new IOException(String.format("Can't read %d bytes, reached end of file", numBytes));
+		}
+
+		int start = 0;
+		int end = numBytes;
+		int step = 1;
+		if (!le)
+		{
+			start = numBytes - 1;
+			end = -1;
+			step = -1;
+		}
+
+		long result = 0;
+		byte shift = 0;
+		for (int i = start; i != end; i += step, ++shift)
+		{
+			result |= (long)(buffer[i] & 0xff) << (shift * 8);
+		}
+
+		return result;
 	}
 	
 	public long read2bytes() throws IOException {
@@ -177,7 +226,6 @@ public class ByteReader extends InputStream {
 			if (b == 0) break;
 			buf[i] = (byte)b;
 		}
-		if (i == 0) return null;
 		return new String(buf, 0, i);
 	}
 	
@@ -194,7 +242,6 @@ public class ByteReader extends InputStream {
 			if (c == 0) break;
 			buf[i] = c;
 		}
-		if (i == 0) return null;
 		return new String(buf, 0, i);
 	}
 	
