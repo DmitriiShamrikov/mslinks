@@ -129,90 +129,6 @@ public class ByteReader extends InputStream implements SerializerStream<ByteRead
 		return result;
 	}
 	
-	public long read2bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		if (le)
-			return b0 | (b1 << 8);
-		else 
-			return b1 | (b0 << 8);
-	}
-	
-	public long read3bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		long b2 = read();
-		if (le)
-			return b0 | (b1 << 8) | (b2 << 16);
-		else 
-			return b2 | (b1 << 8) | (b0 << 16);
-	}
-	
-	public long read4bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		long b2 = read();
-		long b3 = read();
-		if (le)
-			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
-		else 
-			return b3 | (b2 << 8) | (b1 << 16) | (b0 << 24);
-	}
-	
-	public long read5bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		long b2 = read();
-		long b3 = read();
-		long b4 = read();
-		if (le)
-			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32);
-		else 
-			return b4 | (b3 << 8) | (b2 << 16) | (b1 << 24) | (b0 << 32);
-	}
-	
-	public long read6bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		long b2 = read();
-		long b3 = read();
-		long b4 = read();
-		long b5 = read();
-		if (le)
-			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40);
-		else 
-			return b5 | (b4 << 8) | (b3 << 16) | (b2 << 24) | (b1 << 32) | (b0 << 40);
-	}
-	
-	public long read7bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		long b2 = read();
-		long b3 = read();
-		long b4 = read();
-		long b5 = read();
-		long b6 = read();
-		if (le)
-			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40) | (b6 << 48);
-		else 
-			return b6 | (b5 << 8) | (b4 << 16) | (b3 << 24) | (b2 << 32) | (b1 << 40) | (b0 << 48);
-	}
-	
-	public long read8bytes() throws IOException {
-		long b0 = read();
-		long b1 = read();
-		long b2 = read();
-		long b3 = read();
-		long b4 = read();
-		long b5 = read();
-		long b6 = read();
-		long b7 = read();
-		if (le)
-			return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24) | (b4 << 32) | (b5 << 40) | (b6 << 48) | (b7 << 56);
-		else 
-			return b7 | (b6 << 8) | (b5 << 16) | (b4 << 24) | (b3 << 32) | (b2 << 40) | (b1 << 48) | (b0 << 56);
-	}
-	
 	/**
 	 * reads 0-terminated string in default code page
 	 * @param sz - maximum size in bytes
@@ -238,7 +154,7 @@ public class ByteReader extends InputStream implements SerializerStream<ByteRead
 		char[] buf = new char[sz];
 		int i = 0;
 		for (; i<sz; i++) {
-			char c = (char)read2bytes();
+			char c = (char)read(2);
 			if (c == 0) break;
 			buf[i] = c;
 		}
@@ -249,10 +165,10 @@ public class ByteReader extends InputStream implements SerializerStream<ByteRead
 	 * reads unicode string that has 2 bytes at start indicates length of string
 	 */
 	public String readUnicodeStringSizePadded() throws IOException {
-		int c = (int)read2bytes();
+		int c = (int)read(2);
 		char[] buf = new char[c];
 		for (int i=0; i<c; i++)
-			buf[i] = (char)read2bytes();
+			buf[i] = (char)read(2);
 		return new String(buf);
 	}
 }

@@ -111,97 +111,6 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 		write((int)b);
 	}
 	
-	public void write2bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		if (le) {
-			write(b0); write(b1);
-		} else {
-			write(b1); write(b0);
-		}
-	}
-	
-	public void write3bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		if (le) {
-			write(b0); write(b1); write(b2);
-		} else {
-			write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write4bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3);
-		} else {
-			write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write5bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4);
-		} else {
-			write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write6bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		long b5 = (n & 0xff0000000000L) >> 40;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5);
-		} else {
-			write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write7bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		long b5 = (n & 0xff0000000000L) >> 40;
-		long b6 = (n & 0xff000000000000L) >> 48;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5); write(b6);
-		} else {
-			write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write8bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		long b5 = (n & 0xff0000000000L) >> 40;
-		long b6 = (n & 0xff000000000000L) >> 48;
-		long b7 = (n & 0xff00000000000000L) >>> 56;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5); write(b6); write(b7);
-		} else {
-			write(b7); write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-
 	/**
 	 * writes 0-terminated string in default code page
 	 */
@@ -227,8 +136,8 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 	 */
 	public void writeUnicodeStringNullTerm(String s) throws IOException {
 		for (int i=0; i<s.length(); i++)
-			write2bytes(s.charAt(i));
-		write2bytes(0);
+			write(s.charAt(i), 2);
+		write(0, 2);
 	}
 
 	/**
@@ -237,7 +146,7 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 	public void writeUnicodeStringFixedSize(String s, int size) throws IOException {
 		int maxChars = Math.min(s.length(),  size / 2);
 		for (int i=0; i<maxChars; i++) {
-			write2bytes(s.charAt(i));
+			write(s.charAt(i), 2);
 		}
 		int numToPad = size - maxChars * 2;
 		for (int i = 0; i < numToPad; ++i) {
@@ -249,8 +158,8 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 	 * writes unicode string with 2 bytes at the start indicating the length of the string
 	 */
 	public void writeUnicodeStringSizePadded(String s) throws IOException {
-		write2bytes(s.length());
+		write(s.length(), 2);
 		for (int i=0; i<s.length(); i++)
-			write2bytes(s.charAt(i));
+			write(s.charAt(i), 2);
 	}
 }
