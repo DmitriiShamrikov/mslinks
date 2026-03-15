@@ -25,10 +25,10 @@ import mslinks.data.Filetime;
 import mslinks.data.GUID;
 import mslinks.data.HotKeyFlags;
 import mslinks.data.LinkFlags;
+import mslinks.data.Registry;
 
 public class ShellLinkHeader implements Serializable {
 	private static final int headerSize = 0x0000004C;
-	private static final GUID clsid = new GUID("00021401-0000-0000-C000-000000000046");
 	
 	public static final int SW_SHOWNORMAL = 1;
 	public static final int SW_SHOWMAXIMIZED = 3;
@@ -59,26 +59,41 @@ public class ShellLinkHeader implements Serializable {
 	}
 
 	public ShellLinkHeader(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
-		int size = (int)serializer.read(4, "size");
-		if (size != headerSize)
-			throw new ShellLinkException();
-		GUID g = new GUID(serializer);
-		if (!g.equals(clsid))
-			throw new ShellLinkException();
-		lf = new LinkFlags(serializer);
-		faf = new FileAttributesFlags(serializer);
-		creationTime = new Filetime(serializer);
-		accessTime = new Filetime(serializer);
-		writeTime = new Filetime(serializer);
-		fileSize = (int)serializer.read(4, "fileSize");
-		iconIndex = (int)serializer.read(4, "iconIndex");
-		showCommand = (int)serializer.read(4, "showCommand");
-		if (showCommand != SW_SHOWNORMAL && showCommand != SW_SHOWMAXIMIZED && showCommand != SW_SHOWMINNOACTIVE)
-			throw new ShellLinkException();
-		hkf = new HotKeyFlags(serializer);
-		serializer.read(2, "reserved1");
-		serializer.read(4, "reserved2");
-		serializer.read(4, "reserved3");
+		try (var block = serializer.beginBlock("ShellLinkHeader")) {
+			int size = (int)serializer.read(4, Serializer.BLOCK_SIZE_NAME);
+			if (size != headerSize)
+				throw new ShellLinkException();
+			GUID g = new GUID(serializer);
+			if (!g.equals(Registry.CLSID_LINK_HEADER))
+				throw new ShellLinkException();
+			lf = new LinkFlags(serializer);
+			faf = new FileAttributesFlags(serializer);
+			creationTime = new Filetime(serializer, "creationTime");
+			accessTime = new Filetime(serializer, "accessTime");
+			writeTime = new Filetime(serializer, "writeTime");
+			fileSize = (int)serializer.read(4, "fileSize");
+			iconIndex = (int)serializer.read(4, "iconIndex");
+			showCommand = (int)serializer.read(4, "showCommand", ShellLinkHeader::commandToLog);
+			if (showCommand != SW_SHOWNORMAL && showCommand != SW_SHOWMAXIMIZED && showCommand != SW_SHOWMINNOACTIVE) {
+				showCommand = SW_SHOWNORMAL;
+			}
+			hkf = new HotKeyFlags(serializer);
+			serializer.read(2, "reserved1");
+			serializer.read(4, "reserved2");
+			serializer.read(4, "reserved3");
+		}
+	}
+
+	private static String commandToLog(long value) {
+		// ffs... java can't switch on long
+		if (value == SW_SHOWNORMAL) {
+			return "SW_SHOWNORMAL";
+		} else if (value == SW_SHOWMAXIMIZED) {
+			return "SW_SHOWMAXIMIZED";
+		} else if (value == SW_SHOWMINNOACTIVE) {
+			return "SW_SHOWMINNOACTIVE";
+		}
+		return "UNKNOWN";
 	}
 	
 	public LinkFlags getLinkFlags() { return lf; }
@@ -103,19 +118,23 @@ public class ShellLinkHeader implements Serializable {
 			throw new ShellLinkException();
 	}
 
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(headerSize);
-		clsid.serialize(bw);
-		lf.serialize(bw);
-		faf.serialize(bw);
-		creationTime.serialize(bw);
-		accessTime.serialize(bw);
-		writeTime.serialize(bw);
-		bw.write4bytes(fileSize);
-		bw.write4bytes(iconIndex);
-		bw.write4bytes(showCommand);
-		hkf.serialize(bw);
-		bw.write2bytes(0);
-		bw.write8bytes(0);
+	@Override
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		try (var block = serializer.beginBlock("ShellLinkHeader")) {
+			serializer.write(headerSize, 4, Serializer.BLOCK_SIZE_NAME);
+			Registry.CLSID_LINK_HEADER.serialize(serializer);
+			lf.serialize(serializer);
+			faf.serialize(serializer);
+			creationTime.serialize(serializer, "creationTime");
+			accessTime.serialize(serializer, "accessTime");
+			writeTime.serialize(serializer, "writeTime");
+			serializer.write(fileSize, 4, "fileSize");
+			serializer.write(iconIndex, 4, "iconIndex");
+			serializer.write(showCommand, 4, "showCommand", ShellLinkHeader::commandToLog);
+			hkf.serialize(serializer);
+			serializer.write(0, 2, "reserved1");
+			serializer.write(0,4, "reserved2");
+			serializer.write(0,4, "reserved3");
+		}
 	}
 }

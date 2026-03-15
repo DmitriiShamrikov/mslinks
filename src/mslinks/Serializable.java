@@ -17,7 +17,11 @@ package mslinks;
 import java.io.IOException;
 
 import io.ByteWriter;
+import io.Serializer;
 
 public interface Serializable {
-	void serialize(ByteWriter bw) throws IOException;
+	default void serialize(ByteWriter bw) throws IOException {
+		serialize(new Serializer<>(bw));
+	}
+	void serialize(Serializer<ByteWriter> serializer) throws IOException;
 }

@@ -108,6 +108,64 @@ public class ItemID implements Serializable {
 		}
 	}
 
+	public static String typeFlagsToLog(long value) {
+		var builder = new StringBuilder();
+		int group = (int)value & ID_TYPE_GROUPMASK;
+		int subGroup = (int)value & ID_TYPE_INGROUPMASK;
+
+		if ((value & ID_TYPE_JUNCTION) != 0) {
+			builder.append("ID_TYPE_JUNCTION");
+			if (group != 0 || subGroup != 0) {
+				builder.append(" | ");
+			}
+		}
+
+		String prefix = "";
+		switch (group) {
+		case GROUP_ROOT:
+			builder.append("GROUP_ROOT");
+			prefix = "TYPE_ROOT_";
+			break;
+		case GROUP_COMPUTER: 
+			builder.append("GROUP_COMPUTER");
+			prefix = "TYPE_DRIVE_";
+			break;
+		case GROUP_FS:
+			builder.append("GROUP_FS");
+			prefix = "TYPE_FS_";
+			break;
+		case GROUP_NET:
+			builder.append("GROUP_NET");
+			prefix = "TYPE_NET_";
+			break;
+		case GROUP_LOC:
+			builder.append("GROUP_LOC");
+			prefix = "TYPE_LOC_";
+			break;
+		case GROUP_CONTROLPANEL:
+			builder.append("GROUP_CONTROLPANEL");
+			prefix = "TYPE_CONTROL_";
+			break;
+		default:
+			builder.append("UNKNOWN_GROUP");
+			break;
+		}
+
+		if (subGroup != 0) {
+			builder.append(" | ");
+		}
+
+		String fieldPrefix = prefix;
+		Serializer.iterateOverClassConsts(ItemID.class, (field, val) -> {
+			if (field.getName().startsWith(fieldPrefix) && (val & subGroup) != 0) {
+				builder.append(field.getName());
+				return false;
+			}
+			return true;
+		});
+		return builder.toString();
+	}
+
 
 	protected int typeFlags;
 
@@ -140,10 +198,14 @@ public class ItemID implements Serializable {
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		if (internalItemId != null)
-			internalItemId.serialize(bw);
+			internalItemId.serialize(serializer);
 		else
-			bw.write(typeFlags);
+			serializer.write(typeFlags, "typeFlags", ItemID::typeFlagsToLog);
 	}
 
 	@Override

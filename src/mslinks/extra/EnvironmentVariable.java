@@ -54,17 +54,11 @@ public class EnvironmentVariable implements Serializable {
 	}
 	
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(size);
-		bw.write4bytes(signature);
-		byte[] b = variable.getBytes();
-		bw.write(b);
-		for (int i=0; i<260-b.length; i++)
-			bw.write(0);
-		for (int i=0; i<variable.length(); i++)
-			bw.write2bytes(variable.charAt(i));
-		for (int i=0; i<260-variable.length(); i++)
-			bw.write2bytes(0);
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(signature, 4, "signature");
+		serializer.writeStringFixedSize(variable, 260, "variable name");	
+		serializer.writeUnicodeStringFixedSize(variable, 520, "variable name");
 	}
 	
 	public String getVariable() { return variable; }

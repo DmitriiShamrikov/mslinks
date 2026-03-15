@@ -27,19 +27,20 @@ import java.nio.file.StandardOpenOption;
 import org.junit.Test;
 
 import io.ByteWriter;
+import io.Serializer;
 import mslinks.ShellLinkHelper.Options;
 import mslinks.data.Registry;
 import mslinks.extra.ConsoleData.Font;
 
 public class WriteTests {
+	private static final boolean ENABLE_LOGGING = false;
+	private static final boolean DEBUG_EXPORT = false;
 
 	// need some real path to be able to test links in the OS
 	private static final String PROJECT_PATH = "C:\\Programming\\Java\\mslinks";
 	private static final String PROJECT_DRIVE = "C";
 	private static final String PROJECT_DIR = "Programming\\Java\\mslinks";
 	private static final String RELATIVE_PATH = "..\\..";
-
-	private static final boolean DEBUG_EXPORT = false;
 
 	private ShellLinkHelper createLink() {
 		var link = new ShellLink();
@@ -57,9 +58,10 @@ public class WriteTests {
 
 	private byte[] serializeLink(ShellLink link) throws IOException {
 		var stream = new ByteArrayOutputStream();
-		var writer = new ByteWriter(stream);
-		writer.setLittleEndian();
-		link.serialize(writer);
+		var serializer = new Serializer<>(new ByteWriter(stream), ENABLE_LOGGING);
+		serializer.setLittleEndian();
+		link.serialize(serializer);
+		serializer.close();
 		return stream.toByteArray();
 	}
 

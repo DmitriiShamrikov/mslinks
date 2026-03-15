@@ -122,54 +122,61 @@ public class ShellLink {
 		if (lf.hasArguments()) 
 			cmdArgs = serializer.readUnicodeStringSizePadded("cmdArgs");
 		if (lf.hasIconLocation())
-			iconLocation = serializer.readUnicodeStringSizePadded("cmdArgs");
+			iconLocation = serializer.readUnicodeStringSizePadded("iconLocation");
 		
 		while (true) {
-			int size = (int)serializer.read(4, "size");
-			if (size < 4) break;
-			int sign = (int)serializer.read(4, "signature");
-			try {
-				Class<?> cl = extraTypes.get(sign);
-				if (cl != null)
-					extra.put(sign, (Serializable)cl.getConstructor(Serializer.class, int.class).newInstance(serializer, size));
-				else
-					extra.put(sign, new Stub(serializer, size, sign));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
-				e.printStackTrace();
+			try (var block = serializer.beginBlock("ExtraBlock")) {
+				int size = (int)serializer.read(4, Serializer.BLOCK_SIZE_NAME);
+				if (size < 4) break;
+				int sign = (int)serializer.read(4, "signature", v -> extraTypes.get((int)(long)v) != null ? extraTypes.get((int)(long)v).getTypeName() : "UNKNOWN");
+				try {
+					Class<?> cl = extraTypes.get(sign);
+					if (cl != null)
+						extra.put(sign, (Serializable)cl.getConstructor(Serializer.class, int.class).newInstance(serializer, size));
+					else
+						extra.put(sign, new Stub(serializer, size, sign));
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	public void serialize(OutputStream out) throws IOException {
-		var bw = new ByteWriter(out);
-		serialize(bw);
-		out.close();
+		serialize(new ByteWriter(out));
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		LinkFlags lf = header.getLinkFlags();
-		header.serialize(bw);
+		header.serialize(serializer);
 		if (lf.hasLinkTargetIDList())
-			idlist.serialize(bw);
+			idlist.serialize(serializer);
 		
 		if (lf.hasLinkInfo())
-			info.serialize(bw);
+			info.serialize(serializer);
 		if (lf.hasName())
-			bw.writeUnicodeStringSizePadded(name);
+			serializer.writeUnicodeStringSizePadded(name, "name");
 		if (lf.hasRelativePath())
-			bw.writeUnicodeStringSizePadded(relativePath);
+			serializer.writeUnicodeStringSizePadded(relativePath, "relativePath");
 		if (lf.hasWorkingDir()) 
-			bw.writeUnicodeStringSizePadded(workingDir);
+			serializer.writeUnicodeStringSizePadded(workingDir, "workingDir");
 		if (lf.hasArguments()) 
-			bw.writeUnicodeStringSizePadded(cmdArgs);
+			serializer.writeUnicodeStringSizePadded(cmdArgs, "cmdArgs");
 		if (lf.hasIconLocation())
-			bw.writeUnicodeStringSizePadded(iconLocation);
+			serializer.writeUnicodeStringSizePadded(iconLocation, "iconLocation");
 		
-		for (Serializable i : extra.values())
-			i.serialize(bw);
+		for (Serializable i : extra.values()) {
+			try (var block = serializer.beginBlock("ExtraBlock")) {
+				i.serialize(serializer);
+			}
+		}
 		
-		bw.write4bytes(0);
+		serializer.write(0, 4, Serializer.BLOCK_SIZE_NAME);
 	}
 	
 	public ShellLinkHeader getHeader() { return header; }

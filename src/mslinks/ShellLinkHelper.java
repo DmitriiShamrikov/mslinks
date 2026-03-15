@@ -242,7 +242,9 @@ public class ShellLinkHelper {
 		}
 		
 		Files.createDirectories(savingDir);
-		link.serialize(Files.newOutputStream(savingPath));
+		try (var out = Files.newOutputStream(savingPath)) { 
+			link.serialize(out);
+		}
 		return this;
 	}
 

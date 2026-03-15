@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import mslinks.ShellLinkException;
+import mslinks.ShellLinkHeader;
 import mslinks.UnsupportedCLSIDException;
 
 public class Registry {
@@ -105,8 +106,13 @@ public class Registry {
 	public static final GUID CLSID_DESKTOP;
 	public static final GUID CLSID_DOCUMENTS;
 	public static final GUID CLSID_DOWLOADS;
+	
+	public static final GUID CLSID_LINK_HEADER;
 
 	static {
+		CLSID_LINK_HEADER =
+		registerClsid("{00021401-0000-0000-C000-000000000046}", "LinkHeader", ShellLinkHeader.class);
+
 		CLSID_COMPUTER =
 		registerClsid("{20d04fe0-3aea-1069-a2d8-08002b30309d}", "Computer", ItemIDRoot.class);
 

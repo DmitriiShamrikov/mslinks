@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Random;
 
 import mslinks.Serializable;
+import mslinks.UnsupportedCLSIDException;
 
 public class GUID implements Serializable {
 	private static Random r = new Random();
@@ -54,13 +55,15 @@ public class GUID implements Serializable {
 	}
 	
 	public GUID(Serializer<ByteReader> serializer) throws IOException {
-		d1 = (int)serializer.read(4, "d1");
-		d2 = (short)serializer.read(2, "d2");
-		d3 = (short)serializer.read(2, "d3");
-		serializer.changeEndiannes();
-		d4 = (short)serializer.read(2, "d4");
-		d5 = serializer.read(6, "d5");
-		serializer.changeEndiannes();
+		try (var block = serializer.beginBlock("GUID", this::toLog)) {
+			d1 = (int)serializer.read(4, "d1", null);
+			d2 = (short)serializer.read(2, "d2", null);
+			d3 = (short)serializer.read(2, "d3", null);
+			serializer.changeEndiannes();
+			d4 = (short)serializer.read(2, "d4", null);
+			d5 = serializer.read(6, "d5", null);
+			serializer.changeEndiannes();
+		}
 	}
 	
 	public GUID(String s) {
@@ -88,6 +91,16 @@ public class GUID implements Serializable {
 	public String toString() {
 		return String.format("%08X-%04X-%04X-%04X-%012X", d1, d2, d3, d4, d5);
 	}
+
+	private String toLog() {
+		String str = toString();
+		try  {
+			return String.format("%s (%s)", str, Registry.getName(this));
+		}
+		catch (UnsupportedCLSIDException e) {
+			return String.format("%s (unknown)", str);
+		}
+	}
 	
 	public boolean equals(Object o) {
 		if (o == this)
@@ -107,12 +120,18 @@ public class GUID implements Serializable {
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(d1);
-		bw.write2bytes(d2);
-		bw.write2bytes(d3);
-		bw.changeEndiannes();
-		bw.write2bytes(d4);
-		bw.write6bytes(d5);
-		bw.changeEndiannes();
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		try (var block = serializer.beginBlock("GUID", this::toLog)) {
+			serializer.write(d1, 4, "d1");
+			serializer.write(d2, 2, "d2");
+			serializer.write(d3, 2, "d3");
+			serializer.changeEndiannes();
+			serializer.write(d4, 2, "d4");
+			serializer.write(d5, 6, "d5");
+			serializer.changeEndiannes();
+		}
 	}
 }

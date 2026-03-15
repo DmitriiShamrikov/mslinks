@@ -43,8 +43,12 @@ public class ItemIDUnknown extends ItemID {
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		super.serialize(bw);
-		bw.write(data);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		super.serialize(serializer);
+		serializer.write(data, "data");
 	}
 
 	@Override

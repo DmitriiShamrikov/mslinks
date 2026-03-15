@@ -112,8 +112,36 @@ public class HotKeyFlags implements Serializable {
 	}
 	
 	public HotKeyFlags(Serializer<ByteReader> serializer) throws IOException {
-		low = (byte)serializer.read("key");
-		high = (byte)serializer.read("modifiers");
+		try (var block = serializer.beginBlock("HotKeyFlags", this::toLog)) {
+			low = (byte)serializer.read("key");
+			high = (byte)serializer.read("modifiers");
+		}
+	}
+
+	private String toLog() {
+		var builder = new StringBuilder();
+		if (isShift()) {
+			builder.append("SHIFT");
+		}
+		if (isCtrl()) {
+			if (!builder.isEmpty()) {
+				builder.append(" + ");
+			}
+			builder.append("CTRL");
+		}
+		if (isAlt()) {
+			if (!builder.isEmpty()) {
+				builder.append(" + ");
+			}
+			builder.append("ALT");
+		}
+		if (low != 0) {
+			if (!builder.isEmpty()) {
+				builder.append(" + ");
+			}
+			builder.append(getKey());
+		}
+		return builder.length() == 0 ? "<none>" : builder.toString();
 	}
 	
 	public String getKey() {
@@ -139,7 +167,13 @@ public class HotKeyFlags implements Serializable {
 	public HotKeyFlags clearAlt() { high = (byte)(high & 3); return this; }
 
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write(low);
-		bw.write(high);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		try (var block = serializer.beginBlock("HotKeyFlags", this::toLog)) {
+			serializer.write(low, "key");
+			serializer.write(high, "modifiers");
+		}
 	}
 }

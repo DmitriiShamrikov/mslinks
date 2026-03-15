@@ -54,13 +54,17 @@ public class ItemIDDrive extends ItemID {
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		super.serialize(bw);
+		serialize(new Serializer<>(bw));
+	}
 
-		bw.writeString(name);
-		bw.write8bytes(0); // drive size
-		bw.write8bytes(0); // drive free size
-		bw.write(0); // no extension
-		bw.write(0); // no clsid
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		super.serialize(serializer);
+
+		serializer.writeString(name, "name");
+		serializer.write(0, 8, "drive size");
+		serializer.write(0, 8, "drive free size");
+		serializer.write(0, "has drive extension");
+		serializer.write(0, "has class id");
 	}
 
 	@Override

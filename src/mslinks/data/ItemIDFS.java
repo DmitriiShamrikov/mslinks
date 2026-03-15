@@ -15,6 +15,7 @@
 package mslinks.data;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import io.ByteReader;
@@ -103,10 +104,10 @@ public class ItemIDFS extends ItemID {
 		super.load(serializer, maxSize);
 
 		serializer.read("padding ?"); // IDFOLDER struct doesn't have this byte but it does exist in data. Probably it's just padding
-		size = (int)serializer.read(4, "size");
-		serializer.read(2, "date modified"); // date modified
-		serializer.read(2, "time modified"); // time modified
-		attributes = (short)serializer.read(2, "attributes");
+		size = (int)serializer.read(4, "file size");
+		serializer.read(2, "date modified");
+		serializer.read(2, "time modified");
+		attributes = (short)serializer.read(2, "attributes", ItemIDFS::attributesToLog);
 
 		if ((typeFlags & TYPE_FS_UNICODE) != 0) {
 			longname = serializer.readUnicodeStringNullTerm(endPos - serializer.getPosition(), "longname");
@@ -120,46 +121,68 @@ public class ItemIDFS extends ItemID {
 		}
 
 		// last 2 bytes are the offset to the hidden list
+		// someone had a briliant fucking idea to put offset in the end of the block, here goes the mess
 		int bytesParsed = serializer.getPosition() - startPos;
-		byte[] dataChunk = new byte[restOfDataSize - 2];
-		serializer.read(dataChunk, 0, dataChunk.length, "hidden chunk");
+		byte[] dataChunk = new byte[restOfDataSize];
+
+		serializer.setSuspendLogging(true);
+		serializer.read(dataChunk, 0, dataChunk.length - 2, "hidden chunk");
 		int hiddenOffset = (int)serializer.read(2, "hiddenOffset");
+		serializer.setSuspendLogging(false);
+
 		if (hiddenOffset == 0 || hiddenOffset < bytesParsed) {
 			return;
 		}
 
+		if (serializer.isLoggingActive()) {
+			var outStream = new ByteArrayOutputStream();
+			var bw = new ByteWriter(outStream);
+			if (serializer.isLittleEndian()) {
+				bw.setLittleEndian();
+			} else {
+				bw.setBigEndian();
+			}
+			bw.write(hiddenOffset, 2);
+			bw.close();
+			byte[] arr = outStream.toByteArray();
+			dataChunk[dataChunk.length - 2] = arr[0];
+			dataChunk[dataChunk.length - 1] = arr[1];
+		}
+
 		int offsetInDataChunk = hiddenOffset - bytesParsed;
-		var hbr = new ByteReader(new ByteArrayInputStream(dataChunk, offsetInDataChunk, dataChunk.length));
-		loadHiddenPart(hbr, dataChunk.length + 2 - offsetInDataChunk);
+		var hs = new Serializer<>(new ByteReader(new ByteArrayInputStream(dataChunk, 0, dataChunk.length)));
+		hs.seek(offsetInDataChunk);
+		loadHiddenPart(hs, dataChunk.length);
+		hs.read(2, "hiddenOffset");
 	}
 
-	protected void loadHiddenPart(ByteReader br, int maxSize) throws IOException {
+	protected void loadHiddenPart(Serializer<ByteReader> serializer, int maxSize) throws IOException {
 		while (true) {
-			int startPos = br.getPosition();
-			int hiddenSize = (int)br.read2bytes();
-			int hiddenVersion = (int)br.read2bytes();
-			int hiddenIdField = (int)br.read4bytes();
+			int startPos = serializer.getPosition();
+			int hiddenSize = (int)serializer.read(2, "hiddenSize");
+			int hiddenVersion = (int)serializer.read(2, "hiddenVersion");
+			int hiddenIdField = (int)serializer.read(4, "hiddenIdField", ItemIDFS::hiddenIdToLog);
 			int hiddenIdMagic = (hiddenIdField & 0xFFFF0000) >>> 16;
 			int hiddenId = hiddenIdField & 0xFFFF;
 
-			int hiddenEndPos = br.getPosition() - 8 + hiddenSize;
+			int hiddenEndPos = startPos + hiddenSize;
 			if (hiddenEndPos > maxSize) {
 				break;
 			}
 			
 			if (hiddenIdMagic != 0xBEEF) {
-				br.seek(hiddenSize - 8);
+				serializer.seek(hiddenSize - 8);
 				continue;
 			}
 
 			if (hiddenId == HIDDEN_ID_IDFOLDEREX && hiddenVersion >= 3) { // IDFX_V1
-				br.read4bytes(); // date & time created
-				br.read4bytes(); // date & time accessed
-				int offsetNameUnicode = (int)br.read2bytes();
-				br.read2bytes(); // offResourceA
+				serializer.read(4, "date & time created");
+				serializer.read(4, "date & time accessed");
+				int offsetNameUnicode = (int)serializer.read(2, "offsetNameUnicode");
+				serializer.read(2, "offResourceA"); // offResourceA
 				int unicodeNamePos = startPos + offsetNameUnicode;
-				br.seek(unicodeNamePos - br.getPosition());
-				longname = br.readUnicodeStringNullTerm(startPos + hiddenSize - br.getPosition());
+				serializer.seek(unicodeNamePos - serializer.getPosition());
+				longname = serializer.readUnicodeStringNullTerm(startPos + hiddenSize - serializer.getPosition(), "longname");
 
 				// we don't serialize hidden parts so add unicode flag
 				if (!longname.equals(shortname))
@@ -171,19 +194,44 @@ public class ItemIDFS extends ItemID {
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		super.serialize(bw);
-		bw.write(0);
-		bw.write4bytes(size);
-		bw.write4bytes(0); // last modified
-		bw.write2bytes(attributes);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		super.serialize(serializer);
+		serializer.write(0, "padding");
+		serializer.write(size, 4, "file size");
+		serializer.write(0, 2, "date modified");
+		serializer.write(0, 2, "time modified");
+		serializer.write(attributes, 2, "attributes", ItemIDFS::attributesToLog);
 
 		if ((typeFlags & TYPE_FS_UNICODE) != 0) {
-			bw.writeUnicodeStringNullTerm(longname);
-			bw.writeString(shortname);
+			serializer.writeUnicodeStringNullTerm(longname, "longname");
+			serializer.writeString(shortname, "shortname");
 		} else {
-			bw.writeString(shortname);
-			bw.write(0);
+			serializer.writeString(shortname,"shortname");
+			serializer.write(0, "");
 		}
+	}
+
+	private static String attributesToLog(long value) {
+		var builder = new StringBuilder();
+		Serializer.iterateOverClassConsts(ItemIDFS.class, (field, constValue) -> {
+			if (field.getName().startsWith("FILE_ATTRIBUTE_") && (constValue & value) != 0) {
+				if (!builder.isEmpty()) {
+					builder.append(" | ");
+				}
+				builder.append(field.getName());
+			}
+			return true;
+		});
+		return builder.toString();
+	}
+
+	private static String hiddenIdToLog(long value) {
+		int hiddenId = (int)(value & 0xFFFF);
+		var f = Serializer.findConstField(ItemIDFS.class, hiddenId, field -> field.getName().startsWith("HIDDEN_ID_"));
+		return f != null ? f.getName() : "UNKNOWN";
 	}
 
 	@Override

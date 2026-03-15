@@ -38,26 +38,31 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	}
 
 	public LinkTargetIDList(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
-		int size = (int)serializer.read(2, "size");
-		int pos = serializer.getPosition(); 
-		
-		while (true) {
-			int itemSize = (int)serializer.read(2, "itemSize");
-			if (itemSize == 0)
-				break;
+		try (var block = serializer.beginBlock("LinkTargetIDList")) {
+			int size = (int)serializer.read(2, Serializer.BLOCK_SIZE_NAME);
+			int pos = serializer.getPosition(); 
+			
+			while (true) {
+				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
+					int itemSize = (int)serializer.read(2, Serializer.BLOCK_SIZE_NAME);
+					if (itemSize == 0)
+						break;
 
-			int typeFlags = serializer.read("typeFlags");
-			var item = ItemID.createItem(typeFlags);
-			item.load(serializer, itemSize - 3);
-			add(item);
+					int typeFlags = serializer.read("typeFlags", ItemID::typeFlagsToLog);
+					var item = ItemID.createItem(typeFlags);
+					item.load(serializer, itemSize - 3);
+					add(item);
+				}
+			}
+			
+			pos = serializer.getPosition() - pos;
+			if (pos != size) 
+				throw new ShellLinkException("unexpected size of LinkTargetIDList");
 		}
-		
-		pos = serializer.getPosition() - pos;
-		if (pos != size) 
-			throw new ShellLinkException("unexpected size of LinkTargetIDList");
 	}
 
-	public void serialize(ByteWriter bw) throws IOException {
+	@Override
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		int size = 2;
 		byte[][] b = new byte[size()][];
 		int i = 0;
@@ -71,12 +76,16 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 		for (byte[] j : b)
 			size += j.length + 2;
 		
-		bw.write2bytes(size);
-		for (byte[] j : b) {
-			bw.write2bytes(j.length + 2);
-			bw.write(j);
+		try (var block = serializer.beginBlock("LinkTargetIDList")) {
+			serializer.write(size, 2, Serializer.BLOCK_SIZE_NAME);
+			for (int j = 0; j < this.size(); ++j) {
+				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
+					serializer.write(b[j].length + 2, 2, Serializer.BLOCK_SIZE_NAME);
+					this.get(j).serialize(serializer);
+				}
+			}
+			serializer.write(0, 2, Serializer.BLOCK_SIZE_NAME);
 		}
-		bw.write2bytes(0);
 	}
 
 	/**

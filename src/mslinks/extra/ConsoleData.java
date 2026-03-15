@@ -93,31 +93,34 @@ public class ConsoleData implements Serializable {
 	
 	public ConsoleData(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException {
 		if (sz != size) throw new ShellLinkException();
-		int t = (int)serializer.read(2, "text flags");
+		int t = (int)serializer.read(2, "text color", ConsoleData::colorIndexToLog);
 		textFG = t & 0xf;
 		textBG = (t & 0xf0) >> 4;
-		t = (int)serializer.read(2, "popup flags");
+		t = (int)serializer.read(2, "popup color", ConsoleData::colorIndexToLog);
 		popupFG = t & 0xf;
 		popupBG = (t & 0xf0) >> 4;
-		buffer = new Size((int)serializer.read(2, "buffer width"), (int)serializer.read(2, "buffer height"));
-		window = new Size((int)serializer.read(2, "window width"), (int)serializer.read(2, "window height"));
-		windowpos = new Size((int)serializer.read(2, "window pos X"), (int)serializer.read(2, "window pos Y"));
+		buffer = new Size(serializer, "buffer");
+		window = new Size(serializer, "window size");
+		windowpos = new Size(serializer, "window pos");
 		serializer.read(8, "unused space");
 		
 
-		fontsize = ((int)serializer.read(4, "font height and width")) >>> 16;
+		fontsize = ((int)serializer.read(4, "font height and width", ConsoleData::fontSizeToLog)) >>> 16;
 		serializer.read(4, "font family");
 		if ((int)serializer.read(4, "font weight") >= 700) 
 			flags.setBoldFont();
-		switch ((char)serializer.read("font name")) {
+
+		int pos = serializer.getPosition();
+		String fontName = serializer.readUnicodeStringNullTerm(32, "font name");
+		switch (fontName.charAt(0)) {
 			case 'T': font = Font.Terminal; break;
 			case 'L': font = Font.LucidaConsole; break;
 			case 'C': font = Font.Consolas; break;
 			default: throw new ShellLinkException("unknown font type");
 		}
-		serializer.seek(63);
+		serializer.seek(64 - serializer.getPosition() + pos);
 		
-		t = (int)serializer.read(4, "cursor size");
+		t = (int)serializer.read(4, "cursor size", ConsoleData::cursorSizeToLog);
 		if (t <= 25) cursize = CursorSize.Small;
 		else if (t <= 50) cursize = CursorSize.Medium;
 		else cursize = CursorSize.Large;
@@ -135,45 +138,74 @@ public class ConsoleData implements Serializable {
 		if ((int)serializer.read(4, "allow duplicates in history") != 0)
 			flags.setHistoryDup();
 		for (int i=0; i<16; i++)
-			colors[i] = (int)serializer.read(4, String.format("colort table color[%d]", i));
+			colors[i] = (int)serializer.read(4, String.format("color table color[%d]", i), ConsoleData::colorToLog);
 	}
 
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(size);
-		bw.write4bytes(signature);
-		bw.write2bytes(textFG | (textBG << 4));
-		bw.write2bytes(popupFG | (popupBG << 4));
-		buffer.serialize(bw);
-		window.serialize(bw);
-		windowpos.serialize(bw);
-		bw.write8bytes(0);
-		bw.write4bytes(fontsize << 16);
-		bw.write4bytes(font == Font.Terminal? 0x30 : 0x36);
-		bw.write4bytes(flags.isBoldFont() ? 700 : 0);
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(signature, 4, "signature");
+		serializer.write(textFG | (textBG << 4), 2, "text color", ConsoleData::colorIndexToLog);
+		serializer.write(popupFG | (popupBG << 4), 2, "popup color", ConsoleData::colorIndexToLog);
+		buffer.serialize(serializer, "buffer");
+		window.serialize(serializer, "window");
+		windowpos.serialize(serializer, "window pos");
+		serializer.write(0, 8, "unused space");
+		serializer.write(fontsize << 16, 4, "font height and width", ConsoleData::fontSizeToLog);
+		serializer.write(font == Font.Terminal? 0x30 : 0x36, 4, "font family");
+		serializer.write(flags.isBoldFont() ? 700 : 0, 4, "font weight");
+		
 		String fn = "";
 		switch (font) {
 			case Terminal: fn = "Terminal"; break;
 			case LucidaConsole: fn = "Lucida Console"; break;
 			case Consolas: fn = "Consolas"; break;
 		}
-		bw.writeUnicodeStringNullTerm(fn);
-		for (int i=fn.length()+1; i<32; i++)
-			bw.write2bytes(0);
+		serializer.writeUnicodeStringFixedSize(fn, 64, "font name");
+		
+		int curSizeValue = 0;
 		switch (cursize) {
-			case Small: bw.write4bytes(0); break;
-			case Medium: bw.write4bytes(26); break;
-			case Large: bw.write4bytes(51); break;
-		}		
-		bw.write4bytes(flags.isFullscreen()? 1 : 0);
-		bw.write4bytes(flags.isQuickEdit()? 1 : 0);
-		bw.write4bytes(flags.isInsertMode()? 1 : 0);
-		bw.write4bytes(flags.isAutoPosition()? 1 : 0);
-		bw.write4bytes(historysize);
-		bw.write4bytes(historybuffers);
-		bw.write4bytes(flags.isHistoryDup()? 1 : 0);
+			case Small: curSizeValue = 0; break;
+			case Medium: curSizeValue = 26; break;
+			case Large: curSizeValue = 51; break;
+		}
+		serializer.write(curSizeValue, 4, "cursor size", ConsoleData::cursorSizeToLog);
+		serializer.write(flags.isFullscreen()? 1 : 0, 4, "is fullscreen");
+		serializer.write(flags.isQuickEdit()? 1 : 0, 4, "is quckedit");
+		serializer.write(flags.isInsertMode()? 1 : 0, 4, "is insert mode");
+		serializer.write(flags.isAutoPosition()? 1 : 0, 4, "is auto-position enabled");
+		serializer.write(historysize, 4, "historysize");
+		serializer.write(historybuffers, 4, "number of historybuffers");
+		serializer.write(flags.isHistoryDup()? 1 : 0, 4, "allow duplicates in history");
 		for (int i=0; i<16; i++)
-			bw.write4bytes(colors[i]);
+			serializer.write(colors[i], 4, String.format("color table color[%d]", i), ConsoleData::colorToLog);
+	}
+
+	private static String colorIndexToLog(long value) {
+		return String.format("color idx: %d, background idx: %d", value & 0xf, ((value & 0xf0) >> 8));
+	}
+
+	private static String fontSizeToLog(long value) {
+		return String.format("height: %d, width: %d", value >> 16, value & 0xffff);
+	}
+
+	private static String cursorSizeToLog(long value) {
+		String name;
+		if (value <= 25) {
+			name = "Small";
+		}
+		else if (value <= 50) {
+			name = "Medium";
+		}
+		else {
+			name = "Large";
+		}
+		return String.format("%d (%s)", value, name);
+	}
+
+	private static String colorToLog(long value) {
+		int color = (int)value;
+		return String.format("#%02X%02X%02X", r(color), g(color), b(color));
 	}
 	
 	public int[] getColorTable() { return colors; }

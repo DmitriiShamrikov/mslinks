@@ -16,7 +16,6 @@ package mslinks.data;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 import mslinks.Serializable;
 import mslinks.ShellLinkException;
@@ -83,94 +82,100 @@ public class CNRLink implements Serializable {
 	}
 	
 	public CNRLink(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
-		int pos = serializer.getPosition();
-		int size = (int)serializer.read(4, "size");
-		if (size < 0x14)
-			throw new ShellLinkException();
-		flags = new CNRLinkFlags(serializer);
-		int nnoffset = (int)serializer.read(4, "net netame offset");
-		int dnoffset = (int)serializer.read(4, "dev netame offset");
-		if (!flags.isValidDevice())
-			dnoffset = 0;
-		nptype = (int)serializer.read(4, "nptype");
-		if (flags.isValidNetType())
-			checkNptype(nptype);
-		else nptype = 0;
-		
-		int nnoffset_u = 0, dnoffset_u = 0;
-		if (nnoffset > 0x14) {
-			nnoffset_u = (int)serializer.read(4, "net netame offset (unicode)");
-			dnoffset_u = (int)serializer.read(4, "dev netame offset (unicode)");
-		}
-		
-		serializer.seek(pos + nnoffset - serializer.getPosition());
-		netname = serializer.readString(pos + size - serializer.getPosition(), "netname");
-		if (dnoffset != 0) {
-			serializer.seek(pos + dnoffset - serializer.getPosition());
-			devname = serializer.readString(pos + size - serializer.getPosition(), "devname");
-		}
+		try (var block = serializer.beginBlock("CNRLink")) {
+			int pos = serializer.getPosition();
+			int size = (int)serializer.read(4, Serializer.BLOCK_SIZE_NAME);
+			if (size < 0x14)
+				throw new ShellLinkException();
+			flags = new CNRLinkFlags(serializer);
+			int nnoffset = (int)serializer.read(4, "net name offset");
+			int dnoffset = (int)serializer.read(4, "dev name offset");
+			if (!flags.isValidDevice())
+				dnoffset = 0;
+			nptype = (int)serializer.read(4, "nptype", CNRLink::npTypeToLog);
+			if (flags.isValidNetType())
+				checkNptype(nptype);
+			else nptype = 0;
+			
+			int nnoffset_u = 0, dnoffset_u = 0;
+			if (nnoffset > 0x14) {
+				nnoffset_u = (int)serializer.read(4, "net name offset (unicode)");
+				dnoffset_u = (int)serializer.read(4, "dev name offset (unicode)");
+			}
+			
+			serializer.seek(pos + nnoffset - serializer.getPosition());
+			netname = serializer.readString(pos + size - serializer.getPosition(), "netname");
+			if (dnoffset != 0) {
+				serializer.seek(pos + dnoffset - serializer.getPosition());
+				devname = serializer.readString(pos + size - serializer.getPosition(), "devname");
+			}
 
-		if (nnoffset_u != 0) {
-			serializer.seek(pos + nnoffset_u - serializer.getPosition());
-			netname = serializer.readUnicodeStringNullTerm(pos + size - serializer.getPosition(), "netname");
-		}
-		
-		if (dnoffset_u != 0) {
-			serializer.seek(pos + dnoffset_u - serializer.getPosition());
-			devname = serializer.readUnicodeStringNullTerm(pos + size - serializer.getPosition(), "devname");
+			if (nnoffset_u != 0) {
+				serializer.seek(pos + nnoffset_u - serializer.getPosition());
+				netname = serializer.readUnicodeStringNullTerm(pos + size - serializer.getPosition(), "netname");
+			}
+			
+			if (dnoffset_u != 0) {
+				serializer.seek(pos + dnoffset_u - serializer.getPosition());
+				devname = serializer.readUnicodeStringNullTerm(pos + size - serializer.getPosition(), "devname");
+			}
 		}
 	}
+
+	private static String npTypeToLog(long value) {
+		Field f = Serializer.findConstField(CNRLink.class, (int)value);
+		return f != null ? f.getName() : "UNKNOWN";
+	}
 	
-	private void checkNptype(int type) throws ShellLinkException {
-		int mod = Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL;
-		for (Field f : this.getClass().getFields()) {
-			try {
-				if ((f.getModifiers() & mod) == mod && type == ((Integer)f.get(null)).intValue())
-					return;
-			} catch (Exception e) {}
+	private static void checkNptype(int type) throws ShellLinkException {
+		if (Serializer.findConstField(CNRLink.class, type) == null) {
+			throw new ShellLinkException("incorrect network type");
 		}
-		throw new ShellLinkException("incorrect network type");
 	}
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		int size = 28;
-		byte[] netname_b = null, devname_b = null;
-		netname_b = netname.getBytes();
-		if (devname != null) devname_b = devname.getBytes();
-		size += netname_b.length + 1;
-		if (devname_b != null) size += devname_b.length + 1;
-		size += netname.length() * 2 + 2;
-		if (devname != null) size += devname.length() * 2 + 2;
-		bw.write4bytes(size);
-		flags.serialize(bw);
-		int off = 28;
-		bw.write4bytes(off); // netname offset
-		off += netname_b.length + 1;
-		if (devname_b != null) {
-			bw.write4bytes(off); // devname offset
-			off += devname_b.length + 1;
-		} else bw.write4bytes(0);
-		bw.write4bytes(nptype);
-		bw.write4bytes(off);
-		off += netname.length() * 2 + 2;
-		if (devname != null) {
-			bw.write4bytes(off);
-			off += devname.length() * 2 + 2;
-		} else bw.write4bytes(0);
-		bw.write(netname_b);
-		bw.write(0);
-		if (devname_b != null) {
-			bw.write(devname_b);
-			bw.write(0);
-		}
-		for (int i=0; i<netname.length(); i++)
-			bw.write2bytes(netname.charAt(i));
-		bw.write2bytes(0);
-		if (devname != null) {
-			for (int i=0; i<devname.length(); i++)
-				bw.write2bytes(devname.charAt(i));
-			bw.write2bytes(0);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		try (var block = serializer.beginBlock("CNRLink")) {
+			int size = 28;
+			byte[] netname_b = null, devname_b = null;
+			netname_b = netname.getBytes();
+			if (devname != null) devname_b = devname.getBytes();
+			size += netname_b.length + 1;
+			if (devname_b != null) size += devname_b.length + 1;
+			size += netname.length() * 2 + 2;
+			if (devname != null) size += devname.length() * 2 + 2;
+			serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+			flags.serialize(serializer);
+			int off = 28;
+			serializer.write(off, 4, "net name offset");
+			off += netname_b.length + 1;
+			if (devname_b != null) {
+				serializer.write(off, 4, "dev name offset");
+				off += devname_b.length + 1;
+			} else {
+				serializer.write(0, 4, "dev name offset");
+			}
+			serializer.write(nptype, 4, "nptype", CNRLink::npTypeToLog);
+			serializer.write(off, 4, "net netame offset (unicode)");
+			off += netname.length() * 2 + 2;
+			if (devname != null) {
+				serializer.write(off, 4, "dev name offset (unicode)");
+				off += devname.length() * 2 + 2;
+			} else {
+				serializer.write(0, 4, "dev name offset (unicode)");
+			}
+			serializer.writeString(netname, "netname");
+			if (devname_b != null) {
+				serializer.writeString(devname, "devname");
+			}
+			serializer.writeUnicodeStringNullTerm(netname, "netname (unicode)");
+			if (devname != null) {
+				serializer.writeUnicodeStringNullTerm(devname, "devname (unicode)");
+			}
 		}
 	}
 	

@@ -38,15 +38,20 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 
 	public Filetime(ByteReader data) throws IOException {
-		this(new Serializer<>(data));
+		this(new Serializer<>(data), "");
 	}
 	
-	public Filetime(Serializer<ByteReader> serializer) throws IOException {
-		this(serializer.read(8, "timestamp"));
+	public Filetime(Serializer<ByteReader> serializer, String name) throws IOException {
+		this();
+		parse(serializer.read(8, name, v -> new Filetime(v).toString()));
 	}
 	
 	public Filetime(long time) {
 		this();
+		parse(time);
+	}
+
+	private void parse(long time) {
 		long millis = time / 10000;
 		fraction = time - millis;
 		setTimeInMillis(millis);
@@ -82,7 +87,15 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write8bytes(toLong());
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serialize(serializer, "");
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer, String name) throws IOException {
+		serializer.write(toLong(), 8, name, v -> new Filetime(v).toString());
 	}
 	
 	public String toString() {

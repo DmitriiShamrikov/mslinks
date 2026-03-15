@@ -52,17 +52,18 @@ public class VistaIDList implements Serializable {
 	}
 	
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		int size = 10;
 		for (byte[] i : list)
 			size += i.length + 2;
-		bw.write2bytes(size);
+
+		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(signature, 4, "signature");
 		for (byte[] i : list) {
-			bw.write2bytes(i.length + 2);
-			for (byte j : i)
-				bw.write(j);
+			serializer.write(i.length, 2, "item id size");
+			serializer.write(i, "item id data");
 		}
-		bw.write2bytes(0);
+		serializer.write(0, 2, "item id size");
 	}
 	
 	public String toString() {

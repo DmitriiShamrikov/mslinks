@@ -19,11 +19,15 @@ import io.ByteWriter;
 import io.Serializer;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import mslinks.Serializable;
 
 public class BitSet32 implements Serializable {
 	private int d;
+
+	public BitSet32() {
+	}
 	
 	public BitSet32(int n) {
 		d = n;
@@ -34,7 +38,32 @@ public class BitSet32 implements Serializable {
 	}
 
 	public BitSet32(Serializer<ByteReader> serializer) throws IOException {
+		parse(serializer);
+	}
+
+	protected void parse(Serializer<ByteReader> serializer) throws IOException {
 		d = (int)serializer.read(4, "bitset");
+	}
+
+	protected String toLog() {
+		StringBuilder builder = new StringBuilder();
+		for(var method : getClass().getDeclaredMethods()) {
+			if (method.getReturnType() == boolean.class && method.getParameterCount() == 0) {
+				try {
+					if ((boolean)method.invoke(this)) {
+						if (builder.length() != 0) {
+							builder.append(" | ");
+						}
+						builder.append(method.getName());
+					}
+				}
+				catch (IllegalAccessException | InvocationTargetException e) {
+
+				}
+			}
+		}
+
+		return builder.toString();
 	}
 	
 	protected boolean get(int i) {
@@ -50,6 +79,10 @@ public class BitSet32 implements Serializable {
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(d);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serializer.write(d, 4, "bitset");
 	}
 }

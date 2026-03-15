@@ -62,19 +62,16 @@ public class Tracker implements Serializable {
 	}
 
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(size);
-		bw.write4bytes(signature);
-		bw.write4bytes(0x58);
-		bw.write4bytes(0);
-		byte[] b = netbios.getBytes();
-		bw.write(b);
-		for (int i=0; i<16-b.length; i++)
-			bw.write(0);
-		d1.serialize(bw);
-		d2.serialize(bw);
-		db1.serialize(bw);
-		db2.serialize(bw);
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(signature, 4, "signature");
+		serializer.write(0x58, 4, "length");
+		serializer.write(0, 4, "version");
+		serializer.writeStringFixedSize(netbios, 16, "netbios");
+		d1.serialize(serializer);
+		d2.serialize(serializer);
+		db1.serialize(serializer);
+		db2.serialize(serializer);
 	}
 	
 	public String getNetbiosName() { return netbios; }

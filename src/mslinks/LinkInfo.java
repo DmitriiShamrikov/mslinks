@@ -40,46 +40,49 @@ public class LinkInfo implements Serializable {
 	}
 	
 	public LinkInfo(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
-		int pos = serializer.getPosition();
-		int size = (int)serializer.read(4, "size");
-		int hsize = (int)serializer.read(4, "hsize");
-		lif = new LinkInfoFlags(serializer);
-		int vidoffset = (int)serializer.read(4, "vidoffset");
-		int lbpoffset = (int)serializer.read(4, "lbpoffset");
-		int cnrloffset = (int)serializer.read(4, "cnrloffset");
-		int cpsoffset = (int)serializer.read(4, "cpsoffset");
-		int lbpoffset_u = 0, cpfoffset_u = 0;
-		if (hsize >= 0x24) {
-			lbpoffset_u = (int)serializer.read(4, "lbpoffset (unicode)");
-			cpfoffset_u = (int)serializer.read(4, "cpfoffset (unicode)");
+		try (var block = serializer.beginBlock("LinkInfo")) {
+			int pos = serializer.getPosition();
+			int size = (int)serializer.read(4, Serializer.BLOCK_SIZE_NAME);
+			int hsize = (int)serializer.read(4, "hsize");
+			lif = new LinkInfoFlags(serializer);
+			int vidoffset = (int)serializer.read(4, "vidoffset");
+			int lbpoffset = (int)serializer.read(4, "lbpoffset");
+			int cnrloffset = (int)serializer.read(4, "cnrloffset");
+			int cpsoffset = (int)serializer.read(4, "cpsoffset");
+			int lbpoffset_u = 0, cpfoffset_u = 0;
+			if (hsize >= 0x24) {
+				lbpoffset_u = (int)serializer.read(4, "lbpoffset (unicode)");
+				cpfoffset_u = (int)serializer.read(4, "cpfoffset (unicode)");
+			}
+			
+			if (lif.hasVolumeIDAndLocalBasePath()) {
+				serializer.seek(pos + vidoffset - serializer.getPosition());
+				vid = new VolumeID(serializer);
+				serializer.seek(pos + lbpoffset - serializer.getPosition());
+				localBasePath = serializer.readString(pos + size - serializer.getPosition(), "localBasePath");
+			}
+			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
+				serializer.seek(pos + cnrloffset - serializer.getPosition());
+				cnrlink = new CNRLink(serializer);
+				serializer.seek(pos + cpsoffset - serializer.getPosition());
+				commonPathSuffix = serializer.readString(pos + size - serializer.getPosition(), "commonPathSuffix");
+			}
+			if (lif.hasVolumeIDAndLocalBasePath() && lbpoffset_u != 0) {
+				serializer.seek(pos + lbpoffset_u - serializer.getPosition());
+				localBasePath = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "localBasePath");
+			}
+			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix() && cpfoffset_u != 0) {
+				serializer.seek(pos + cpfoffset_u - serializer.getPosition());
+				commonPathSuffix = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "commonPathSuffix");
+			}
+			
+			serializer.seek(pos + size - serializer.getPosition());
 		}
-		
-		if (lif.hasVolumeIDAndLocalBasePath()) {
-			serializer.seek(pos + vidoffset - serializer.getPosition());
-			vid = new VolumeID(serializer);
-			serializer.seek(pos + lbpoffset - serializer.getPosition());
-			localBasePath = serializer.readString(pos + size - serializer.getPosition(), "localBasePath");
-		}
-		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			serializer.seek(pos + cnrloffset - serializer.getPosition());
-			cnrlink = new CNRLink(serializer);
-			serializer.seek(pos + cpsoffset - serializer.getPosition());
-			commonPathSuffix = serializer.readString(pos + size - serializer.getPosition(), "commonPathSuffix");
-		}
-		if (lif.hasVolumeIDAndLocalBasePath() && lbpoffset_u != 0) {
-			serializer.seek(pos + lbpoffset_u - serializer.getPosition());
-			localBasePath = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "localBasePath");
-		}
-		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix() && cpfoffset_u != 0) {
-			serializer.seek(pos + cpfoffset_u - serializer.getPosition());
-			commonPathSuffix = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "commonPathSuffix");
-		}
-		
-		serializer.seek(pos + size - serializer.getPosition());
 	}
 
-	public void serialize(ByteWriter bw) throws IOException {
-		int pos = bw.getPosition();
+	@Override
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		int pos = serializer.getPosition();
 		int hsize = 28;
 		if (localBasePath != null || commonPathSuffix != null) 
 			hsize += 8;
@@ -111,63 +114,62 @@ public class LinkInfo implements Serializable {
 			size += 2;
 		}
 		
-		
-		bw.write4bytes(size);
-		bw.write4bytes(hsize);
-		lif.serialize(bw);
-		int off = hsize;
-		if (lif.hasVolumeIDAndLocalBasePath()) {
-			bw.write4bytes(off); // volumeid offset
-			off += vid_b.length;
-			bw.write4bytes(off); // localBasePath offset
-			off += localBasePath_b.length + 1;
-		} else {
-			bw.write4bytes(0); // volumeid offset
-			bw.write4bytes(0); // localBasePath offset
-		}
-		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			bw.write4bytes(off); // CommonNetworkRelativeLink offset 
-			off += cnrlink_b.length;
-			bw.write4bytes(off); // commonPathSuffix
-			off += commonPathSuffix_b.length + 1;
-		} else {
-			bw.write4bytes(0); // CommonNetworkRelativeLinkOffset
-			bw.write4bytes(size - (hsize > 28 ? 4 : 1)); // fake commonPathSuffix offset 
-		}
-		if (hsize > 28) {
+		try (var block = serializer.beginBlock("LinkInfo")) {
+			serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+			serializer.write(hsize, 4, "hsize");
+			lif.serialize(serializer);
+			int off = hsize;
 			if (lif.hasVolumeIDAndLocalBasePath()) {
-				bw.write4bytes(off); // LocalBasePathOffsetUnicode
-				off += localBasePath.length() * 2 + 2;
-				bw.write4bytes(size - 2); // fake CommonPathSuffixUnicode offset
-			} else  {
-				bw.write4bytes(0);
-				bw.write4bytes(off); // CommonPathSuffixUnicode offset 
-				off += commonPathSuffix.length() * 2 + 2;
-			}
-		}
-		
-		if (lif.hasVolumeIDAndLocalBasePath()) {
-			bw.write(vid_b);
-			bw.write(localBasePath_b);
-			bw.write(0);
-		}
-		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			bw.write(cnrlink_b);
-			bw.write(commonPathSuffix_b);
-			bw.write(0);
-		}
-		
-		if (hsize > 28) {
-			if (lif.hasVolumeIDAndLocalBasePath()) {
-				bw.writeUnicodeStringNullTerm(localBasePath);
+				serializer.write(off, 4, "vidoffset"); // volumeid offset
+				off += vid_b.length;
+				serializer.write(off, 4, "lbpoffset"); // localBasePath offset
+				off += localBasePath_b.length + 1;
+			} else {
+				serializer.write(0, 4, "vidoffset"); // volumeid offset
+				serializer.write(0, 4, "lbpoffset"); // localBasePath offset
 			}
 			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-				bw.writeUnicodeStringNullTerm(commonPathSuffix);
+				serializer.write(off, 4, "cnrloffset"); // CommonNetworkRelativeLink offset 
+				off += cnrlink_b.length;
+				serializer.write(off, 4, "cpsloffset"); // commonPathSuffix
+				off += commonPathSuffix_b.length + 1;
+			} else {
+				serializer.write(0, 4, "cnrloffset"); // CommonNetworkRelativeLinkOffset
+				serializer.write(size - (hsize > 28 ? 4 : 1), 4, "cpsloffset"); // fake commonPathSuffix offset 
 			}
+			if (hsize > 28) {
+				if (lif.hasVolumeIDAndLocalBasePath()) {
+					serializer.write(off, 4, "lbpoffset (unicode)"); // LocalBasePathOffsetUnicode
+					off += localBasePath.length() * 2 + 2;
+					serializer.write(size - 2, 4, "cpfoffset (unicode)"); // fake CommonPathSuffixUnicode offset
+				} else  {
+					serializer.write(0, 4, "lbpoffset (unicode)");
+					serializer.write(off, 4, "cpfoffset (unicode)"); // CommonPathSuffixUnicode offset 
+					off += commonPathSuffix.length() * 2 + 2;
+				}
+			}
+			
+			if (lif.hasVolumeIDAndLocalBasePath()) {
+				vid.serialize(serializer);
+				serializer.writeString(localBasePath, "localBasePath");
+			}
+			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
+				cnrlink.serialize(serializer);
+				serializer.writeString(commonPathSuffix, "commonPathSuffix");
+			}
+			
+			if (hsize > 28) {
+				if (lif.hasVolumeIDAndLocalBasePath()) {
+					serializer.writeUnicodeStringNullTerm(localBasePath, "localBasePath (unicode)");
+				}
+				if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
+					serializer.writeUnicodeStringNullTerm(commonPathSuffix, "commonPathSuffix (unicode)");
+				}
+			}
+			
+			while (serializer.getPosition() < pos + size)
+				serializer.write(0, "padding");
 		}
-		
-		while (bw.getPosition() < pos + size)
-			bw.write(0);
 	}
 	
 	private byte[] toByteArray(Serializable o) throws IOException {

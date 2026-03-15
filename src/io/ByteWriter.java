@@ -101,7 +101,7 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 		for (int i = start; i != end; i += step)
 		{
 			long shift = i * 8;
-			long mask = 0xff << shift;
+			long mask = 0xffL << shift;
 			long b = (value & mask) >> shift;
 			write(b);
 		}
@@ -211,12 +211,38 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 	}
 
 	/**
+	 * writes 0-terminated string in default code page
+	 */
+	public void writeStringFixedSize(String s, int size) throws IOException {
+		byte[] bytes = s.getBytes();
+		write(bytes, 0, Math.min(bytes.length, size));
+		int numToPad = size - bytes.length;
+		for (int i = 0; i < numToPad; ++i) {
+			write(0);
+		}
+	}
+
+	/**
 	 * writes 0-terminated string in unicode
 	 */
 	public void writeUnicodeStringNullTerm(String s) throws IOException {
 		for (int i=0; i<s.length(); i++)
 			write2bytes(s.charAt(i));
 		write2bytes(0);
+	}
+
+	/**
+	 * writes 0-terminated string in unicode
+	 */
+	public void writeUnicodeStringFixedSize(String s, int size) throws IOException {
+		int maxChars = Math.min(s.length(),  size / 2);
+		for (int i=0; i<maxChars; i++) {
+			write2bytes(s.charAt(i));
+		}
+		int numToPad = size - maxChars * 2;
+		for (int i = 0; i < numToPad; ++i) {
+			write(0);
+		}
 	}
 
 	/**

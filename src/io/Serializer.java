@@ -150,16 +150,16 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	{
 		if (isLoggingActive())
 		{
-			boolean hasBeenFullyRead = true;
+			boolean hasBeenFullySerialized = true;
 			var block = m_Blocks.get(m_Blocks.size() - 1);
 			if (block.size > 0)
 			{
-				int bytesRead = getPosition() - block.startPos;
-				if (bytesRead < block.size)
+				int bytesSerialized = getPosition() - block.startPos;
+				if (bytesSerialized < block.size)
 				{
-					hasBeenFullyRead = false;
+					hasBeenFullySerialized = false;
 
-					int size = block.size - bytesRead;
+					int size = block.size - bytesSerialized;
 					byte[] arr = new byte[size];
 					try
 					{
@@ -172,7 +172,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 				}
 			}
 
-			if (hasBeenFullyRead && block.formatter != null)
+			if (hasBeenFullySerialized && block.formatter != null)
 			{
 				try
 				{
@@ -327,6 +327,11 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 		return str;
 	}
 
+	public void write(byte[] b, String name) throws IOException
+	{
+		write(b, 0, b.length, name);
+	}
+
 	public void write(byte[] b, int off, int len, String name) throws IOException
 	{
 		logArray(b, off, len, name, null);
@@ -357,32 +362,80 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 	public void writeString(String s, String name) throws IOException
 	{
-		if (isLoggingActive())
-		{
-			var memStream = new ByteArrayOutputStream();
-			try (var writer = getTempWriter(memStream))
-			{
-				writer.writeString(s);
-			}
-			logArray(memStream.toByteArray(), memStream.size(), name, arr -> s);
-		}
-
-		asWriter().writeString(s);
+		writeString(s, -1, name);
 	}
 
-	public void writeUnicodeStringNullTerm(String s, String name) throws IOException
+	public void writeStringFixedSize(String s, int maxSize, String name) throws IOException
+	{
+		writeString(s, maxSize, name);
+	}
+
+	private void writeString(String s, int maxSize, String name) throws IOException
 	{
 		if (isLoggingActive())
 		{
 			var memStream = new ByteArrayOutputStream();
 			try (var writer = getTempWriter(memStream))
 			{
-				writer.writeUnicodeStringNullTerm(s);
+				if (maxSize == -1)
+				{
+					writer.writeString(s);
+				}
+				else
+				{
+					writer.writeStringFixedSize(s, maxSize);
+				}
 			}
 			logArray(memStream.toByteArray(), memStream.size(), name, arr -> s);
 		}
 
-		asWriter().writeUnicodeStringNullTerm(s);
+		if (maxSize == -1)
+		{
+			asWriter().writeString(s);
+		}
+		else
+		{
+			asWriter().writeStringFixedSize(s, maxSize);
+		}
+	}
+
+	public void writeUnicodeStringNullTerm(String s, String name) throws IOException
+	{
+		writeUnicodeStringNullTerm(s, -1, name);
+	}
+
+	public void writeUnicodeStringFixedSize(String s, int maxSize, String name) throws IOException
+	{
+		writeUnicodeStringNullTerm(s, maxSize, name);
+	}
+
+	private void writeUnicodeStringNullTerm(String s, int maxSize, String name) throws IOException
+	{
+		if (isLoggingActive())
+		{
+			var memStream = new ByteArrayOutputStream();
+			try (var writer = getTempWriter(memStream))
+			{
+				if (maxSize == -1)
+				{
+					writer.writeUnicodeStringNullTerm(s);
+				}
+				else
+				{
+					writer.writeUnicodeStringFixedSize(s, maxSize);
+				}
+			}
+			logArray(memStream.toByteArray(), memStream.size(), name, arr -> s);
+		}
+
+		if (maxSize == -1)
+		{
+			asWriter().writeUnicodeStringNullTerm(s);
+		}
+		else
+		{
+			asWriter().writeUnicodeStringFixedSize(s, maxSize);
+		}
 	}
 
 	public void writeUnicodeStringSizePadded(String s, String name) throws IOException
@@ -434,7 +487,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			for (int i = start; i != end; i += step)
 			{
 				long shift = i * 8;
-				long mask = 0xff << shift;
+				long mask = 0xffL << shift;
 				long b = ((value & mask) >>> shift) & 0xff;
 				System.out.printf("%02X ", b);
 			}
@@ -492,6 +545,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 	private void logIndentation()
 	{
+		System.out.printf("%4d: ", getPosition());
 		for (int i = 0; i < m_Blocks.size(); ++i)
 		{
 			System.out.printf("   ");
