@@ -63,43 +63,44 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 	}
 
 	@Override
-	public void close() throws IOException
-	{
-		stream.close();
+	public void close() throws IOException {
+		if (stream != null) {
+			stream.close();
+		}
 		super.close();
 	}
 
 	@Override
-	public void write(byte[] b, int off, int len) throws IOException
-	{
+	public void write(byte[] b, int off, int len) throws IOException {
 		pos += len;
-		stream.write(b, off, len);
+		if (stream != null) {
+			stream.write(b, off, len);
+		}
 	}
 	
 	@Override
 	public void write(int b) throws IOException {
 		pos++;
-		stream.write(b);
+		if (stream != null) {
+			stream.write(b);
+		}
 	}
 
 	public void write(long value, int numBytes) throws IOException {
-		if (numBytes > 8)
-		{
+		if (numBytes > 8) {
 			throw new IOException(String.format("Can't write %d bytes at a time", numBytes));
 		}
 
 		int start = 0;
 		int end = numBytes;
 		int step = 1;
-		if (!le)
-		{
+		if (!le) {
 			start = numBytes - 1;
 			end = -1;
 			step = -1;
 		}
 
-		for (int i = start; i != end; i += step)
-		{
+		for (int i = start; i != end; i += step) {
 			long shift = i * 8;
 			long mask = 0xffL << shift;
 			long b = (value & mask) >> shift;

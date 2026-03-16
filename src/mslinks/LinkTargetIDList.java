@@ -18,7 +18,6 @@ import io.ByteReader;
 import io.ByteWriter;
 import io.Serializer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 
@@ -64,24 +63,20 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		int size = 2;
-		byte[][] b = new byte[size()][];
-		int i = 0;
-		for (ItemID j : this) {
-			ByteArrayOutputStream ba = new ByteArrayOutputStream();
-			ByteWriter w = new ByteWriter(ba);
-			
-			j.serialize(w);
-			b[i++] = ba.toByteArray();
+		int[] itemSizes = new int[this.size()];
+		for (int i = 0; i < this.size(); ++i) {
+			ByteWriter bw = new ByteWriter(null);			
+			this.get(i).serialize(bw);
+			itemSizes[i] = bw.getPosition() + 2;
+			size += itemSizes[i];
 		}
-		for (byte[] j : b)
-			size += j.length + 2;
 		
 		try (var block = serializer.beginBlock("LinkTargetIDList")) {
 			serializer.write(size, 2, Serializer.BLOCK_SIZE_NAME);
-			for (int j = 0; j < this.size(); ++j) {
+			for (int i = 0; i < this.size(); ++i) {
 				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
-					serializer.write(b[j].length + 2, 2, Serializer.BLOCK_SIZE_NAME);
-					this.get(j).serialize(serializer);
+					serializer.write(itemSizes[i], 2, Serializer.BLOCK_SIZE_NAME);
+					this.get(i).serialize(serializer);
 				}
 			}
 			serializer.write(0, 2, Serializer.BLOCK_SIZE_NAME);

@@ -18,7 +18,6 @@ import io.ByteReader;
 import io.ByteWriter;
 import io.Serializer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
@@ -87,21 +86,23 @@ public class LinkInfo implements Serializable {
 		if (localBasePath != null || commonPathSuffix != null) 
 			hsize += 8;
 		
-		byte[] vid_b = null, localBasePath_b = null, cnrlink_b = null, commonPathSuffix_b = null;
+		byte[] localBasePath_b = null, commonPathSuffix_b = null;
+		int vidSize = 0;
+		int cnrlinkSize = 0;
 		if (lif.hasVolumeIDAndLocalBasePath()) {
-			vid_b = toByteArray(vid);
+			vidSize = calcSize(vid);
 			localBasePath_b = localBasePath.getBytes();
 			commonPathSuffix_b = new byte[0];
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-			cnrlink_b = toByteArray(cnrlink);
+			cnrlinkSize = calcSize(cnrlink);
 			commonPathSuffix_b = commonPathSuffix.getBytes();
 		}
 		
 		int size = hsize
-				+ (vid_b == null? 0 : vid_b.length)
+				+ vidSize
 				+ (localBasePath_b == null? 0 : localBasePath_b.length + 1)
-				+ (cnrlink_b == null? 0 : cnrlink_b.length)
+				+ cnrlinkSize
 				+ commonPathSuffix_b.length + 1;
 		
 		if (hsize > 28) {
@@ -121,7 +122,7 @@ public class LinkInfo implements Serializable {
 			int off = hsize;
 			if (lif.hasVolumeIDAndLocalBasePath()) {
 				serializer.write(off, 4, "vidoffset"); // volumeid offset
-				off += vid_b.length;
+				off += vidSize;
 				serializer.write(off, 4, "lbpoffset"); // localBasePath offset
 				off += localBasePath_b.length + 1;
 			} else {
@@ -130,7 +131,7 @@ public class LinkInfo implements Serializable {
 			}
 			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
 				serializer.write(off, 4, "cnrloffset"); // CommonNetworkRelativeLink offset 
-				off += cnrlink_b.length;
+				off += cnrlinkSize;
 				serializer.write(off, 4, "cpsloffset"); // commonPathSuffix
 				off += commonPathSuffix_b.length + 1;
 			} else {
@@ -172,11 +173,10 @@ public class LinkInfo implements Serializable {
 		}
 	}
 	
-	private byte[] toByteArray(Serializable o) throws IOException {
-		ByteArrayOutputStream arr = new ByteArrayOutputStream();
-		ByteWriter bt = new ByteWriter(arr);
-		o.serialize(bt);
-		return arr.toByteArray();
+	private int calcSize(Serializable o) throws IOException {
+		ByteWriter bw = new ByteWriter(null);
+		o.serialize(bw);
+		return bw.getPosition();
 	}
 	
 	public VolumeID getVolumeID() { return vid; }
