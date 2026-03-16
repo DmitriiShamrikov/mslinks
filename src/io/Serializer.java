@@ -155,19 +155,29 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			if (block.size > 0)
 			{
 				int bytesSerialized = getPosition() - block.startPos;
-				if (bytesSerialized < block.size)
+				if (m_Stream instanceof ByteReader)
 				{
-					hasBeenFullySerialized = false;
+					if (bytesSerialized < block.size)
+					{
+						hasBeenFullySerialized = false;
 
-					int size = block.size - bytesSerialized;
-					byte[] arr = new byte[size];
-					try
-					{
-						read(arr, 0, size, "leftover data");
+						int size = block.size - bytesSerialized;
+						byte[] arr = new byte[size];
+						try
+						{
+							read(arr, 0, size, "leftover data");
+						}
+						catch (Exception e)
+						{
+							System.out.printf("failed to read leftover data (%d bytes) because: %s", size, e.getMessage());
+						}
 					}
-					catch (Exception e)
+				}
+				else
+				{
+					if (bytesSerialized != block.size)
 					{
-						System.out.printf("failed to read leftover data (%d bytes) because: %s", size, e.getMessage());
+						System.out.printf("Written %d bytes while expeced %d. This will not work", bytesSerialized, block.size);
 					}
 				}
 			}
