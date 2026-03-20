@@ -31,23 +31,24 @@ public class GUID implements Serializable {
 	private int d1;
 	private short d2;
 	private short d3;
-	private short d4;
-	private long d5;
+	private byte[] d4 = new byte[8];
 	
 	public GUID() {
 		d1 = r.nextInt();
 		d2 = (short)r.nextInt();
 		d3 = (short)r.nextInt();
-		d4 = (short)r.nextInt();
-		d5 = r.nextLong() & 0xffffffffffffL;
+		for (int i = 0; i < d4.length; ++i) {
+			d4[i] = (byte)r.nextInt();
+		}
 	}
 	
 	public GUID(byte[] d) {
 		d1 = Bytes.makeIntL(d[0], d[1], d[2], d[3]);
 		d2 = Bytes.makeShortL(d[4], d[5]);
 		d3 = Bytes.makeShortL(d[6], d[7]);
-		d4 = Bytes.makeShortB(d[8], d[9]);
-		d5 = Bytes.makeLongB((byte)0, (byte)0, d[10], d[11], d[12], d[13], d[14], d[15]);
+		for (int i = 0; i < d4.length; ++i) {
+			d4[i] = d[8 + i];
+		}
 	}
 
 	public GUID(ByteReader data) throws IOException {
@@ -59,10 +60,7 @@ public class GUID implements Serializable {
 			d1 = (int)serializer.read(4, "d1", null);
 			d2 = (short)serializer.read(2, "d2", null);
 			d3 = (short)serializer.read(2, "d3", null);
-			serializer.changeEndiannes();
-			d4 = (short)serializer.read(2, "d4", null);
-			d5 = serializer.read(6, "d5", null);
-			serializer.changeEndiannes();
+			serializer.read(d4, 0, d4.length, "d4");
 		}
 	}
 	
@@ -77,19 +75,26 @@ public class GUID implements Serializable {
 		d2 = Bytes.makeShortB(b[0], b[1]);
 		b = parse(p[2]);
 		d3 = Bytes.makeShortB(b[0], b[1]);
-		d4 = (short)Long.parseLong(p[3], 16);
-		d5 = Long.parseLong(p[4], 16);
+		d4[0] = (byte)Long.parseLong(p[3].substring(0, 2), 16);
+		d4[1] = (byte)Long.parseLong(p[3].substring(2, 4), 16);
+		d4[2] = (byte)Long.parseLong(p[4].substring(0, 2), 16);
+		d4[3] = (byte)Long.parseLong(p[4].substring(2, 4), 16);
+		d4[4] = (byte)Long.parseLong(p[4].substring(4, 6), 16);
+		d4[5] = (byte)Long.parseLong(p[4].substring(6, 8), 16);
+		d4[6] = (byte)Long.parseLong(p[4].substring(8, 10), 16);
+		d4[7] = (byte)Long.parseLong(p[4].substring(10, 12), 16);
 	}
 	
 	private byte[] parse(String s) {
-		byte[] b = new byte[s.length() >> 1];
+		byte[] b = new byte[s.length() / 2];
 		for (int i=0, j=0; j<s.length(); i++, j+=2)
 			b[i] = (byte)Long.parseLong(s.substring(j, j+2), 16);
 		return b;
 	}
 	
 	public String toString() {
-		return String.format("%08X-%04X-%04X-%04X-%012X", d1, d2, d3, d4, d5);
+		return String.format("%08X-%04X-%04X-%04X-%012X", d1, d2, d3,
+			Bytes.makeShortB(d4[0], d4[1]), Bytes.makeLongB((byte)0, (byte)0, d4[2], d4[3], d4[4], d4[5], d4[6], d4[7]));
 	}
 
 	private String toLog() {
@@ -110,13 +115,18 @@ public class GUID implements Serializable {
 			return false;
 
 		GUID g = (GUID)o;
-		return d1 == g.d1 && d2 == g.d2 && d3 == g.d3 && d4 == g.d4 && d5 == g.d5;
+		for (int i = 0; i < d4.length; ++i) {
+			if (d4[i] != g.d4[i])
+				return false;
+		}
+
+		return d1 == g.d1 && d2 == g.d2 && d3 == g.d3;
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return (int)(d1 ^ d2 ^ d3 ^ d4 ^ ((d5 & 0xffffffff00000000l) >> 32) ^ (d5 & 0xffffffffl));
+		return (int)(d1 ^ d2 ^ d3 ^ Bytes.makeIntL(d4[0], d4[1], d4[2], d4[3]) ^ Bytes.makeIntL(d4[4], d4[5], d4[6], d4[7]));
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
@@ -128,10 +138,7 @@ public class GUID implements Serializable {
 			serializer.write(d1, 4, "d1");
 			serializer.write(d2, 2, "d2");
 			serializer.write(d3, 2, "d3");
-			serializer.changeEndiannes();
-			serializer.write(d4, 2, "d4");
-			serializer.write(d5, 6, "d5");
-			serializer.changeEndiannes();
+			serializer.write(d4, "d4");
 		}
 	}
 }

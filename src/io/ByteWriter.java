@@ -35,12 +35,6 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 	}
 
 	@Override
-	public ByteWriter changeEndiannes() {
-		le = !le;
-		return this;
-	}
-
-	@Override
 	public ByteWriter setLittleEndian() {
 		le = true;
 		return this;

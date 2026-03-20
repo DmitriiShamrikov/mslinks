@@ -101,11 +101,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	{
 		return m_Stream.getPosition();
 	}
-	
-	public T changeEndiannes()
-	{
-		return m_Stream.changeEndiannes();
-	}
+
 
 	public boolean isLittleEndian()
 	{

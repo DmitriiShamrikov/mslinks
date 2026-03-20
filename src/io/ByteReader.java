@@ -35,13 +35,7 @@ public class ByteReader extends InputStream implements SerializerStream<ByteRead
 	public int getPosition() {
 		return pos;
 	}
-
-	@Override
-	public ByteReader changeEndiannes() {
-		le = !le;
-		return this;
-	}
-
+	
 	@Override
 	public ByteReader setLittleEndian() {
 		le = true;

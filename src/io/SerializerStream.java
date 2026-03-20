@@ -19,7 +19,6 @@ import java.io.Closeable;
 public interface SerializerStream<T> extends Closeable
 {
 	public int getPosition();
-	public T changeEndiannes();
 	public T setLittleEndian();
 	public T setBigEndian();
 	public boolean isLittleEndian();
