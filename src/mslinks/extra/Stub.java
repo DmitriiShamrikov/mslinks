@@ -41,7 +41,7 @@ public class Stub implements Serializable {
 	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		serializer.write(data.length + 8, 4, Serializer.BLOCK_SIZE_NAME);
-		serializer.write(sign, 4, "signature");
+		serializer.write(sign, 4, "signature", v -> getClass().getName());
 		serializer.write(data, "data");
 	}
 

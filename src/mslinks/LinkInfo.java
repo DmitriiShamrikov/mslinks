@@ -55,27 +55,27 @@ public class LinkInfo implements Serializable {
 			}
 			
 			if (lif.hasVolumeIDAndLocalBasePath()) {
-				serializer.seek(pos + vidoffset - serializer.getPosition());
+				serializer.seekTo(pos + vidoffset);
 				vid = new VolumeID(serializer);
-				serializer.seek(pos + lbpoffset - serializer.getPosition());
+				serializer.seekTo(pos + lbpoffset);
 				localBasePath = serializer.readString(pos + size - serializer.getPosition(), "localBasePath");
 			}
 			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
-				serializer.seek(pos + cnrloffset - serializer.getPosition());
+				serializer.seekTo(pos + cnrloffset);
 				cnrlink = new CNRLink(serializer);
-				serializer.seek(pos + cpsoffset - serializer.getPosition());
+				serializer.seekTo(pos + cpsoffset);
 				commonPathSuffix = serializer.readString(pos + size - serializer.getPosition(), "commonPathSuffix");
 			}
 			if (lif.hasVolumeIDAndLocalBasePath() && lbpoffset_u != 0) {
-				serializer.seek(pos + lbpoffset_u - serializer.getPosition());
-				localBasePath = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "localBasePath");
+				serializer.seekTo(pos + lbpoffset_u);
+				localBasePath = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "localBasePath (unicode)");
 			}
 			if (lif.hasCommonNetworkRelativeLinkAndPathSuffix() && cpfoffset_u != 0) {
-				serializer.seek(pos + cpfoffset_u - serializer.getPosition());
-				commonPathSuffix = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "commonPathSuffix");
+				serializer.seekTo(pos + cpfoffset_u);
+				commonPathSuffix = serializer.readUnicodeStringNullTerm((pos + size - serializer.getPosition()) / 2, "commonPathSuffix (unicode)");
 			}
 			
-			serializer.seek(pos + size - serializer.getPosition());
+			serializer.seekTo(pos + size);
 		}
 	}
 

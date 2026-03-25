@@ -144,7 +144,7 @@ public class ConsoleData implements Serializable {
 	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
-		serializer.write(signature, 4, "signature");
+		serializer.write(signature, 4, "signature", v -> getClass().getName());
 		serializer.write(textFG | (textBG << 4), 2, "text color", ConsoleData::colorIndexToLog);
 		serializer.write(popupFG | (popupBG << 4), 2, "popup color", ConsoleData::colorIndexToLog);
 		buffer.serialize(serializer, "buffer");

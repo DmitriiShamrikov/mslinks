@@ -58,7 +58,7 @@ public class VistaIDList implements Serializable {
 			size += i.length + 2;
 
 		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
-		serializer.write(signature, 4, "signature");
+		serializer.write(signature, 4, "signature", v -> getClass().getName());
 		for (byte[] i : list) {
 			serializer.write(i.length, 2, "item id size");
 			serializer.write(i, "item id data");

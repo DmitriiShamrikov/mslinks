@@ -64,7 +64,7 @@ public class Tracker implements Serializable {
 	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
-		serializer.write(signature, 4, "signature");
+		serializer.write(signature, 4, "signature", v -> getClass().getName());
 		serializer.write(0x58, 4, "length");
 		serializer.write(0, 4, "version");
 		serializer.writeStringFixedSize(netbios, 16, "netbios");

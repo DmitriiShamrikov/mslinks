@@ -49,7 +49,7 @@ public class ConsoleFEData implements Serializable {
 	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
-		serializer.write(signature, 4, "signature");
+		serializer.write(signature, 4, "signature", v -> getClass().getName());
 		serializer.write(langs.get(lang) << 16, 4, "console language id");
 	}
 	
