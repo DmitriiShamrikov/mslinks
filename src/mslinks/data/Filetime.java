@@ -38,12 +38,16 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 
 	public Filetime(ByteReader data) throws IOException {
-		this(new Serializer<>(data), "");
+		this(new Serializer<>(data), "Filetime");
 	}
 	
 	public Filetime(Serializer<ByteReader> serializer, String name) throws IOException {
 		this();
-		parse(serializer.read(8, name, v -> new Filetime(v).toString()));
+		try (var block = serializer.beginBlock(name, () -> toString())) {
+			long low = serializer.read(4, "low bits");
+			long high = serializer.read(4, "high bits");
+			parse(high << 32 | low);
+		}
 	}
 	
 	public Filetime(long time) {
@@ -95,7 +99,11 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 
 	public void serialize(Serializer<ByteWriter> serializer, String name) throws IOException {
-		serializer.write(toLong(), 8, name, v -> new Filetime(v).toString());
+		long value = toLong();
+		try (var block = serializer.beginBlock(name, () -> toString())) {
+			serializer.write(value & 0xffffffffL, 4, "low bits");
+			serializer.write(value >>> 32, 4, "high bits");
+		}
 	}
 	
 	public String toString() {

@@ -29,6 +29,11 @@ public class ByteWriter extends OutputStream implements SerializerStream<ByteWri
 		stream = out;
 	}
 
+	public boolean isWritingData()
+	{
+		return stream != null;
+	}
+
 	@Override
 	public int getPosition() {
 		return pos;

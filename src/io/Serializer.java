@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -33,11 +34,16 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	private boolean m_EnableLogging = false;
 	private boolean m_SuspendLogging = false;
 	private ArrayList<Block> m_Blocks = new ArrayList<>();
+	private ArrayList<BlockSize> m_Sizes;
 
-	private class Block
+	private class BlockSize
 	{
 		public int size;
 		public int startPos;
+	}
+
+	private class Block extends BlockSize
+	{
 		public Callable<String> formatter;
 
 		public Block(Callable<String> formatter)
@@ -80,6 +86,11 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	{
 		this(enableLogging);
 		m_Stream = stream;
+		
+		if (stream instanceof ByteWriter && !((ByteWriter)stream).isWritingData())
+		{
+			m_Sizes = new ArrayList<>();
+		}
 	}
 
 	public boolean getSuspendLogging()
@@ -102,6 +113,10 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 		return m_Stream.getPosition();
 	}
 
+	public boolean isWritingData() throws IOException
+	{
+		return asWriter().isWritingData();
+	}
 
 	public boolean isLittleEndian()
 	{
@@ -132,8 +147,12 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	{
 		if (isLoggingActive())
 		{
-			logIndentation();
+			logIndentation(0);
 			System.out.println(name);
+		}
+
+		if (isLoggingActive() || m_Sizes != null)
+		{
 			var block = new Block(formatter);
 			block.startPos = getPosition();
 			m_Blocks.add(block);
@@ -182,15 +201,44 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			{
 				try
 				{
-					logIndentation();
+					logIndentation(0);
 					System.out.printf("|-> %s\n", block.formatter.call());
 				}
 				catch (Exception ex)
 				{
 				}
 			}
+			
+		}
+
+		if (m_Sizes != null)
+		{
+			var block = m_Blocks.get(m_Blocks.size() - 1);
+			block.size = getPosition() - block.startPos;
+			m_Sizes.add(block);
+
+			if (m_Blocks.size() == 1)
+			{
+				m_Sizes.sort((bs1, bs2) -> bs1.startPos - bs2.startPos);
+			}
+		}
+
+		if (isLoggingActive() || m_Sizes != null)
+		{
 			m_Blocks.remove(m_Blocks.size() - 1);
 		}
+	}
+
+	public int getSize(int pos)
+	{
+		for (var block : m_Sizes)
+		{
+			if (block.startPos == pos)
+			{
+				return block.size;
+			}
+		}
+		return 0;
 	}
 	
 	public boolean seek(int n) throws IOException
@@ -207,7 +255,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 		{
 			if (isLoggingActive())
 			{
-				logIndentation();
+				logIndentation(0);
 				builder.delete(0, builder.length());
 			}
 
@@ -340,8 +388,8 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 	public void write(byte[] b, int off, int len, String name) throws IOException
 	{
-		logArray(b, off, len, name, null);
 		asWriter().write(b, off, len);
+		logArray(b, off, len, name, null);
 	}
 
 	public void write(int b, String name) throws IOException
@@ -351,8 +399,8 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	
 	public void write(int b, String name, Function<Long, String> formatter) throws IOException
 	{
-		logByte(b, name, formatter);
 		asWriter().write(b);
+		logByte(b, name, formatter);
 	}
 
 	public void write(long value, int numBytes, String name) throws IOException
@@ -362,8 +410,8 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 	public void write(long value, int numBytes, String name, Function<Long, String> formatter) throws IOException
 	{
-		logValue(value, numBytes, name, formatter);
 		asWriter().write(value, numBytes);
+		logValue(value, numBytes, name, formatter);
 	}
 
 	public void writeString(String s, String name) throws IOException
@@ -378,6 +426,15 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 	private void writeString(String s, int maxSize, String name) throws IOException
 	{
+		if (maxSize == -1)
+		{
+			asWriter().writeString(s);
+		}
+		else
+		{
+			asWriter().writeStringFixedSize(s, maxSize);
+		}
+
 		if (isLoggingActive())
 		{
 			var memStream = new ByteArrayOutputStream();
@@ -394,15 +451,6 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			}
 			logArray(memStream.toByteArray(), memStream.size(), name, arr -> s);
 		}
-
-		if (maxSize == -1)
-		{
-			asWriter().writeString(s);
-		}
-		else
-		{
-			asWriter().writeStringFixedSize(s, maxSize);
-		}
 	}
 
 	public void writeUnicodeStringNullTerm(String s, String name) throws IOException
@@ -417,6 +465,15 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 	private void writeUnicodeStringNullTerm(String s, int maxSize, String name) throws IOException
 	{
+		if (maxSize == -1)
+		{
+			asWriter().writeUnicodeStringNullTerm(s);
+		}
+		else
+		{
+			asWriter().writeUnicodeStringFixedSize(s, maxSize);
+		}
+
 		if (isLoggingActive())
 		{
 			var memStream = new ByteArrayOutputStream();
@@ -433,19 +490,12 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			}
 			logArray(memStream.toByteArray(), memStream.size(), name, arr -> s);
 		}
-
-		if (maxSize == -1)
-		{
-			asWriter().writeUnicodeStringNullTerm(s);
-		}
-		else
-		{
-			asWriter().writeUnicodeStringFixedSize(s, maxSize);
-		}
 	}
 
 	public void writeUnicodeStringSizePadded(String s, String name) throws IOException
 	{
+		asWriter().writeUnicodeStringSizePadded(s);
+
 		if (isLoggingActive())
 		{
 			var memStream = new ByteArrayOutputStream();
@@ -455,15 +505,13 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			}
 			logArray(memStream.toByteArray(), memStream.size(), name, arr -> s);
 		}
-
-		asWriter().writeUnicodeStringSizePadded(s);
 	}
 
 	private void logByte(long value, String name, Function<Long, String> formatter)
 	{
 		if (isLoggingActive())
 		{
-			logIndentation();
+			logIndentation(1);
 			if (formatter == null)
 			{
 				System.out.printf("%02X | %s\n", value, name);
@@ -479,7 +527,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 	{
 		if (isLoggingActive() && numBytes > 0)
 		{
-			logIndentation();
+			logIndentation(numBytes);
 			int start = 0;
 			int end = numBytes;
 			int step = 1;
@@ -522,7 +570,7 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			{
 				if (i % 16 == 0)
 				{
-					logIndentation();
+					logIndentation(arr.length - i);
 				}
 
 				for (int j = 0; j < 16 && j < numBytes - i; ++j)
@@ -543,15 +591,15 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 			if (formatter != null)
 			{
-				logIndentation();
+				logIndentation(0);
 				System.out.printf("  |-> %s\n", formatter.apply(arr));
 			}
 		}
 	}
 
-	private void logIndentation()
+	private void logIndentation(int bytesSerialized)
 	{
-		System.out.printf("%4d: ", getPosition());
+		System.out.printf("%4d: ", getPosition() - bytesSerialized);
 		for (int i = 0; i < m_Blocks.size(); ++i)
 		{
 			System.out.printf("   ");
