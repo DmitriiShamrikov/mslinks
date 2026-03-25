@@ -56,7 +56,11 @@ public class GUID implements Serializable {
 	}
 	
 	public GUID(Serializer<ByteReader> serializer) throws IOException {
-		try (var block = serializer.beginBlock("GUID", this::toLog)) {
+		this(serializer, "GUID");
+	}
+
+	public GUID(Serializer<ByteReader> serializer, String name) throws IOException {
+		try (var block = serializer.beginBlock(name, this::toLog)) {
 			d1 = (int)serializer.read(4, "d1", null);
 			d2 = (short)serializer.read(2, "d2", null);
 			d3 = (short)serializer.read(2, "d3", null);
@@ -133,8 +137,13 @@ public class GUID implements Serializable {
 		serialize(new Serializer<>(bw));
 	}
 
+	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
-		try (var block = serializer.beginBlock("GUID", this::toLog)) {
+		serialize(serializer, "GUID");
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer, String name) throws IOException {
+		try (var block = serializer.beginBlock(name, this::toLog)) {
 			serializer.write(d1, 4, "d1");
 			serializer.write(d2, 2, "d2");
 			serializer.write(d3, 2, "d3");

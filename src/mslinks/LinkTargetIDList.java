@@ -39,23 +39,25 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	public LinkTargetIDList(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
 		try (var block = serializer.beginBlock("LinkTargetIDList")) {
 			int size = (int)serializer.read(2, Serializer.BLOCK_SIZE_NAME);
-			int pos = serializer.getPosition(); 
+			int startPos = serializer.getPosition(); 
 			
 			while (true) {
 				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
+					int offset = serializer.getPosition() - startPos;
 					int itemSize = (int)serializer.read(2, Serializer.BLOCK_SIZE_NAME);
 					if (itemSize == 0)
 						break;
 
 					int typeFlags = serializer.read("typeFlags", ItemID::typeFlagsToLog);
 					var item = ItemID.createItem(typeFlags);
+					item.setOffset(offset);
 					item.load(serializer, itemSize - 3);
 					add(item);
 				}
 			}
 			
-			pos = serializer.getPosition() - pos;
-			if (pos != size) 
+			int serializedSize = serializer.getPosition() - startPos;
+			if (serializedSize != size) 
 				throw new ShellLinkException("unexpected size of LinkTargetIDList");
 		}
 	}
@@ -73,8 +75,10 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 		
 		try (var block = serializer.beginBlock("LinkTargetIDList")) {
 			serializer.write(size, 2, Serializer.BLOCK_SIZE_NAME);
+			int startPos = serializer.getPosition();
 			for (int i = 0; i < this.size(); ++i) {
 				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
+					this.get(i).setOffset(serializer.getPosition() - startPos);
 					serializer.write(itemSizes[i], 2, Serializer.BLOCK_SIZE_NAME);
 					this.get(i).serialize(serializer);
 				}

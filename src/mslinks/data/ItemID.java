@@ -168,6 +168,7 @@ public class ItemID implements Serializable {
 
 
 	protected int typeFlags;
+	protected int offset;
 
 	/**
 	 * @deprecated Instances of this class should not be created directly. The class is going to be abstract
@@ -211,6 +212,13 @@ public class ItemID implements Serializable {
 	@Override
 	public String toString() {
 		return "";
+	}
+
+	public int getOffset() {
+		return offset;
+	}
+	public void setOffset(int off) {
+		offset = off;
 	}
 
 	public int getTypeFlags() {

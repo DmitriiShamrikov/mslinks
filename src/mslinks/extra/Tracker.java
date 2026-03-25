@@ -55,10 +55,10 @@ public class Tracker implements Serializable {
 		int pos = serializer.getPosition();
 		netbios = serializer.readString(16, "netbios name");
 		serializer.seek(pos + 16 - serializer.getPosition());
-		d1 = new GUID(serializer);
-		d2 = new GUID(serializer);
-		db1 = new GUID(serializer);
-		db2 = new GUID(serializer);
+		d1 = new GUID(serializer, "Droid 1");
+		d2 = new GUID(serializer, "Droid 2");
+		db1 = new GUID(serializer, "DroidBirth 1");
+		db2 = new GUID(serializer, "DroidBirth 2");
 	}
 
 	@Override
@@ -68,10 +68,10 @@ public class Tracker implements Serializable {
 		serializer.write(0x58, 4, "length");
 		serializer.write(0, 4, "version");
 		serializer.writeStringFixedSize(netbios, 16, "netbios");
-		d1.serialize(serializer);
-		d2.serialize(serializer);
-		db1.serialize(serializer);
-		db2.serialize(serializer);
+		d1.serialize(serializer, "Droid 1");
+		d2.serialize(serializer, "Droid 2");
+		db1.serialize(serializer, "DroidBirth 1");
+		db2.serialize(serializer, "DroidBirth 2");
 	}
 	
 	public String getNetbiosName() { return netbios; }
@@ -79,6 +79,30 @@ public class Tracker implements Serializable {
 		if (s.length() > 16)
 			throw new ShellLinkException("netbios name length must be <= 16");
 		netbios = s;
+		return this;
+	}
+
+	public GUID getDroid1() { return d1; }
+	public Tracker setDroid1(GUID guid) {
+		d1 = guid;
+		return this;
+	}
+
+	public GUID getDroid2() { return d2; }
+	public Tracker setDroid2(GUID guid) {
+		d1 = guid;
+		return this;
+	}
+
+	public GUID getDroidBirth1() { return db1; }
+	public Tracker setDroidBirth1(GUID guid) {
+		db1 = guid;
+		return this;
+	}
+
+	public GUID getDroidBirth2() { return db2; }
+	public Tracker setDroidBirth2(GUID guid) {
+		db1 = guid;
 		return this;
 	}
 }

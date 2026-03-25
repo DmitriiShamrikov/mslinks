@@ -32,7 +32,12 @@ import java.util.Map;
 import mslinks.data.LinkFlags;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
+import mslinks.extra.Darwin;
 import mslinks.extra.EnvironmentVariable;
+import mslinks.extra.IconEnvironment;
+import mslinks.extra.KnownFolder;
+import mslinks.extra.Shim;
+import mslinks.extra.SpecialFolder;
 import mslinks.extra.Stub;
 import mslinks.extra.Tracker;
 import mslinks.extra.VistaIDList;
@@ -46,7 +51,12 @@ public class ShellLink {
 		ConsoleFEData.signature, ConsoleFEData.class,
 		Tracker.signature, Tracker.class,
 		VistaIDList.signature, VistaIDList.class,
-		EnvironmentVariable.signature, EnvironmentVariable.class
+		EnvironmentVariable.signature, EnvironmentVariable.class,
+		Darwin.signature, Darwin.class,
+		IconEnvironment.signature, IconEnvironment.class,
+		KnownFolder.signature, KnownFolder.class,
+		SpecialFolder.signature, SpecialFolder.class,
+		Shim.signature, Shim.class
 	));
 	
 	
@@ -131,7 +141,11 @@ public class ShellLink {
 				int sign = (int)serializer.read(4, "signature", v -> extraTypes.get((int)(long)v) != null ? extraTypes.get((int)(long)v).getTypeName() : "UNKNOWN");
 				try {
 					Class<?> cl = extraTypes.get(sign);
-					if (cl != null)
+					if (cl == KnownFolder.class)
+						extra.put(sign, new KnownFolder(serializer, size, this));
+					else if (cl == SpecialFolder.class)
+						extra.put(sign, new SpecialFolder(serializer, size, this));
+					else if (cl != null)
 						extra.put(sign, (Serializable)cl.getConstructor(Serializer.class, int.class).newInstance(serializer, size));
 					else
 						extra.put(sign, new Stub(serializer, size, sign));
@@ -292,6 +306,30 @@ public class ShellLink {
 	}
 	public ShellLink removeEnvironmentVariable() {
 		extra.remove(EnvironmentVariable.signature);
+		return this;
+	}
+
+	public Darwin getDarwin() {
+		return (Darwin)getExtraDataBlock(Darwin.signature);
+	}
+	public ShellLink removeDarwin() {
+		extra.remove(Darwin.signature);
+		return this;
+	}
+
+	public IconEnvironment getIconEnvironment() {
+		return (IconEnvironment)getExtraDataBlock(IconEnvironment.signature);
+	}
+	public ShellLink removeIconEnvironment() {
+		extra.remove(IconEnvironment.signature);
+		return this;
+	}
+
+	public KnownFolder getKnownFolder() {
+		return (KnownFolder)getExtraDataBlock(KnownFolder.signature);
+	}
+	public ShellLink removeKnownFolder() {
+		extra.remove(KnownFolder.signature);
 		return this;
 	}
 

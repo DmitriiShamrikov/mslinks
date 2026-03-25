@@ -1,7 +1,7 @@
 /*
 	https://github.com/BlackOverlord666/mslinks
 	
-	Copyright (c) 2015 Dmitrii Shamrikov
+	Copyright (c) 2026 Dmitrii Shamrikov
 
 	Licensed under the WTFPL
 	You may obtain a copy of the License at
@@ -14,32 +14,32 @@
 */
 package mslinks.extra;
 
+import java.io.IOException;
+
 import io.ByteReader;
 import io.ByteWriter;
 import io.Serializer;
 import mslinks.ShellLinkException;
 
-import java.io.IOException;
-
-public class EnvironmentVariable extends StringDataBlock
+public class Darwin extends StringDataBlock
 {
-	public static final int signature = 0xA0000001;
+	public static final int signature = 0xA0000006;
+
+	public Darwin()
+	{
+	}
+
+	public Darwin(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException
+	{
+		super(serializer, sz, "application id");
+	}
 	
-	public EnvironmentVariable()
-	{
-	}
-
-	public EnvironmentVariable(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException
-	{
-		super(serializer, sz, "variable");
-	}
-
 	@Override
 	public void serialize(Serializer<ByteWriter> serializer) throws IOException
 	{
-		super.serialize(serializer, signature, "variable");
+		super.serialize(serializer, signature, "application id");
 	}
 	
-	public String getVariable() { return m_Value; }
-	public EnvironmentVariable setVariable(String s) { m_Value = s; return this; }
+	public String getApplicationId() { return m_Value; }
+	public Darwin setApplicationId(String s) { m_Value = s; return this; }
 }
