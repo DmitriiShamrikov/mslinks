@@ -36,6 +36,7 @@ import mslinks.extra.Darwin;
 import mslinks.extra.EnvironmentVariable;
 import mslinks.extra.IconEnvironment;
 import mslinks.extra.KnownFolder;
+import mslinks.extra.PropertyStore;
 import mslinks.extra.Shim;
 import mslinks.extra.SpecialFolder;
 import mslinks.extra.Stub;
@@ -46,17 +47,18 @@ public class ShellLink {
 
 	public static final String VERSION = "1.1.2";
 	
-	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.of(
-		ConsoleData.signature, ConsoleData.class,
-		ConsoleFEData.signature, ConsoleFEData.class,
-		Tracker.signature, Tracker.class,
-		VistaIDList.signature, VistaIDList.class,
-		EnvironmentVariable.signature, EnvironmentVariable.class,
-		Darwin.signature, Darwin.class,
-		IconEnvironment.signature, IconEnvironment.class,
-		KnownFolder.signature, KnownFolder.class,
-		SpecialFolder.signature, SpecialFolder.class,
-		Shim.signature, Shim.class
+	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.ofEntries(
+		Map.entry(ConsoleData.signature, ConsoleData.class),
+		Map.entry(ConsoleFEData.signature, ConsoleFEData.class),
+		Map.entry(Tracker.signature, Tracker.class),
+		Map.entry(VistaIDList.signature, VistaIDList.class),
+		Map.entry(EnvironmentVariable.signature, EnvironmentVariable.class),
+		Map.entry(Darwin.signature, Darwin.class),
+		Map.entry(IconEnvironment.signature, IconEnvironment.class),
+		Map.entry(KnownFolder.signature, KnownFolder.class),
+		Map.entry(SpecialFolder.signature, SpecialFolder.class),
+		Map.entry(Shim.signature, Shim.class),
+		Map.entry(PropertyStore.signature, PropertyStore.class)
 	));
 	
 	
@@ -285,6 +287,7 @@ public class ShellLink {
 		return this;
 	}
 	
+	public boolean HasConsoleData() { return extra.get(ConsoleData.signature) != null; }
 	public ConsoleData getConsoleData() {
 		return (ConsoleData)getExtraDataBlock(ConsoleData.signature);
 	}
@@ -293,6 +296,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasConsoleFEData() { return extra.get(ConsoleFEData.signature) != null; }
 	public ConsoleFEData getConsoleFEData() {
 		return (ConsoleFEData)getExtraDataBlock(ConsoleFEData.signature);
 	}
@@ -301,6 +305,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasEnvironmentVariable() { return extra.get(EnvironmentVariable.signature) != null; }
 	public EnvironmentVariable getEnvironmentVariable() {
 		return (EnvironmentVariable)getExtraDataBlock(EnvironmentVariable.signature);
 	}
@@ -309,6 +314,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasDarwin() { return extra.get(Darwin.signature) != null; }
 	public Darwin getDarwin() {
 		return (Darwin)getExtraDataBlock(Darwin.signature);
 	}
@@ -317,6 +323,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasIconEnvironment() { return extra.get(IconEnvironment.signature) != null; }
 	public IconEnvironment getIconEnvironment() {
 		return (IconEnvironment)getExtraDataBlock(IconEnvironment.signature);
 	}
@@ -325,6 +332,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasKnownFolder() { return extra.get(KnownFolder.signature) != null; }
 	public KnownFolder getKnownFolder() {
 		return (KnownFolder)getExtraDataBlock(KnownFolder.signature);
 	}
@@ -333,6 +341,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasTracker() { return extra.get(Tracker.signature) != null; }
 	public Tracker getTracker() {
 		return (Tracker)getExtraDataBlock(Tracker.signature);
 	}
@@ -341,11 +350,21 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasVistaIDList() { return extra.get(VistaIDList.signature) != null; }
 	public VistaIDList getVistaIDList() {
 		return (VistaIDList)getExtraDataBlock(VistaIDList.signature);
 	}
 	public ShellLink removeVistaIDList() {
 		extra.remove(VistaIDList.signature);
+		return this;
+	}
+
+	public boolean HasPropertyStore() { return extra.get(PropertyStore.signature) != null; }
+	public PropertyStore getPropertyStore() {
+		return (PropertyStore)getExtraDataBlock(PropertyStore.signature);
+	}
+	public ShellLink removePropertyStore() {
+		extra.remove(PropertyStore.signature);
 		return this;
 	}
 

@@ -26,6 +26,8 @@ import mslinks.Serializable;
 import mslinks.UnsupportedCLSIDException;
 
 public class GUID implements Serializable {
+	public static final GUID ZERO = new GUID(new byte[16]);
+
 	private static Random r = new Random();
 	
 	private int d1;

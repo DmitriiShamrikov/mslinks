@@ -7,6 +7,7 @@ import java.util.Iterator;
 import mslinks.ShellLinkException;
 import mslinks.ShellLinkHeader;
 import mslinks.UnsupportedCLSIDException;
+import mslinks.extra.PropertyStore;
 
 public class Registry {
 	private static class RegistryEnumeration implements Iterable<GUID> {
@@ -108,10 +109,15 @@ public class Registry {
 	public static final GUID CLSID_DOWLOADS;
 	
 	public static final GUID CLSID_LINK_HEADER;
+	public static final GUID PROPERTY_STORAGE_FORMAT_STRING;
 
 	static {
 		CLSID_LINK_HEADER =
 		registerClsid("{00021401-0000-0000-C000-000000000046}", "LinkHeader", ShellLinkHeader.class);
+
+		PROPERTY_STORAGE_FORMAT_STRING =
+		registerClsid("{D5CDD505-2E9C-101B-9397-08002B2CF9AE}", "StringStorageType", PropertyStore.class);
+		
 
 		CLSID_COMPUTER =
 		registerClsid("{20d04fe0-3aea-1069-a2d8-08002b30309d}", "Computer", ItemIDRoot.class);
@@ -148,5 +154,7 @@ public class Registry {
 		registerClsid("{A8CDFF1C-4878-43BE-B5FD-F8091C1C60D0}", "Personal");
 		registerClsid("{F8278C54-A712-415B-B593-B77A2BE0DDA9}", "Profile");
 		registerClsid("{5B934B42-522B-4C34-BBFE-37A3EF7B9C90}", "Public_1");
+
+		registerClsid("{59031A47-3F72-44A7-89C5-5595FE6B30EE}", "User Folder");
 	}
 }
