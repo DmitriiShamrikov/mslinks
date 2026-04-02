@@ -124,19 +124,19 @@ public class HotKeyFlags implements Serializable {
 			builder.append("SHIFT");
 		}
 		if (isCtrl()) {
-			if (!builder.isEmpty()) {
+			if (builder.length() > 0) {
 				builder.append(" + ");
 			}
 			builder.append("CTRL");
 		}
 		if (isAlt()) {
-			if (!builder.isEmpty()) {
+			if (builder.length() > 0) {
 				builder.append(" + ");
 			}
 			builder.append("ALT");
 		}
 		if (low != 0) {
-			if (!builder.isEmpty()) {
+			if (builder.length() > 0) {
 				builder.append(" + ");
 			}
 			builder.append(getKey());

@@ -218,7 +218,7 @@ public class ItemIDFS extends ItemID {
 		var builder = new StringBuilder();
 		Serializer.iterateOverClassConsts(ItemIDFS.class, (field, constValue) -> {
 			if (field.getName().startsWith("FILE_ATTRIBUTE_") && (constValue & value) != 0) {
-				if (!builder.isEmpty()) {
+				if (builder.length() > 0) {
 					builder.append(" | ");
 				}
 				builder.append(field.getName());
