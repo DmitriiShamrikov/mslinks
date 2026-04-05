@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import mslinks.ShellLinkHelper.Options;
 import mslinks.data.LinkFlags;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
@@ -311,6 +312,7 @@ public class ShellLink {
 	}
 	public ShellLink removeEnvironmentVariable() {
 		extra.remove(EnvironmentVariable.signature);
+		header.getLinkFlags().clearHasExpString();
 		return this;
 	}
 
@@ -320,6 +322,7 @@ public class ShellLink {
 	}
 	public ShellLink removeDarwin() {
 		extra.remove(Darwin.signature);
+		header.getLinkFlags().clearHasDarwinID();
 		return this;
 	}
 
@@ -329,6 +332,7 @@ public class ShellLink {
 	}
 	public ShellLink removeIconEnvironment() {
 		extra.remove(IconEnvironment.signature);
+		header.getLinkFlags().clearHasExpIcon();
 		return this;
 	}
 
@@ -359,6 +363,16 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasShim() { return extra.get(Shim.signature) != null; }
+	public VistaIDList getShim() {
+		return (VistaIDList)getExtraDataBlock(Shim.signature);
+	}
+	public ShellLink removeShim() {
+		extra.remove(Shim.signature);
+		header.getLinkFlags().clearRunWithShimLayer();
+		return this;
+	}
+
 	public boolean HasPropertyStore() { return extra.get(PropertyStore.signature) != null; }
 	public PropertyStore getPropertyStore() {
 		return (PropertyStore)getExtraDataBlock(PropertyStore.signature);
@@ -379,20 +393,24 @@ public class ShellLink {
 	}
 	
 	public String resolveTarget() {
-		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildAbsolutePath())
+		var linkFlags = header.getLinkFlags();
+		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
+		if (envBlock != null && !envBlock.getVariable().isEmpty() && linkFlags.preferEnvironmentPath())
+			return envBlock.getVariable();
+		
+		if (linkFlags.hasLinkTargetIDList() && idlist != null && idlist.canBuildAbsolutePath())
 			return idlist.buildPath();
 		
-		if (header.getLinkFlags().hasLinkInfo() && info != null) {
+		if (linkFlags.hasLinkInfo() && info != null) {
 			String path = info.buildPath();
 			if (path != null)
 				return path;
 		}
 		
-		if (linkFileSource != null && header.getLinkFlags().hasRelativePath() && relativePath != null) 
+		if (linkFileSource != null && linkFlags.hasRelativePath() && relativePath != null) 
 			return linkFileSource.resolveSibling(relativePath).normalize().toString();
 
-		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
-		if (envBlock != null && !envBlock.getVariable().isEmpty())
+		if (envBlock != null && !envBlock.getVariable().isEmpty() && linkFlags.hasExpString())
 			return envBlock.getVariable();
 
 		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildPath())
@@ -408,6 +426,12 @@ public class ShellLink {
 			try {
 				block = (Serializable)type.getConstructor().newInstance();
 				extra.put(signature, block);
+				switch (signature) {
+					case EnvironmentVariable.signature: header.getLinkFlags().setHasExpString(); break;
+					case Darwin.signature: header.getLinkFlags().setHasDarwinID(); break;
+					case IconEnvironment.signature: header.getLinkFlags().setHasExpIcon(); break;
+					case Shim.signature: header.getLinkFlags().setRunWithShimLayer(); break;
+				}
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException	| SecurityException e) {
 				e.printStackTrace();
@@ -428,8 +452,9 @@ public class ShellLink {
 	/**
 	 * Set path to target file or directory. Function accepts local paths and network paths.
 	 * Environment variables are accepted but resolved here and aren't kept in the link.
-	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath)}
+	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path, Options... options)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath, Options... options)}
 	 */
+	@SuppressWarnings("removal")
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public ShellLink setTarget(String target) {
 		target = ShellLinkHelper.resolveEnvVariables(target);
@@ -450,7 +475,7 @@ public class ShellLink {
 	}
 
 	/**
-	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath)}
+	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path, Options... options)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath, Options... options)}
 	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target) {
@@ -460,7 +485,7 @@ public class ShellLink {
 	}
 
 	/**
-	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#createLink(String target, String linkpath)}
+	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#createLink(String target, String linkpath, Options... options)}
 	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target, String linkpath) throws IOException {

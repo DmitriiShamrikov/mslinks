@@ -41,5 +41,14 @@ public class EnvironmentVariable extends StringDataBlock
 	}
 	
 	public String getVariable() { return m_Value; }
-	public EnvironmentVariable setVariable(String s) { m_Value = s; return this; }
+	public EnvironmentVariable setVariable(String s) throws ShellLinkException
+	{
+		if (s.length() > 260)
+		{
+			throw new ShellLinkException("Path must not be longer than 260 chars");
+		}
+		
+		m_Value = s;
+		return this;
+	}
 }

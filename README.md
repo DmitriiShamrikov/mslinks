@@ -15,17 +15,13 @@ This library allows opening existing .lnk files as well as creating new ones fro
 * Files and directories on local filesystem with a drive letter as a root (absolute paths like `C:\path\to\target`)
 * Files and directories in Samba shares (network paths like `\\host\share\path\to\target`)
 * Files and directories in special Windows folders, such as Desktop, Documents, Downloads, etc. See available [GUIDs](https://github.com/DmitriiShamrikov/mslinks/wiki/GUIDs-table)
+* Files and directories on local filesystem or in Samba shares with paths containing environment variables (e.g. `%appdata%\path\to\target` or `\\host\\share\%somevar%\path\to\target`)
 
 Planned features:
 
-* Environment variables
 * Non-filesystem targets like Control Panel, Printers, etc
 
 The composition of classes reflect the data layout described in the format [specification](http://msdn.microsoft.com/en-us/library/dd871305.aspx), so it's recommended to take a look there if you are looking for something specific or want a detailed explanation of flags and constants. Otherwise, you can use `ShellLinkHelper` class that provides methods for some general tasks.
-
-**Note regarding character encoding**:
-
-Even though paths can contain Unicode characters, Windows does not use Unicode format *if the characters can be encoded with the system locale* and it doesn't keep code page information inside .lnk files. That means, if you create a link naturally from Windows with non-ASCII characters in the target path, it may be broken when opening it with mslinks because the default encoding in Java is UTF-8 since Java 18 (unless you override it with `-Dfile.encoding` JVM arg) regardless of the system locale. mslinks always forces Unicode when saving links.
 
 ## Examples
 
@@ -88,11 +84,54 @@ import java.io.IOException;
 public class Main {
 	public static void main(String[] args) throws IOException {
 		var link = new ShellLinkHelper(new ShellLink());
-		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "pause.bat", Options.ForceTypeFile);
+		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "testfile.txt", Options.ForceTypeFile);
 		link.saveTo("testlink.lnk");
 	}
 }
 ```
+
+Here is an example using environment variables. Note that Windows adds absolute path to the link as soon as the link is double-clicked and the target file is successfully located (this doesn't inlude inspecting link properties). The EV path still works at this point if the EV value changes but it's not very stable. If you want to avoid this kind of behaviour and prevent Windows changing links, you can set a read-only flag on the link file
+
+```java
+package mslinks;
+
+import java.io.IOException;
+
+public class Main {
+	public static void main(String[] args) throws IOException {
+		var link = new ShellLinkHelper(new ShellLink());
+		link.setEnvironmentVariableTarget("%appdata%\\path\\to\\testfile.txt", Options.ForceTypeFile);
+		link.saveTo("testlink.lnk");
+		new java.io.File("testlink.lnk").setReadOnly();
+	}
+}
+```
+
+## FAQ
+
+Q: How do I make the target file run as administrator?<br/>
+A: `link.getHeader().getLinkFlags().setRunAsUser()`
+
+Q: Can I have a link to another link?<br/>
+A: Yes. Set this flag: `link.getHeader().getLinkFlags().setAllowLinkToLink()`
+
+Q: Can I create a link with a relative (to the link file) path?<br/>
+A: Unfortunately, no. Despite ShellLink having a relative path field, it doesn't work on its own. I haven't found a way to setup a link with relative path only.
+
+Q: Can I see what values are actually being read or written?<br/>
+A: You can manually create a Serializer object with logging enabled (STDOUT). E.g.:
+```
+boolean enableLogging = true;
+var serializer = new Serializer<>(new ByteReader(Files.newInputStream(Path.of("linkfile.lnk"))), enableLogging);
+var link = new ShellLink(serializer);
+```
+
+Q: I created a link from Windows but when I open it in mslinks, the target path is in a wrong encoding.<br/>
+A: This could happen when Windows locale doesn't match the default encoding of your JVM.
+Unicode characters are allowed in path, however Windows does not use Unicode format *if the characters can be encoded with the system locale* and it doesn't keep codepage information inside .lnk files. Before Java 18 the default encoding was the same as system locale, since Java 18 UTF-8 is the default encoding (unless you override it with `-Dfile.encoding` JVM arg). mslinks always forces Unicode when saving links.
+
+Q: I have a link with a an unsupported GUID. Is there a way around it?<br/>
+A: If you are sure that the GUID corresponds to a valid known folder you can add it manually using `Registry.registerClsid("{GUID}", "FolderName");`
 
 ## Download
 

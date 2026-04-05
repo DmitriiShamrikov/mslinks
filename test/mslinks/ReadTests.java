@@ -27,6 +27,8 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ReadTests {
 	private static final boolean ENABLE_LOGGING = false;
@@ -477,5 +479,15 @@ public class ReadTests {
 		assertEquals(3, link.getTargetIdList().size());
 		assertEquals(expectedTarget, link.getTargetIdList().buildPath());
 		assertEquals(absoluteTarget, link.resolveTarget());
+	}
+
+	@Test
+	public void TestEnvVariableLink() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.envvarlink);
+
+		assertTrue(link.getHeader().getLinkFlags().hasExpString());
+		assertFalse(link.getHeader().getLinkFlags().preferEnvironmentPath());
+		assertNotNull(link.getEnvironmentVariable());
+		assertEquals("C:\\%test%\\pause.bat", link.getEnvironmentVariable().getVariable());
 	}
 }

@@ -18,7 +18,6 @@ import io.ByteReader;
 import io.ByteWriter;
 import io.Serializer;
 
-import java.io.File;
 import java.io.IOException;
 
 import mslinks.data.*;
@@ -232,8 +231,8 @@ public class LinkInfo implements Serializable {
 		if (localBasePath != null) {
 			String path = localBasePath;
 			if (commonPathSuffix != null && !commonPathSuffix.equals("")) {
-				if (path.charAt(path.length() - 1) != File.separatorChar)
-					path += File.separatorChar;
+				if (path.charAt(path.length() - 1) != '\\')
+					path += '\\';
 				path += commonPathSuffix;
 			}
 			return path;

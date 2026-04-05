@@ -151,18 +151,21 @@ public class ItemID implements Serializable {
 			break;
 		}
 
-		if (subGroup != 0) {
-			builder.append(" | ");
-		}
-
+		int length = builder.length();
 		String fieldPrefix = prefix;
 		Serializer.iterateOverClassConsts(ItemID.class, (field, val) -> {
 			if (field.getName().startsWith(fieldPrefix) && (val & subGroup) != 0) {
+				builder.append(" | ");
 				builder.append(field.getName());
 				return false;
 			}
 			return true;
 		});
+
+		if (builder.length() == length && subGroup != 0) {
+			builder.append(" | UNKNOWN_SUBGROUP");
+		}
+
 		return builder.toString();
 	}
 

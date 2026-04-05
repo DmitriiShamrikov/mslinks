@@ -15,6 +15,7 @@
 package mslinks;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -227,5 +228,14 @@ public class WriteTests {
 		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "pause.bat", Options.ForceTypeFile);
 
 		assertArrayEquals(WriteTestData.documentslink, serializeLink(link.getLink(), "documentslink"));
+	}
+
+	@Test
+	public void TestEnvVariableLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setEnvironmentVariableTarget("%appdata%\\pause.bat");
+
+		assertEquals("%appdata%\\pause.bat", link.getLink().resolveTarget());
+		assertArrayEquals(WriteTestData.envvarlink, serializeLink(link.getLink(), "envvarlink"));
 	}
 }
