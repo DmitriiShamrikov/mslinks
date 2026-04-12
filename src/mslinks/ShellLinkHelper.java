@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import mslinks.data.GUID;
 import mslinks.data.ItemID;
+import mslinks.data.ItemIDControl;
 import mslinks.data.ItemIDDrive;
 import mslinks.data.ItemIDFS;
 import mslinks.data.ItemIDRoot;
@@ -178,17 +179,28 @@ public class ShellLinkHelper {
 		// although later systems use ItemIDRoot(computer) + ItemIDRegFolder(root clsid) pair, always set root clsid as ItemIDRoot for simplicity
 		idList.add(new ItemIDRoot().setClsid(root));
 
+		boolean isUserFolder = root.equals(Registry.CLSID_USERFOLDER);
+
 		// each segment of the path is directory
 		path = path.replaceAll("^(\\\\|\\/)", "");
 		String[] pathSegments = path.split("\\\\|\\/");
-		for (String i : pathSegments)
-			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(i));
+		if (isUserFolder && pathSegments.length > 0) {
+			idList.add(new ItemIDControl().setName(pathSegments[0]));
+		}
+
+		for (int i = isUserFolder ? 1 : 0; i < pathSegments.length; ++i) {
+			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(pathSegments[i]));
+		}
 
 		link.getHeader().getFileAttributesFlags().setDirecory();
 
 		if (optionsList.contains(Options.ForceTypeFile)) {
 			link.getHeader().getFileAttributesFlags().clearDirecory();
-			idList.getLast().setTypeFlags(ItemID.TYPE_FS_FILE);
+			if (idList.getLast() instanceof ItemIDControl) {
+				((ItemIDControl)idList.getLast()).setIsFile(true);
+			} else if (!(idList.getLast() instanceof ItemIDRoot)) {
+				idList.getLast().setTypeFlags(ItemID.TYPE_FS_FILE);
+			}
 		}
 
 		return this;

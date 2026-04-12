@@ -14,21 +14,25 @@
 */
 package mslinks;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+
 import org.junit.Test;
 
 import io.ByteReader;
 import io.Serializer;
 import mslinks.data.CNRLink;
+import mslinks.data.ItemIDControl;
 import mslinks.data.VolumeID;
 import mslinks.extra.ConsoleData;
-
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class ReadTests {
 	private static final boolean ENABLE_LOGGING = false;
@@ -489,5 +493,49 @@ public class ReadTests {
 		assertFalse(link.getHeader().getLinkFlags().preferEnvironmentPath());
 		assertNotNull(link.getEnvironmentVariable());
 		assertEquals("C:\\%test%\\pause.bat", link.getEnvironmentVariable().getVariable());
+	}
+
+	@Test
+	public void TestUserfolderLinkFileVista() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.userfolderlink_file_vista);
+
+		assertTrue(link.getHeader().getLinkFlags().hasLinkTargetIDList());
+		assertEquals(ItemIDControl.class, link.getTargetIdList().get(1).getClass());
+		assertTrue(((ItemIDControl)link.getTargetIdList().get(1)).getIsFile());
+		assertEquals("<UserFolder>\\ntuser.dat.LOG1", link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\ntuser.dat.LOG1", link.resolveTarget());
+	}
+
+	@Test
+	public void TestUserfolderLinkFolderVista() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.userfolderlink_folder_vista);
+
+		assertTrue(link.getHeader().getLinkFlags().hasLinkTargetIDList());
+		assertEquals(ItemIDControl.class, link.getTargetIdList().get(1).getClass());
+		assertFalse(((ItemIDControl)link.getTargetIdList().get(1)).getIsFile());
+		assertEquals("<UserFolder>\\AppData\\Roaming\\pause.bat", link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\AppData\\Roaming\\pause.bat", link.resolveTarget());
+	}
+
+	@Test
+	public void TestUserfolderLinkFileWin11() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.userfolderlink_file_win11);
+
+		assertTrue(link.getHeader().getLinkFlags().hasLinkTargetIDList());
+		assertEquals(ItemIDControl.class, link.getTargetIdList().get(1).getClass());
+		assertTrue(((ItemIDControl)link.getTargetIdList().get(1)).getIsFile());
+		assertEquals("<UserFolder>\\NTUSER.DAT", link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\NTUSER.DAT", link.resolveTarget());
+	}
+
+	@Test
+	public void TestUserfolderLinkFolderWin11() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.userfolderlink_folder_win11);
+
+		assertTrue(link.getHeader().getLinkFlags().hasLinkTargetIDList());
+		assertEquals(ItemIDControl.class, link.getTargetIdList().get(1).getClass());
+		assertFalse(((ItemIDControl)link.getTargetIdList().get(1)).getIsFile());
+		assertEquals("<UserFolder>\\AppData\\", link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\AppData", link.resolveTarget());
 	}
 }

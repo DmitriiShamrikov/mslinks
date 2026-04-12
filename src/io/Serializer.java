@@ -250,7 +250,6 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 
 		var builder = isLoggingActive() ? new StringBuilder() : null;
 	
-		var reader = asReader();
 		for (int i = 0; i < n; i += 16)
 		{
 			if (isLoggingActive())
@@ -262,7 +261,15 @@ public class Serializer<T extends SerializerStream<T>> implements Closeable
 			int j = 0;
 			for (; j < 16 && j < n - i; ++j)
 			{
-				int value = reader.read();
+				int value = 0;
+				if (m_Stream instanceof ByteReader)
+				{
+					value = ((ByteReader)m_Stream).read();
+				}
+				else
+				{
+					((ByteWriter)m_Stream).write(value);
+				}
 
 				if (isLoggingActive())
 				{

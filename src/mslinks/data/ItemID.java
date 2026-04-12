@@ -87,6 +87,7 @@ public class ItemID implements Serializable {
 	// GROUP_CONTROLPANEL
 	public static final int TYPE_CONTROL_REGITEM = 0x0;
 	public static final int TYPE_CONTROL_REGITEM_EX = 0x1;
+	public static final int TYPE_CONTROL_SPECIAL_FOLDER = 0x4;
 
 	public static ItemID createItem(int typeFlags) throws ShellLinkException {
 		if ((typeFlags & ID_TYPE_JUNCTION) != 0)
@@ -103,6 +104,10 @@ public class ItemID implements Serializable {
 			return new ItemIDDrive(typeFlags);
 		case GROUP_FS:
 			return new ItemIDFS(typeFlags);
+		case GROUP_CONTROLPANEL:
+			if (subGroup == TYPE_CONTROL_SPECIAL_FOLDER)
+				return new ItemIDControl(typeFlags);
+			// fall through
 		default:
 			return new ItemIDUnknown(typeFlags);
 		}

@@ -345,6 +345,15 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasSpecialFolder() { return extra.get(SpecialFolder.signature) != null; }
+	public SpecialFolder getSpecialFolder() {
+		return (SpecialFolder)getExtraDataBlock(SpecialFolder.signature);
+	}
+	public ShellLink removeSpecialFolder() {
+		extra.remove(SpecialFolder.signature);
+		return this;
+	}
+
 	public boolean HasTracker() { return extra.get(Tracker.signature) != null; }
 	public Tracker getTracker() {
 		return (Tracker)getExtraDataBlock(Tracker.signature);

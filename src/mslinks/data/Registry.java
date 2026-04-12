@@ -107,6 +107,7 @@ public class Registry {
 	public static final GUID CLSID_DESKTOP;
 	public static final GUID CLSID_DOCUMENTS;
 	public static final GUID CLSID_DOWLOADS;
+	public static final GUID CLSID_USERFOLDER;
 	
 	public static final GUID CLSID_LINK_HEADER;
 	public static final GUID PROPERTY_STORAGE_FORMAT_STRING;
@@ -128,6 +129,8 @@ public class Registry {
 		registerClsid("{450D8FBA-AD25-11D0-98A8-0800361B1103}", "Documents");
 		registerClsid("{645FF040-5081-101B-9F08-00AA002F954E}", "RecycleBin");
 		registerClsid("{D20EA4E1-3957-11D2-A40B-0C5020524152}", "Fonts"); // WinXP ONLY
+		CLSID_USERFOLDER =
+		registerClsid("{59031A47-3F72-44A7-89C5-5595FE6B30EE}", "UserFolder");
 
 		// Windows 7+
 		registerClsid("{D34A6CA6-62C2-4C34-8A7C-14709C1AD938}", "Links");

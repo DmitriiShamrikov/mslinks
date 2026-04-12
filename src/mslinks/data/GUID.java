@@ -146,9 +146,9 @@ public class GUID implements Serializable {
 
 	public void serialize(Serializer<ByteWriter> serializer, String name) throws IOException {
 		try (var block = serializer.beginBlock(name, this::toLog)) {
-			serializer.write(d1, 4, "d1");
-			serializer.write(d2, 2, "d2");
-			serializer.write(d3, 2, "d3");
+			serializer.write(d1, 4, "d1", null);
+			serializer.write(d2, 2, "d2", null);
+			serializer.write(d3, 2, "d3", null);
 			serializer.write(d4, "d4");
 		}
 	}
