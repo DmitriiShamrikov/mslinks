@@ -242,18 +242,18 @@ public class WriteTests {
 	@Test
 	public void TestUserFolderLinkFolder() throws ShellLinkException, IOException {
 		var link = createLink();
-		link.setSpecialFolderTarget(Registry.CLSID_USERFOLDER, "testfolder\\pause.bat", Options.ForceTypeFile);
+		link.setSpecialFolderTarget(Registry.CLSID_USERFOLDER, "longlongfolder\\pause.bat", Options.ForceTypeFile);
 		
-		assertEquals("<UserFolder>\\testfolder\\pause.bat", link.getLink().resolveTarget());
+		assertEquals("<UserFolder>\\longlongfolder\\pause.bat", link.getLink().resolveTarget());
 		assertArrayEquals(WriteTestData.userfolderlink_folder, serializeLink(link.getLink(), "userfolderlink_folder"));
 	}
 
 	@Test
 	public void TestUserFolderLinkFile() throws ShellLinkException, IOException {
 		var link = createLink();
-		link.setSpecialFolderTarget(Registry.CLSID_USERFOLDER, "longpause.bat", Options.ForceTypeFile);
+		link.setSpecialFolderTarget(Registry.CLSID_USERFOLDER, "pause.bat", Options.ForceTypeFile);
 		
-		assertEquals("<UserFolder>\\longpause.bat", link.getLink().resolveTarget());
+		assertEquals("<UserFolder>\\pause.bat", link.getLink().resolveTarget());
 		assertArrayEquals(WriteTestData.userfolderlink_file, serializeLink(link.getLink(), "userfolderlink_file"));
 	}
 }

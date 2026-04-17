@@ -98,25 +98,53 @@ public class ItemIDControl extends ItemID
 		super.serialize(serializer);
 		serializer.seek(1);
 
-		// size (2) + signature (4) + flags (2) + flags (2) + unknown (10) + shortname + nullterm(1) + unknown(1)
-		int blockSize = 2 + 4 + 2 + 2 + 10 + (m_ShortName.length() + 1) + 1;
+		int shortnameSize = m_ShortName.length() + 1; // + 0-term
+		// pad to even size
+		if (shortnameSize % 2 != 0)
+		{
+			shortnameSize++;
+		}
+		// size (2) + signature (4) + flags (2) + flags (2) + unknown (10) + shortname + nullterm(1)
+		int blockSize = 2 + 4 + 2 + 2 + 10 + shortnameSize;
 		serializer.write(blockSize, 2, "shortname block size");
 		serializer.write(s_Signature, 4, "signature");
 
-		if (m_IsFile)
+		// this seems to be dependant file/folder and if a shortname format is used
+		// but it doesn't look like if specific bits control that
+		short flags1 = 0;
+		short flags2 = 0;
+		if (m_LongName.equals(m_ShortName))
 		{
-			serializer.write(0x001c, 2, "flags");
-			serializer.write(0x0032, 2, "flags");
+			if (m_IsFile)
+			{
+				flags1 = 0x18;
+				flags2 = 0x44;
+			}
+			else
+			{
+				flags1 = 0x16;
+				flags2 = 0x42;
+			}
 		}
 		else
 		{
-			serializer.write(0x0016, 2, "flags");
-			serializer.write(0x0031, 2, "flags");
+			if (m_IsFile)
+			{
+				flags1 = 0x1c;
+				flags2 = 0x48;
+			}
+			else
+			{
+				flags1 = 0x18;
+				flags2 = 0x44;
+			}
 		}
 
+		serializer.write(flags1, 2, "flags");
+		serializer.write(m_IsFile ? 0x0032 : 0x0031, 2, "flags");
+
 		serializer.seek(10);
-		serializer.writeString(m_ShortName, "shortname");
-		serializer.seek(1);
+		serializer.writeStringFixedSize(m_ShortName, shortnameSize, "shortname");
 
 		serializer.seek(2);
 		s_G1.serialize(serializer);
@@ -134,7 +162,7 @@ public class ItemIDControl extends ItemID
 
 		serializer.writeUnicodeStringNullTerm(m_LongName, "longname");
 
-		serializer.write(m_IsFile ? 0x48 : 0x42, 2,"flags");
+		serializer.write(flags2, 2,"flags");
 	}
 
 	@Override

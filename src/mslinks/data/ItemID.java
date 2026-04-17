@@ -261,7 +261,9 @@ public class ItemID implements Serializable {
 		String ext = dotIdx == -1 ? "" : filename.substring(dotIdx + 1);
 
 		String wrongSymbolsPattern = ".*[\\.\"\\/\\\\\\[\\]:;=, ]+.*";
-		return baseName.length() > 8 || ext.length() > 3 || baseName.matches(wrongSymbolsPattern) || ext.matches(wrongSymbolsPattern);
+		return dotIdx != -1 && (baseName.length() > 8 || ext.length() > 3)
+			|| dotIdx == -1 && filename.length() > 12
+			|| baseName.matches(wrongSymbolsPattern) || ext.matches(wrongSymbolsPattern);
 	}
 
 	protected static String generateShortName(String longname) {
