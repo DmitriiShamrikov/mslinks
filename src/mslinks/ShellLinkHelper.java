@@ -173,22 +173,26 @@ public class ShellLinkHelper {
 		if (!optionsList.contains(Options.IgnoreEnvVars) && hasEnvVars(path)) {
 			throw new ShellLinkException("Environment variables are not supported combined with special folders");
 		}
+
+		if (root.equals(Registry.CLSID_COMPUTER)) {
+			throw new ShellLinkException("Can't use Computer guid as a special folder root! Use setLocalTarget with a drive name instead ");
+		}
 		
 		link.getHeader().getLinkFlags().setHasLinkTargetIDList();
 		var idList = link.createTargetIdList();
 		// although later systems use ItemIDRoot(computer) + ItemIDRegFolder(root clsid) pair, always set root clsid as ItemIDRoot for simplicity
 		idList.add(new ItemIDRoot().setClsid(root));
 
-		boolean isUserFolder = root.equals(Registry.CLSID_USERFOLDER);
+		boolean isControlClsid = Registry.isControlClsid(root);
 
 		// each segment of the path is directory
 		path = path.replaceAll("^(\\\\|\\/)", "");
 		String[] pathSegments = path.split("\\\\|\\/");
-		if (isUserFolder && pathSegments.length > 0) {
+		if (isControlClsid && pathSegments.length > 0) {
 			idList.add(new ItemIDControl().setName(pathSegments[0]));
 		}
 
-		for (int i = isUserFolder ? 1 : 0; i < pathSegments.length; ++i) {
+		for (int i = isControlClsid ? 1 : 0; i < pathSegments.length; ++i) {
 			idList.add(new ItemIDFS(ItemID.TYPE_FS_DIRECTORY).setName(pathSegments[i]));
 		}
 
