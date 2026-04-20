@@ -16,6 +16,7 @@ package mslinks.data;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -35,13 +36,26 @@ public class Filetime extends GregorianCalendar implements Serializable {
 		super();
 		setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
-	
+
 	public Filetime(ByteReader data) throws IOException {
-		this(data.read8bytes());
+		this(new Serializer<>(data), "Filetime");
+	}
+	
+	public Filetime(Serializer<ByteReader> serializer, String name) throws IOException {
+		this();
+		try (var block = serializer.beginBlock(name, () -> toString())) {
+			long low = serializer.read(4, "low bits");
+			long high = serializer.read(4, "high bits");
+			parse(high << 32 | low);
+		}
 	}
 	
 	public Filetime(long time) {
 		this();
+		parse(time);
+	}
+
+	private void parse(long time) {
 		long millis = time / 10000;
 		fraction = time - millis;
 		setTimeInMillis(millis);
@@ -77,7 +91,19 @@ public class Filetime extends GregorianCalendar implements Serializable {
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
-		bw.write8bytes(toLong());
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serialize(serializer, "");
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer, String name) throws IOException {
+		long value = toLong();
+		try (var block = serializer.beginBlock(name, () -> toString())) {
+			serializer.write(value & 0xffffffffL, 4, "low bits");
+			serializer.write(value >>> 32, 4, "high bits");
+		}
 	}
 	
 	public String toString() {

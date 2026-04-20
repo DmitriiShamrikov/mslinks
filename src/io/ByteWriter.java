@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteOrder;
 
-public class ByteWriter extends OutputStream {
+public class ByteWriter extends OutputStream implements SerializerStream<ByteWriter> {
 	private boolean le = ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN);
 
 	private OutputStream stream;
@@ -28,141 +28,89 @@ public class ByteWriter extends OutputStream {
 	public ByteWriter(OutputStream out) {
 		stream = out;
 	}
-	
+
+	public boolean isWritingData()
+	{
+		return stream != null;
+	}
+
+	@Override
 	public int getPosition() {
 		return pos;
 	}
-	
-	public ByteWriter changeEndiannes() {
-		le = !le;
-		return this;
-	}
 
+	@Override
 	public ByteWriter setLittleEndian() {
 		le = true;
 		return this;
 	}
 
+	@Override
 	public ByteWriter setBigEndian() {
 		le = false;
 		return this;
 	}
 
 	@Override
-	public void close() throws IOException
-	{
-		stream.close();
+	public boolean isLittleEndian() {
+		return le;
+	}
+
+	@Override
+	public boolean isBigEndian() {
+		return !le;
+	}
+
+	@Override
+	public void close() throws IOException {
+		if (stream != null) {
+			stream.close();
+		}
 		super.close();
 	}
 
 	@Override
-	public void write(byte[] b, int off, int len) throws IOException
-	{
+	public void write(byte[] b, int off, int len) throws IOException {
 		pos += len;
-		stream.write(b, off, len);
+		if (stream != null) {
+			stream.write(b, off, len);
+		}
 	}
 	
 	@Override
 	public void write(int b) throws IOException {
 		pos++;
-		stream.write(b);
+		if (stream != null) {
+			stream.write(b);
+		}
 	}
 
-	public void write(long b) throws IOException {
+	public void write(long value, int numBytes) throws IOException {
+		if (numBytes > 8) {
+			throw new IOException(String.format("Can't write %d bytes at a time", numBytes));
+		}
+
+		int start = 0;
+		int end = numBytes;
+		int step = 1;
+		if (!le) {
+			start = numBytes - 1;
+			end = -1;
+			step = -1;
+		}
+
+		for (int i = start; i != end; i += step) {
+			long shift = i * 8;
+			long mask = 0xffL << shift;
+			long b = (value & mask) >> shift;
+			write(b);
+		}
+	}
+
+	private void write(long b) throws IOException {
 		write((int)b);
 	}
 	
-	public void write2bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		if (le) {
-			write(b0); write(b1);
-		} else {
-			write(b1); write(b0);
-		}
-	}
-	
-	public void write3bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		if (le) {
-			write(b0); write(b1); write(b2);
-		} else {
-			write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write4bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3);
-		} else {
-			write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write5bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4);
-		} else {
-			write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write6bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		long b5 = (n & 0xff0000000000L) >> 40;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5);
-		} else {
-			write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write7bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		long b5 = (n & 0xff0000000000L) >> 40;
-		long b6 = (n & 0xff000000000000L) >> 48;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5); write(b6);
-		} else {
-			write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-	
-	public void write8bytes(long n) throws IOException {
-		long b0 = n & 0xff;
-		long b1 = (n & 0xff00) >> 8;
-		long b2 = (n & 0xff0000) >> 16;
-		long b3 = (n & 0xff000000) >>> 24;
-		long b4 = (n & 0xff00000000L) >> 32;
-		long b5 = (n & 0xff0000000000L) >> 40;
-		long b6 = (n & 0xff000000000000L) >> 48;
-		long b7 = (n & 0xff00000000000000L) >>> 56;
-		if (le) {
-			write(b0); write(b1); write(b2); write(b3); write(b4); write(b5); write(b6); write(b7);
-		} else {
-			write(b7); write(b6); write(b5); write(b4); write(b3); write(b2); write(b1); write(b0);
-		}
-	}
-
 	/**
 	 * writes 0-terminated string in default code page
 	 */
@@ -172,20 +120,46 @@ public class ByteWriter extends OutputStream {
 	}
 
 	/**
+	 * writes 0-terminated string in default code page
+	 */
+	public void writeStringFixedSize(String s, int size) throws IOException {
+		byte[] bytes = s.getBytes();
+		write(bytes, 0, Math.min(bytes.length, size));
+		int numToPad = size - bytes.length;
+		for (int i = 0; i < numToPad; ++i) {
+			write(0);
+		}
+	}
+
+	/**
 	 * writes 0-terminated string in unicode
 	 */
 	public void writeUnicodeStringNullTerm(String s) throws IOException {
 		for (int i=0; i<s.length(); i++)
-			write2bytes(s.charAt(i));
-		write2bytes(0);
+			write(s.charAt(i), 2);
+		write(0, 2);
+	}
+
+	/**
+	 * writes 0-terminated string in unicode
+	 */
+	public void writeUnicodeStringFixedSize(String s, int size) throws IOException {
+		int maxChars = Math.min(s.length(),  size / 2);
+		for (int i=0; i<maxChars; i++) {
+			write(s.charAt(i), 2);
+		}
+		int numToPad = size - maxChars * 2;
+		for (int i = 0; i < numToPad; ++i) {
+			write(0);
+		}
 	}
 
 	/**
 	 * writes unicode string with 2 bytes at the start indicating the length of the string
 	 */
 	public void writeUnicodeStringSizePadded(String s) throws IOException {
-		write2bytes(s.length());
+		write(s.length(), 2);
 		for (int i=0; i<s.length(); i++)
-			write2bytes(s.charAt(i));
+			write(s.charAt(i), 2);
 	}
 }

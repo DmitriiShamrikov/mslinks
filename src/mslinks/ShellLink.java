@@ -16,6 +16,7 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +29,17 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import mslinks.ShellLinkHelper.Options;
 import mslinks.data.LinkFlags;
 import mslinks.extra.ConsoleData;
 import mslinks.extra.ConsoleFEData;
+import mslinks.extra.Darwin;
 import mslinks.extra.EnvironmentVariable;
+import mslinks.extra.IconEnvironment;
+import mslinks.extra.KnownFolder;
+import mslinks.extra.PropertyStore;
+import mslinks.extra.Shim;
+import mslinks.extra.SpecialFolder;
 import mslinks.extra.Stub;
 import mslinks.extra.Tracker;
 import mslinks.extra.VistaIDList;
@@ -40,12 +48,18 @@ public class ShellLink {
 
 	public static final String VERSION = "1.1.2";
 	
-	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.of(
-		ConsoleData.signature, ConsoleData.class,
-		ConsoleFEData.signature, ConsoleFEData.class,
-		Tracker.signature, Tracker.class,
-		VistaIDList.signature, VistaIDList.class,
-		EnvironmentVariable.signature, EnvironmentVariable.class
+	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.ofEntries(
+		Map.entry(ConsoleData.signature, ConsoleData.class),
+		Map.entry(ConsoleFEData.signature, ConsoleFEData.class),
+		Map.entry(Tracker.signature, Tracker.class),
+		Map.entry(VistaIDList.signature, VistaIDList.class),
+		Map.entry(EnvironmentVariable.signature, EnvironmentVariable.class),
+		Map.entry(Darwin.signature, Darwin.class),
+		Map.entry(IconEnvironment.signature, IconEnvironment.class),
+		Map.entry(KnownFolder.signature, KnownFolder.class),
+		Map.entry(SpecialFolder.signature, SpecialFolder.class),
+		Map.entry(Shim.signature, Shim.class),
+		Map.entry(PropertyStore.signature, PropertyStore.class)
 	));
 	
 	
@@ -75,86 +89,111 @@ public class ShellLink {
 	}
 	
 	public ShellLink(Path file) throws IOException, ShellLinkException {
-		this(Files.newInputStream(file));
+		parse(file);
+	}
+
+	private void parse(Path file) throws ShellLinkException, IOException {
+		try (InputStream in = Files.newInputStream(file)) {
+			parse(in);
+		}
 		linkFileSource = file.toAbsolutePath();
 	}
 	
 	public ShellLink(InputStream in) throws IOException, ShellLinkException {
-		try (var reader = new ByteReader(in)) {
-			parse(reader);
-		}
+		parse(in);
+	}
+
+	private void parse(InputStream in) throws ShellLinkException, IOException {
+		parse(new ByteReader(in));
 	}
 
 	public ShellLink(ByteReader reader) throws IOException, ShellLinkException {
-		try (reader) {
-			parse(reader);
-		}
+		parse(reader);
+	}
+
+	private void parse(ByteReader reader) throws ShellLinkException, IOException {
+		parse(new Serializer<>(reader));
+	}
+
+	public ShellLink(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
+		parse(serializer);
 	}
 	
-	private void parse(ByteReader data) throws ShellLinkException, IOException {
-		header = new ShellLinkHeader(data);
+	private void parse(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
+		header = new ShellLinkHeader(serializer);
 		LinkFlags lf = header.getLinkFlags();
 		if (lf.hasLinkTargetIDList()) 
-			idlist = new LinkTargetIDList(data);
+			idlist = new LinkTargetIDList(serializer);
 		if (lf.hasLinkInfo())
-			info = new LinkInfo(data);
+			info = new LinkInfo(serializer);
 		if (lf.hasName())
-			name = data.readUnicodeStringSizePadded();
+			name = serializer.readUnicodeStringSizePadded("name");
 		if (lf.hasRelativePath())
-			relativePath = data.readUnicodeStringSizePadded();
+			relativePath = serializer.readUnicodeStringSizePadded("relativePath");
 		if (lf.hasWorkingDir()) 
-			workingDir = data.readUnicodeStringSizePadded();
+			workingDir = serializer.readUnicodeStringSizePadded("workingDir");
 		if (lf.hasArguments()) 
-			cmdArgs = data.readUnicodeStringSizePadded();
+			cmdArgs = serializer.readUnicodeStringSizePadded("cmdArgs");
 		if (lf.hasIconLocation())
-			iconLocation = data.readUnicodeStringSizePadded();
+			iconLocation = serializer.readUnicodeStringSizePadded("iconLocation");
 		
 		while (true) {
-			int size = (int)data.read4bytes();
-			if (size < 4) break;
-			int sign = (int)data.read4bytes();
-			try {
-				Class<?> cl = extraTypes.get(sign);
-				if (cl != null)
-					extra.put(sign, (Serializable)cl.getConstructor(ByteReader.class, int.class).newInstance(data, size));
-				else
-					extra.put(sign, new Stub(data, size, sign));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
-				e.printStackTrace();
+			try (var block = serializer.beginBlock("ExtraBlock")) {
+				int size = (int)serializer.read(4, Serializer.BLOCK_SIZE_NAME);
+				if (size < 4) break;
+				int sign = (int)serializer.read(4, "signature", v -> extraTypes.get((int)(long)v) != null ? extraTypes.get((int)(long)v).getTypeName() : "UNKNOWN");
+				try {
+					Class<?> cl = extraTypes.get(sign);
+					if (cl == KnownFolder.class)
+						extra.put(sign, new KnownFolder(serializer, size, this));
+					else if (cl == SpecialFolder.class)
+						extra.put(sign, new SpecialFolder(serializer, size, this));
+					else if (cl != null)
+						extra.put(sign, (Serializable)cl.getConstructor(Serializer.class, int.class).newInstance(serializer, size));
+					else
+						extra.put(sign, new Stub(serializer, size, sign));
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException	| SecurityException e) {	
+					e.printStackTrace();
+				}
 			}
 		}
 	}
 
 	public void serialize(OutputStream out) throws IOException {
-		var bw = new ByteWriter(out);
-		serialize(bw);
-		out.close();
+		serialize(new ByteWriter(out));
 	}
 
 	public void serialize(ByteWriter bw) throws IOException {
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		LinkFlags lf = header.getLinkFlags();
-		header.serialize(bw);
+		header.serialize(serializer);
 		if (lf.hasLinkTargetIDList())
-			idlist.serialize(bw);
+			idlist.serialize(serializer);
 		
 		if (lf.hasLinkInfo())
-			info.serialize(bw);
+			info.serialize(serializer);
 		if (lf.hasName())
-			bw.writeUnicodeStringSizePadded(name);
+			serializer.writeUnicodeStringSizePadded(name, "name");
 		if (lf.hasRelativePath())
-			bw.writeUnicodeStringSizePadded(relativePath);
+			serializer.writeUnicodeStringSizePadded(relativePath, "relativePath");
 		if (lf.hasWorkingDir()) 
-			bw.writeUnicodeStringSizePadded(workingDir);
+			serializer.writeUnicodeStringSizePadded(workingDir, "workingDir");
 		if (lf.hasArguments()) 
-			bw.writeUnicodeStringSizePadded(cmdArgs);
+			serializer.writeUnicodeStringSizePadded(cmdArgs, "cmdArgs");
 		if (lf.hasIconLocation())
-			bw.writeUnicodeStringSizePadded(iconLocation);
+			serializer.writeUnicodeStringSizePadded(iconLocation, "iconLocation");
 		
-		for (Serializable i : extra.values())
-			i.serialize(bw);
+		for (Serializable i : extra.values()) {
+			try (var block = serializer.beginBlock("ExtraBlock")) {
+				i.serialize(serializer);
+			}
+		}
 		
-		bw.write4bytes(0);
+		serializer.write(0, 4, Serializer.BLOCK_SIZE_NAME);
 	}
 	
 	public ShellLinkHeader getHeader() { return header; }
@@ -249,6 +288,7 @@ public class ShellLink {
 		return this;
 	}
 	
+	public boolean HasConsoleData() { return extra.get(ConsoleData.signature) != null; }
 	public ConsoleData getConsoleData() {
 		return (ConsoleData)getExtraDataBlock(ConsoleData.signature);
 	}
@@ -257,6 +297,7 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasConsoleFEData() { return extra.get(ConsoleFEData.signature) != null; }
 	public ConsoleFEData getConsoleFEData() {
 		return (ConsoleFEData)getExtraDataBlock(ConsoleFEData.signature);
 	}
@@ -265,14 +306,55 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasEnvironmentVariable() { return extra.get(EnvironmentVariable.signature) != null; }
 	public EnvironmentVariable getEnvironmentVariable() {
 		return (EnvironmentVariable)getExtraDataBlock(EnvironmentVariable.signature);
 	}
 	public ShellLink removeEnvironmentVariable() {
 		extra.remove(EnvironmentVariable.signature);
+		header.getLinkFlags().clearHasExpString();
 		return this;
 	}
 
+	public boolean HasDarwin() { return extra.get(Darwin.signature) != null; }
+	public Darwin getDarwin() {
+		return (Darwin)getExtraDataBlock(Darwin.signature);
+	}
+	public ShellLink removeDarwin() {
+		extra.remove(Darwin.signature);
+		header.getLinkFlags().clearHasDarwinID();
+		return this;
+	}
+
+	public boolean HasIconEnvironment() { return extra.get(IconEnvironment.signature) != null; }
+	public IconEnvironment getIconEnvironment() {
+		return (IconEnvironment)getExtraDataBlock(IconEnvironment.signature);
+	}
+	public ShellLink removeIconEnvironment() {
+		extra.remove(IconEnvironment.signature);
+		header.getLinkFlags().clearHasExpIcon();
+		return this;
+	}
+
+	public boolean HasKnownFolder() { return extra.get(KnownFolder.signature) != null; }
+	public KnownFolder getKnownFolder() {
+		return (KnownFolder)getExtraDataBlock(KnownFolder.signature);
+	}
+	public ShellLink removeKnownFolder() {
+		extra.remove(KnownFolder.signature);
+		return this;
+	}
+
+	public boolean HasSpecialFolder() { return extra.get(SpecialFolder.signature) != null; }
+	public SpecialFolder getSpecialFolder() {
+		return (SpecialFolder)getExtraDataBlock(SpecialFolder.signature);
+	}
+	public ShellLink removeSpecialFolder() {
+		extra.remove(SpecialFolder.signature);
+		return this;
+	}
+
+	public boolean HasTracker() { return extra.get(Tracker.signature) != null; }
 	public Tracker getTracker() {
 		return (Tracker)getExtraDataBlock(Tracker.signature);
 	}
@@ -281,11 +363,31 @@ public class ShellLink {
 		return this;
 	}
 
+	public boolean HasVistaIDList() { return extra.get(VistaIDList.signature) != null; }
 	public VistaIDList getVistaIDList() {
 		return (VistaIDList)getExtraDataBlock(VistaIDList.signature);
 	}
 	public ShellLink removeVistaIDList() {
 		extra.remove(VistaIDList.signature);
+		return this;
+	}
+
+	public boolean HasShim() { return extra.get(Shim.signature) != null; }
+	public VistaIDList getShim() {
+		return (VistaIDList)getExtraDataBlock(Shim.signature);
+	}
+	public ShellLink removeShim() {
+		extra.remove(Shim.signature);
+		header.getLinkFlags().clearRunWithShimLayer();
+		return this;
+	}
+
+	public boolean HasPropertyStore() { return extra.get(PropertyStore.signature) != null; }
+	public PropertyStore getPropertyStore() {
+		return (PropertyStore)getExtraDataBlock(PropertyStore.signature);
+	}
+	public ShellLink removePropertyStore() {
+		extra.remove(PropertyStore.signature);
 		return this;
 	}
 
@@ -300,20 +402,24 @@ public class ShellLink {
 	}
 	
 	public String resolveTarget() {
-		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildAbsolutePath())
+		var linkFlags = header.getLinkFlags();
+		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
+		if (envBlock != null && !envBlock.getVariable().isEmpty() && linkFlags.preferEnvironmentPath())
+			return envBlock.getVariable();
+		
+		if (linkFlags.hasLinkTargetIDList() && idlist != null && idlist.canBuildAbsolutePath())
 			return idlist.buildPath();
 		
-		if (header.getLinkFlags().hasLinkInfo() && info != null) {
+		if (linkFlags.hasLinkInfo() && info != null) {
 			String path = info.buildPath();
 			if (path != null)
 				return path;
 		}
 		
-		if (linkFileSource != null && header.getLinkFlags().hasRelativePath() && relativePath != null) 
+		if (linkFileSource != null && linkFlags.hasRelativePath() && relativePath != null) 
 			return linkFileSource.resolveSibling(relativePath).normalize().toString();
 
-		var envBlock = (EnvironmentVariable)extra.get(EnvironmentVariable.signature);
-		if (envBlock != null && !envBlock.getVariable().isEmpty())
+		if (envBlock != null && !envBlock.getVariable().isEmpty() && linkFlags.hasExpString())
 			return envBlock.getVariable();
 
 		if (header.getLinkFlags().hasLinkTargetIDList() && idlist != null && idlist.canBuildPath())
@@ -329,6 +435,12 @@ public class ShellLink {
 			try {
 				block = (Serializable)type.getConstructor().newInstance();
 				extra.put(signature, block);
+				switch (signature) {
+					case EnvironmentVariable.signature: header.getLinkFlags().setHasExpString(); break;
+					case Darwin.signature: header.getLinkFlags().setHasDarwinID(); break;
+					case IconEnvironment.signature: header.getLinkFlags().setHasExpIcon(); break;
+					case Shim.signature: header.getLinkFlags().setRunWithShimLayer(); break;
+				}
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException	| SecurityException e) {
 				e.printStackTrace();
@@ -349,8 +461,9 @@ public class ShellLink {
 	/**
 	 * Set path to target file or directory. Function accepts local paths and network paths.
 	 * Environment variables are accepted but resolved here and aren't kept in the link.
-	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath)}
+	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path, Options... options)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath, Options... options)}
 	 */
+	@SuppressWarnings("removal")
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public ShellLink setTarget(String target) {
 		target = ShellLinkHelper.resolveEnvVariables(target);
@@ -371,7 +484,7 @@ public class ShellLink {
 	}
 
 	/**
-	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath)}
+	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#setNetworkTarget(String path, Options... options)} or {@link ShellLinkHelper#setLocalTarget(String drive, String absolutePath, Options... options)}
 	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target) {
@@ -381,7 +494,7 @@ public class ShellLink {
 	}
 
 	/**
-	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#createLink(String target, String linkpath)}
+	 * @deprecated Use new ShellLinkHelper API: {@link ShellLinkHelper#createLink(String target, String linkpath, Options... options)}
 	 */
 	@Deprecated(since = "1.0.7", forRemoval = true)
 	public static ShellLink createLink(String target, String linkpath) throws IOException {

@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -39,37 +40,38 @@ public class Tracker implements Serializable {
 		d1 = db1 = new GUID();
 		d2 = db2 = new GUID("539D9DC6-8293-11E3-8FB0-005056C00008");
 	}
-	
+
 	public Tracker(ByteReader br, int sz) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), sz);
+	}
+	
+	public Tracker(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException {
 		if (sz != size)
 			throw new ShellLinkException();
-		int len = (int)br.read4bytes();
-		if (len < 0x58)
+		int len = (int)serializer.read(4, "length");
+		if (len != 0x58)
 			throw new ShellLinkException();
-		br.read4bytes();
-		int pos = br.getPosition();
-		netbios = br.readString(16);
-		br.seek(pos + 16 - br.getPosition());
-		d1 = new GUID(br);
-		d2 = new GUID(br);
-		db1 = new GUID(br);
-		db2 = new GUID(br);
+		serializer.read(4, "version");
+		int pos = serializer.getPosition();
+		netbios = serializer.readString(16, "netbios name");
+		serializer.seek(pos + 16 - serializer.getPosition());
+		d1 = new GUID(serializer, "Droid 1");
+		d2 = new GUID(serializer, "Droid 2");
+		db1 = new GUID(serializer, "DroidBirth 1");
+		db2 = new GUID(serializer, "DroidBirth 2");
 	}
 
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(size);
-		bw.write4bytes(signature);
-		bw.write4bytes(0x58);
-		bw.write4bytes(0);
-		byte[] b = netbios.getBytes();
-		bw.write(b);
-		for (int i=0; i<16-b.length; i++)
-			bw.write(0);
-		d1.serialize(bw);
-		d2.serialize(bw);
-		db1.serialize(bw);
-		db2.serialize(bw);
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(signature, 4, "signature", v -> getClass().getName());
+		serializer.write(0x58, 4, "length");
+		serializer.write(0, 4, "version");
+		serializer.writeStringFixedSize(netbios, 16, "netbios");
+		d1.serialize(serializer, "Droid 1");
+		d2.serialize(serializer, "Droid 2");
+		db1.serialize(serializer, "DroidBirth 1");
+		db2.serialize(serializer, "DroidBirth 2");
 	}
 	
 	public String getNetbiosName() { return netbios; }
@@ -77,6 +79,30 @@ public class Tracker implements Serializable {
 		if (s.length() > 16)
 			throw new ShellLinkException("netbios name length must be <= 16");
 		netbios = s;
+		return this;
+	}
+
+	public GUID getDroid1() { return d1; }
+	public Tracker setDroid1(GUID guid) {
+		d1 = guid;
+		return this;
+	}
+
+	public GUID getDroid2() { return d2; }
+	public Tracker setDroid2(GUID guid) {
+		d1 = guid;
+		return this;
+	}
+
+	public GUID getDroidBirth1() { return db1; }
+	public Tracker setDroidBirth1(GUID guid) {
+		db1 = guid;
+		return this;
+	}
+
+	public GUID getDroidBirth2() { return db2; }
+	public Tracker setDroidBirth2(GUID guid) {
+		db1 = guid;
 		return this;
 	}
 }

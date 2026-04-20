@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
@@ -27,18 +28,21 @@ public class Stub implements Serializable {
 	private byte[] data;
 
 	public Stub(ByteReader br, int sz, int sgn) throws IOException {
+		this(new Serializer<ByteReader>(br), sz, sgn);
+	}
+
+	public Stub(Serializer<ByteReader> serializer, int sz, int sgn) throws IOException {
 		int len = sz - 8;
 		sign = sgn;
 		data = new byte[len];
-		for (int i=0; i<len; i++)
-			data[i] = (byte)br.read();
+		serializer.read(data, 0, data.length, "stub data");
 	}
 	
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(data.length + 8);
-		bw.write4bytes(sign);
-		bw.write(data);
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serializer.write(data.length + 8, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(sign, 4, "signature", v -> getClass().getName());
+		serializer.write(data, "data");
 	}
 
 }

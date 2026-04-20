@@ -15,6 +15,7 @@
 package mslinks;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -27,19 +28,20 @@ import java.nio.file.StandardOpenOption;
 import org.junit.Test;
 
 import io.ByteWriter;
+import io.Serializer;
 import mslinks.ShellLinkHelper.Options;
 import mslinks.data.Registry;
 import mslinks.extra.ConsoleData.Font;
 
 public class WriteTests {
+	private static final boolean ENABLE_LOGGING = false;
+	private static final boolean DEBUG_EXPORT = false;
 
 	// need some real path to be able to test links in the OS
 	private static final String PROJECT_PATH = "C:\\Programming\\Java\\mslinks";
 	private static final String PROJECT_DRIVE = "C";
 	private static final String PROJECT_DIR = "Programming\\Java\\mslinks";
 	private static final String RELATIVE_PATH = "..\\..";
-
-	private static final boolean DEBUG_EXPORT = false;
 
 	private ShellLinkHelper createLink() {
 		var link = new ShellLink();
@@ -57,9 +59,10 @@ public class WriteTests {
 
 	private byte[] serializeLink(ShellLink link) throws IOException {
 		var stream = new ByteArrayOutputStream();
-		var writer = new ByteWriter(stream);
-		writer.setLittleEndian();
-		link.serialize(writer);
+		var serializer = new Serializer<>(new ByteWriter(stream), ENABLE_LOGGING);
+		serializer.setLittleEndian();
+		link.serialize(serializer);
+		serializer.close();
 		return stream.toByteArray();
 	}
 
@@ -225,5 +228,41 @@ public class WriteTests {
 		link.setSpecialFolderTarget(Registry.CLSID_DOCUMENTS, "pause.bat", Options.ForceTypeFile);
 
 		assertArrayEquals(WriteTestData.documentslink, serializeLink(link.getLink(), "documentslink"));
+	}
+
+	@Test
+	public void TestEnvVariableLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setEnvironmentVariableTarget("%appdata%\\pause.bat");
+
+		assertEquals("%appdata%\\pause.bat", link.getLink().resolveTarget());
+		assertArrayEquals(WriteTestData.envvarlink, serializeLink(link.getLink(), "envvarlink"));
+	}
+
+	@Test
+	public void TestUserFolderLinkFolder() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.CLSID_USERFOLDER, "longlongfolder\\pause.bat", Options.ForceTypeFile);
+		
+		assertEquals("<UserFolder>\\longlongfolder\\pause.bat", link.getLink().resolveTarget());
+		assertArrayEquals(WriteTestData.userfolderlink_folder, serializeLink(link.getLink(), "userfolderlink_folder"));
+	}
+
+	@Test
+	public void TestUserFolderLinkFile() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.CLSID_USERFOLDER, "pause.bat", Options.ForceTypeFile);
+		
+		assertEquals("<UserFolder>\\pause.bat", link.getLink().resolveTarget());
+		assertArrayEquals(WriteTestData.userfolderlink_file, serializeLink(link.getLink(), "userfolderlink_file"));
+	}
+
+	@Test
+	public void TestKnownFolderLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.getClsid("SavedGames"), "pause.bat", Options.ForceTypeFile);
+		
+		assertEquals("<SavedGames>\\pause.bat", link.getLink().resolveTarget());
+		assertArrayEquals(WriteTestData.knownfolderlink, serializeLink(link.getLink(), "knownfolderlink"));
 	}
 }

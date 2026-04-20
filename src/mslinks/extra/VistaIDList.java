@@ -16,6 +16,7 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -31,34 +32,38 @@ public class VistaIDList implements Serializable {
 
 	public VistaIDList() {
 	}
-	
+
 	public VistaIDList(ByteReader br, int size) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), size);
+	}
+	
+	public VistaIDList(Serializer<ByteReader> serializer, int size) throws ShellLinkException, IOException {
 		if (size < 0xa)
 			throw new ShellLinkException();
 		
-		int s = (int)br.read2bytes();
+		int s = (int)serializer.read(2, "item id size");
 		while (s != 0) {
 			s -= 2;
 			byte[] b = new byte[s];
-			for (int i=0; i<s; i++)
-				b[i] = (byte)br.read();
+			serializer.read(b, 0, s, "item id data");
 			list.add(b);
-			s = (int)br.read2bytes();
+			s = (int)serializer.read(2, "item id size");
 		}		
 	}
 	
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		int size = 10;
 		for (byte[] i : list)
 			size += i.length + 2;
-		bw.write2bytes(size);
+
+		serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+		serializer.write(signature, 4, "signature", v -> getClass().getName());
 		for (byte[] i : list) {
-			bw.write2bytes(i.length + 2);
-			for (byte j : i)
-				bw.write(j);
+			serializer.write(i.length, 2, "item id size");
+			serializer.write(i, "item id data");
 		}
-		bw.write2bytes(0);
+		serializer.write(0, 2, "item id size");
 	}
 	
 	public String toString() {

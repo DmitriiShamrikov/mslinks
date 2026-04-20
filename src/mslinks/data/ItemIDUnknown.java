@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 import mslinks.ShellLinkException;
 
 public class ItemIDUnknown extends ItemID {
@@ -30,20 +31,24 @@ public class ItemIDUnknown extends ItemID {
 	}
 
 	@Override
-	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
-		int startPos = br.getPosition();
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
+		int startPos = serializer.getPosition();
 		
-		super.load(br, maxSize);
+		super.load(serializer, maxSize);
 		
-		int bytesRead = br.getPosition() - startPos;
+		int bytesRead = serializer.getPosition() - startPos;
 		data = new byte[maxSize - bytesRead];
-		br.read(data);
+		serializer.read(data, 0, data.length, "data");
 	}
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
-		super.serialize(bw);
-		bw.write(data);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		super.serialize(serializer);
+		serializer.write(data, "data");
 	}
 
 	@Override

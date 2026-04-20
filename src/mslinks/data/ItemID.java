@@ -16,6 +16,7 @@ package mslinks.data;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class ItemID implements Serializable {
 	public static final int ID_TYPE_GROUPMASK = 0x70;
 	public static final int ID_TYPE_INGROUPMASK = 0x0f;
 
+	public static final int GROUP_KF = 0x00;
 	public static final int GROUP_ROOT = 0x10;
 	public static final int GROUP_COMPUTER = 0x20;
 	public static final int GROUP_FS = 0x30;
@@ -86,6 +88,7 @@ public class ItemID implements Serializable {
 	// GROUP_CONTROLPANEL
 	public static final int TYPE_CONTROL_REGITEM = 0x0;
 	public static final int TYPE_CONTROL_REGITEM_EX = 0x1;
+	public static final int TYPE_CONTROL_SPECIAL_FOLDER = 0x4;
 
 	public static ItemID createItem(int typeFlags) throws ShellLinkException {
 		if ((typeFlags & ID_TYPE_JUNCTION) != 0)
@@ -94,6 +97,10 @@ public class ItemID implements Serializable {
 		int group = typeFlags & ID_TYPE_GROUPMASK;
 		int subGroup = typeFlags & ID_TYPE_INGROUPMASK;
 		switch (group) {
+		case GROUP_KF:
+			if (subGroup == 0)
+				return new ItemIDKnownFolder();
+			break;
 		case GROUP_ROOT:
 			return new ItemIDRoot(typeFlags);
 		case GROUP_COMPUTER: 
@@ -102,13 +109,82 @@ public class ItemID implements Serializable {
 			return new ItemIDDrive(typeFlags);
 		case GROUP_FS:
 			return new ItemIDFS(typeFlags);
-		default:
-			return new ItemIDUnknown(typeFlags);
+		case GROUP_CONTROLPANEL:
+			if (subGroup == TYPE_CONTROL_SPECIAL_FOLDER)
+				return new ItemIDControl(typeFlags);
+			break;
 		}
+
+		return new ItemIDUnknown(typeFlags);
+	}
+
+	public static String typeFlagsToLog(long value) {
+		var builder = new StringBuilder();
+		int group = (int)value & ID_TYPE_GROUPMASK;
+		int subGroup = (int)value & ID_TYPE_INGROUPMASK;
+
+		if ((value & ID_TYPE_JUNCTION) != 0) {
+			builder.append("ID_TYPE_JUNCTION");
+			if (group != 0 || subGroup != 0) {
+				builder.append(" | ");
+			}
+		}
+
+		String prefix = "";
+		switch (group) {
+		case GROUP_KF:
+			builder.append("GROUP_KF");
+			break;
+		case GROUP_ROOT:
+			builder.append("GROUP_ROOT");
+			prefix = "TYPE_ROOT_";
+			break;
+		case GROUP_COMPUTER: 
+			builder.append("GROUP_COMPUTER");
+			prefix = "TYPE_DRIVE_";
+			break;
+		case GROUP_FS:
+			builder.append("GROUP_FS");
+			prefix = "TYPE_FS_";
+			break;
+		case GROUP_NET:
+			builder.append("GROUP_NET");
+			prefix = "TYPE_NET_";
+			break;
+		case GROUP_LOC:
+			builder.append("GROUP_LOC");
+			prefix = "TYPE_LOC_";
+			break;
+		case GROUP_CONTROLPANEL:
+			builder.append("GROUP_CONTROLPANEL");
+			prefix = "TYPE_CONTROL_";
+			break;
+		default:
+			builder.append("UNKNOWN_GROUP");
+			break;
+		}
+
+		int length = builder.length();
+		String fieldPrefix = prefix;
+		Serializer.iterateOverClassConsts(ItemID.class, (field, val) -> {
+			if (field.getName().startsWith(fieldPrefix) && (val & subGroup) != 0) {
+				builder.append(" | ");
+				builder.append(field.getName());
+				return false;
+			}
+			return true;
+		});
+
+		if (builder.length() == length && subGroup != 0) {
+			builder.append(" | UNKNOWN_SUBGROUP");
+		}
+
+		return builder.toString();
 	}
 
 
 	protected int typeFlags;
+	protected int offset;
 
 	/**
 	 * @deprecated Instances of this class should not be created directly. The class is going to be abstract
@@ -129,21 +205,36 @@ public class ItemID implements Serializable {
 	}
 
 	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
+		load(new Serializer<>(br), maxSize);
+	}
+
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
 		// DO NOT read type flags here as they have already been read
 		// in order to determine the type of this item id
 	}
 
 	@Override
 	public void serialize(ByteWriter bw) throws IOException {
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
 		if (internalItemId != null)
-			internalItemId.serialize(bw);
+			internalItemId.serialize(serializer);
 		else
-			bw.write(typeFlags);
+			serializer.write(typeFlags, "typeFlags", ItemID::typeFlagsToLog);
 	}
 
 	@Override
 	public String toString() {
 		return "";
+	}
+
+	public int getOffset() {
+		return offset;
+	}
+	public void setOffset(int off) {
+		offset = off;
 	}
 
 	public int getTypeFlags() {
@@ -178,7 +269,9 @@ public class ItemID implements Serializable {
 		String ext = dotIdx == -1 ? "" : filename.substring(dotIdx + 1);
 
 		String wrongSymbolsPattern = ".*[\\.\"\\/\\\\\\[\\]:;=, ]+.*";
-		return baseName.length() > 8 || ext.length() > 3 || baseName.matches(wrongSymbolsPattern) || ext.matches(wrongSymbolsPattern);
+		return dotIdx != -1 && (baseName.length() > 8 || ext.length() > 3)
+			|| dotIdx == -1 && filename.length() > 12
+			|| baseName.matches(wrongSymbolsPattern) || ext.matches(wrongSymbolsPattern);
 	}
 
 	protected static String generateShortName(String longname) {

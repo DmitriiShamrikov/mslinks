@@ -16,53 +16,39 @@ package mslinks.extra;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
+import mslinks.ShellLinkException;
 
 import java.io.IOException;
 
-import mslinks.Serializable;
-import mslinks.ShellLinkException;
-
-public class EnvironmentVariable implements Serializable {
-
+public class EnvironmentVariable extends StringDataBlock
+{
 	public static final int signature = 0xA0000001;
-	public static final int size = 0x314;
 	
-	private String variable;
-	
-	public EnvironmentVariable() {
-		variable = "";
+	public EnvironmentVariable()
+	{
 	}
-	
-	public EnvironmentVariable(ByteReader br, int sz) throws ShellLinkException, IOException {
-		if (sz != size)
-			throw new ShellLinkException();
-		
-		int pos = br.getPosition();
-		variable = br.readString(260);
-		br.seekTo(pos + 260);
-		
-		pos = br.getPosition();
-		String unicodeStr = br.readUnicodeStringNullTerm(260);
-		br.seekTo(pos + 520);
-		if (unicodeStr != null && !unicodeStr.equals(""))
-			variable = unicodeStr;
-	}
-	
-	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write4bytes(size);
-		bw.write4bytes(signature);
-		byte[] b = variable.getBytes();
-		bw.write(b);
-		for (int i=0; i<260-b.length; i++)
-			bw.write(0);
-		for (int i=0; i<variable.length(); i++)
-			bw.write2bytes(variable.charAt(i));
-		for (int i=0; i<260-variable.length(); i++)
-			bw.write2bytes(0);
-	}
-	
-	public String getVariable() { return variable; }
-	public EnvironmentVariable setVariable(String s) { variable = s; return this; }
 
+	public EnvironmentVariable(Serializer<ByteReader> serializer, int sz) throws ShellLinkException, IOException
+	{
+		super(serializer, sz, "variable");
+	}
+
+	@Override
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException
+	{
+		super.serialize(serializer, signature, "variable");
+	}
+	
+	public String getVariable() { return m_Value; }
+	public EnvironmentVariable setVariable(String s) throws ShellLinkException
+	{
+		if (s.length() > 260)
+		{
+			throw new ShellLinkException("Path must not be longer than 260 chars");
+		}
+		
+		m_Value = s;
+		return this;
+	}
 }

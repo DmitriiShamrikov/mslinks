@@ -14,11 +14,14 @@
 */
 package mslinks.data;
 
+import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 import java.io.IOException;
 
 import mslinks.Serializable;
+import mslinks.ShellLinkException;
 
 public class Size implements Serializable{
 	private int x, y;
@@ -30,6 +33,17 @@ public class Size implements Serializable{
 	public Size(int _x, int _y) {
 		x = _x;
 		y = _y;
+	}
+
+	public Size(ByteReader br) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(br), "");
+	}
+	
+	public Size(Serializer<ByteReader> serializer, String name) throws ShellLinkException, IOException {
+		try (var block = serializer.beginBlock(name)) {
+			x = (int)serializer.read(2, "X");
+			y = (int)serializer.read(2, "Y");
+		}
 	}
 
 	public int getX() {
@@ -51,8 +65,14 @@ public class Size implements Serializable{
 	}
 
 	@Override
-	public void serialize(ByteWriter bw) throws IOException {
-		bw.write2bytes(x);
-		bw.write2bytes(y);
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		serialize(serializer, "Size");
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer, String name) throws IOException {
+		try (var block = serializer.beginBlock(name)) { 
+			serializer.write(x, 2, "X");
+			serializer.write(y, 2, "Y");
+		}
 	}	
 }

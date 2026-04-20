@@ -1,7 +1,7 @@
 /*
 	https://github.com/BlackOverlord666/mslinks
 	
-	Copyright (c) 2015 Dmitrii Shamrikov
+	Copyright (c) 2026 Dmitrii Shamrikov
 
 	Licensed under the WTFPL
 	You may obtain a copy of the License at
@@ -12,16 +12,15 @@
 	distributed under the License is distributed on an "AS IS" BASIS,
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 */
-package mslinks;
+package io;
 
-import java.io.IOException;
+import java.io.Closeable;
 
-import io.ByteWriter;
-import io.Serializer;
-
-public interface Serializable {
-	default void serialize(ByteWriter bw) throws IOException {
-		serialize(new Serializer<>(bw));
-	}
-	void serialize(Serializer<ByteWriter> serializer) throws IOException;
+public interface SerializerStream<T> extends Closeable
+{
+	public int getPosition();
+	public T setLittleEndian();
+	public T setBigEndian();
+	public boolean isLittleEndian();
+	public boolean isBigEndian();
 }

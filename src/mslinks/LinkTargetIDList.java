@@ -16,14 +16,16 @@ package mslinks;
 
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 
 import mslinks.data.ItemID;
+import mslinks.data.ItemIDControl;
 import mslinks.data.ItemIDDrive;
 import mslinks.data.ItemIDFS;
+import mslinks.data.ItemIDKnownFolder;
 import mslinks.data.ItemIDRoot;
 import mslinks.data.ItemIDUnknown;
 import mslinks.data.Registry;
@@ -33,45 +35,58 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 	public LinkTargetIDList() {}
 	
 	public LinkTargetIDList(ByteReader data) throws IOException, ShellLinkException {
-		int size = (int)data.read2bytes();
-		int pos = data.getPosition(); 
-		
-		while (true) {
-			int itemSize = (int)data.read2bytes();
-			if (itemSize == 0)
-				break;
-
-			int typeFlags = data.read();
-			var item = ItemID.createItem(typeFlags);
-			item.load(data, itemSize - 3);
-			add(item);
-		}
-		
-		pos = data.getPosition() - pos;
-		if (pos != size) 
-			throw new ShellLinkException("unexpected size of LinkTargetIDList");
+		this(new Serializer<ByteReader>(data));
 	}
 
-	public void serialize(ByteWriter bw) throws IOException {
-		int size = 2;
-		byte[][] b = new byte[size()][];
-		int i = 0;
-		for (ItemID j : this) {
-			ByteArrayOutputStream ba = new ByteArrayOutputStream();
-			ByteWriter w = new ByteWriter(ba);
+	public LinkTargetIDList(Serializer<ByteReader> serializer) throws IOException, ShellLinkException {
+		try (var block = serializer.beginBlock("LinkTargetIDList")) {
+			int size = (int)serializer.read(2, Serializer.BLOCK_SIZE_NAME);
+			int startPos = serializer.getPosition(); 
 			
-			j.serialize(w);
-			b[i++] = ba.toByteArray();
+			while (true) {
+				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
+					int offset = serializer.getPosition() - startPos;
+					int itemSize = (int)serializer.read(2, Serializer.BLOCK_SIZE_NAME);
+					if (itemSize == 0)
+						break;
+
+					int typeFlags = serializer.read("typeFlags", ItemID::typeFlagsToLog);
+					var item = ItemID.createItem(typeFlags);
+					item.setOffset(offset);
+					item.load(serializer, itemSize - 3);
+					add(item);
+				}
+			}
+			
+			int serializedSize = serializer.getPosition() - startPos;
+			if (serializedSize != size) 
+				throw new ShellLinkException("unexpected size of LinkTargetIDList");
 		}
-		for (byte[] j : b)
-			size += j.length + 2;
+	}
+
+	@Override
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		int size = 2;
+		int[] itemSizes = new int[this.size()];
+		for (int i = 0; i < this.size(); ++i) {
+			ByteWriter bw = new ByteWriter(null);			
+			this.get(i).serialize(bw);
+			itemSizes[i] = bw.getPosition() + 2;
+			size += itemSizes[i];
+		}
 		
-		bw.write2bytes(size);
-		for (byte[] j : b) {
-			bw.write2bytes(j.length + 2);
-			bw.write(j);
+		try (var block = serializer.beginBlock("LinkTargetIDList")) {
+			serializer.write(size, 2, Serializer.BLOCK_SIZE_NAME);
+			int startPos = serializer.getPosition();
+			for (int i = 0; i < this.size(); ++i) {
+				try (var itemBlock = serializer.beginBlock("ItemBlock")) {
+					this.get(i).setOffset(serializer.getPosition() - startPos);
+					serializer.write(itemSizes[i], 2, Serializer.BLOCK_SIZE_NAME);
+					this.get(i).serialize(serializer);
+				}
+			}
+			serializer.write(0, 2, Serializer.BLOCK_SIZE_NAME);
 		}
-		bw.write2bytes(0);
 	}
 
 	/**
@@ -113,8 +128,14 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 			if (firstId instanceof ItemIDFS)
 				path.append("<Desktop>\\");
 
-			for (ItemID i : this) {
-				path.append(i.toString());
+			int i = 0;
+			// a known folder is already bound to aspecific absolute location
+			// ItemIDRoot before it doesn't make much sense but without it links don't work
+			if (size() > 1 && get(0) instanceof ItemIDRoot && get(1) instanceof ItemIDKnownFolder) {
+				++i;
+			}
+			for (; i < size(); ++i) {
+				path.append(get(i).toString());
 			}
 		}
 		return path.toString();

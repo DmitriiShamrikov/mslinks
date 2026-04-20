@@ -20,6 +20,7 @@ import mslinks.Serializable;
 import mslinks.ShellLinkException;
 import io.ByteReader;
 import io.ByteWriter;
+import io.Serializer;
 
 public class VolumeID implements Serializable {
 	public static final int DRIVE_UNKNOWN = 0;
@@ -40,68 +41,69 @@ public class VolumeID implements Serializable {
 		dsn = 0;
 		label = "";
 	}
-	
-	public VolumeID(ByteReader data) throws ShellLinkException, IOException {
-		int pos = data.getPosition();
-		int size = (int)data.read4bytes();
-		if (size <= 0x10)
-			throw new ShellLinkException();
-		
-		dt = (int)data.read4bytes();
-		if (dt != DRIVE_NO_ROOT_DIR && dt != DRIVE_REMOVABLE && dt != DRIVE_FIXED 
-				&& dt != DRIVE_REMOTE && dt != DRIVE_CDROM && dt != DRIVE_RAMDISK)
-			dt = DRIVE_UNKNOWN;
-		dsn = (int)data.read4bytes();
-		int vloffset = (int)data.read4bytes();
-		boolean u = false;
-		if (vloffset == 0x14) {
-			vloffset = (int)data.read4bytes();
-			u = true;
-		}
 
-		data.seek(pos + vloffset - data.getPosition());
-		
-		int i=0;
-		if (u) {
-			char[] buf = new char[(size-vloffset)>>1];
-			for (;; i++) {
-				char c = (char)data.read2bytes();
-				if (c == 0) break;
-				buf[i] = c;
+	public VolumeID(ByteReader data) throws ShellLinkException, IOException {
+		this(new Serializer<ByteReader>(data));
+	}
+	
+	public VolumeID(Serializer<ByteReader> serializer) throws ShellLinkException, IOException {
+		try (var block = serializer.beginBlock("VolumeID")) {
+			int pos = serializer.getPosition();
+			int size = (int)serializer.read(4, Serializer.BLOCK_SIZE_NAME);
+			if (size <= 0x10)
+				throw new ShellLinkException();
+			
+			dt = (int)serializer.read(4, "drite type", VolumeID::driveTypeToLog);
+			if (dt != DRIVE_NO_ROOT_DIR && dt != DRIVE_REMOVABLE && dt != DRIVE_FIXED 
+					&& dt != DRIVE_REMOTE && dt != DRIVE_CDROM && dt != DRIVE_RAMDISK)
+				dt = DRIVE_UNKNOWN;
+			dsn = (int)serializer.read(4, "serial number");
+			int vloffset = (int)serializer.read(4, "vloffset");
+			boolean u = false;
+			if (vloffset == 0x14) {
+				vloffset = (int)serializer.read(4, "vloffset (unicode)");
+				u = true;
 			}
-			label = new String(buf, 0, i);
-		} else {
-			byte[] buf = new byte[size-vloffset];
-			for (;; i++) {
-				int b = data.read();
-				if (b == 0) break;
-				buf[i] = (byte)b;
+
+			serializer.seek(pos + vloffset - serializer.getPosition());
+
+			if (u) {
+				label = serializer.readUnicodeStringNullTerm((size-vloffset) / 2, "label (unicode)");
+			} else {
+				label = serializer.readString(size-vloffset, "label");
 			}
-			label = new String(buf, 0, i);
 		}
+	}
+
+	private static String driveTypeToLog(long value) {
+		var f = Serializer.findConstField(VolumeID.class, (int)value);
+		return f != null ? f.getName() : "DRIVE_UNKNOWN";
 	}
 	
 	public void serialize(ByteWriter bw) throws IOException {
-		int size = 16;
-		byte[] label_b = label.getBytes();
-		size += label_b.length + 1;
-		size += 4 + 1 + label.length() * 2 + 2;
-		bw.write4bytes(size);
-		bw.write4bytes(dt);
-		bw.write4bytes(dsn);
-		int off = 20;
-		bw.write4bytes(off);
-		off += label_b.length + 1;		
-		off++;
-		bw.write4bytes(off);
-		off += label.length() * 2 + 2;
-		
-		bw.write(label_b);
-		bw.write(0);
-		bw.write(0);
-		for (int i=0; i<label.length(); i++)
-			bw.write2bytes(label.charAt(i));
-		bw.write2bytes(0);
+		serialize(new Serializer<>(bw));
+	}
+
+	public void serialize(Serializer<ByteWriter> serializer) throws IOException {
+		try (var block = serializer.beginBlock("VolumeID")) {
+			int size = 16;
+			byte[] label_b = label.getBytes();
+			size += label_b.length + 1;
+			size += 4 + 1 + label.length() * 2 + 2;
+			serializer.write(size, 4, Serializer.BLOCK_SIZE_NAME);
+			serializer.write(dt, 4, "drite type", VolumeID::driveTypeToLog);
+			serializer.write(dsn, 4, "serial number");
+			int off = 20;
+			serializer.write(off, 4, "vloffset");
+			off += label_b.length + 1;		
+			off++;
+			serializer.write(off, 4, "vloffset (unicode)");
+			off += label.length() * 2 + 2;
+			
+			serializer.writeString(label, "label");
+			serializer.write(0, "padding ?");
+			serializer.writeUnicodeStringNullTerm(label, "label (unicode)");
+		}
 	}
 	
 	public int getDriveType() { return dt;}

@@ -17,6 +17,7 @@ package mslinks.data;
 import java.io.IOException;
 
 import io.ByteReader;
+import io.Serializer;
 import mslinks.ShellLinkException;
 import mslinks.UnsupportedItemIDException;
 
@@ -35,10 +36,10 @@ public class ItemIDRoot extends ItemIDRegItem {
 	}
 
 	@Override
-	public void load(ByteReader br, int maxSize) throws IOException, ShellLinkException {
-		int endPos = br.getPosition() + maxSize;
-		super.load(br, maxSize);
-		br.seekTo(endPos);
+	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
+		int endPos = serializer.getPosition() + maxSize;
+		super.load(serializer, maxSize);
+		serializer.seekTo(endPos);
 	}
 
 	@Override
