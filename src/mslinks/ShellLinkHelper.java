@@ -160,7 +160,7 @@ public class ShellLinkHelper {
 	/**
 	 * Sets target relative to a special folder defined by a GUID.
 	 * Use {@link Registry} class to get an available GUID by name or predefined constants.
-	 * Note that you can add your own GUIDs available on your system using {@link Registry#registerClsid(String clsid, String clsid, String name, Class<?>... allowedItemIdTypes)}
+	 * Note that you can add your own GUIDs available on your system using {@link Registry#registerClsid(String clsid, String name, int flags, Class<?>... allowedItemIdTypes)}
 	 * @param root a GUID defining a special folder, e.g. Registry.CLSID_DOCUMENTS. Must be registered in the {@link Registry}
 	 * @param path a path relative to the special folder, e.g. "path\to\target"
 	 * @throws ShellLinkException
