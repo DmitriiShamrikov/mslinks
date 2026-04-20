@@ -24,13 +24,14 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-
 import org.junit.Test;
 
 import io.ByteReader;
 import io.Serializer;
 import mslinks.data.CNRLink;
 import mslinks.data.ItemIDControl;
+import mslinks.data.ItemIDKnownFolder;
+import mslinks.data.ItemIDRoot;
 import mslinks.data.VolumeID;
 import mslinks.extra.ConsoleData;
 
@@ -537,5 +538,16 @@ public class ReadTests {
 		assertFalse(((ItemIDControl)link.getTargetIdList().get(1)).getIsFile());
 		assertEquals("<UserFolder>\\AppData\\", link.getTargetIdList().buildPath());
 		assertEquals("C:\\Users\\admin\\AppData", link.resolveTarget());
+	}
+
+	@Test
+	public void TestKnownFolderLink() throws IOException, ShellLinkException {
+		var link = createLink(ReadTestData.knownfolderlink);
+
+		assertTrue(link.getHeader().getLinkFlags().hasLinkTargetIDList());
+		assertEquals(ItemIDRoot.class, link.getTargetIdList().get(0).getClass());
+		assertEquals(ItemIDKnownFolder.class, link.getTargetIdList().get(1).getClass());
+		assertEquals("<Downloads>\\pause.bat", link.getTargetIdList().buildPath());
+		assertEquals("C:\\Users\\admin\\Downloads\\pause.bat", link.resolveTarget());
 	}
 }

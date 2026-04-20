@@ -256,4 +256,13 @@ public class WriteTests {
 		assertEquals("<UserFolder>\\pause.bat", link.getLink().resolveTarget());
 		assertArrayEquals(WriteTestData.userfolderlink_file, serializeLink(link.getLink(), "userfolderlink_file"));
 	}
+
+	@Test
+	public void TestKnownFolderLink() throws ShellLinkException, IOException {
+		var link = createLink();
+		link.setSpecialFolderTarget(Registry.getClsid("SavedGames"), "pause.bat", Options.ForceTypeFile);
+		
+		assertEquals("<SavedGames>\\pause.bat", link.getLink().resolveTarget());
+		assertArrayEquals(WriteTestData.knownfolderlink, serializeLink(link.getLink(), "knownfolderlink"));
+	}
 }
