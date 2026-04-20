@@ -35,7 +35,7 @@ public abstract class ItemIDRegItem extends ItemID {
 	public void load(Serializer<ByteReader> serializer, int maxSize) throws IOException, ShellLinkException {
 		super.load(serializer, maxSize);
 		serializer.read("order");
-		setClsid(new GUID(serializer));
+		clsid = new GUID(serializer);
 	}
 
 	@Override

@@ -85,13 +85,13 @@ public class LinkInfo implements Serializable {
 		if (localBasePath != null || commonPathSuffix != null) 
 			hsize += 8;
 		
-		byte[] localBasePath_b = null, commonPathSuffix_b = null;
+		byte[] localBasePath_b = new byte[0];
+		byte[] commonPathSuffix_b = new byte[0];
 		int vidSize = 0;
 		int cnrlinkSize = 0;
 		if (lif.hasVolumeIDAndLocalBasePath()) {
 			vidSize = calcSize(vid);
 			localBasePath_b = localBasePath.getBytes();
-			commonPathSuffix_b = new byte[0];
 		}
 		if (lif.hasCommonNetworkRelativeLinkAndPathSuffix()) {
 			cnrlinkSize = calcSize(cnrlink);
@@ -100,7 +100,7 @@ public class LinkInfo implements Serializable {
 		
 		int size = hsize
 				+ vidSize
-				+ (localBasePath_b == null? 0 : localBasePath_b.length + 1)
+				+ (localBasePath_b.length == 0 ? 0 : localBasePath_b.length + 1)
 				+ cnrlinkSize
 				+ commonPathSuffix_b.length + 1;
 		
@@ -180,7 +180,7 @@ public class LinkInfo implements Serializable {
 	
 	public VolumeID getVolumeID() { return vid; }
 	/**
-	 * Creates VolumeID and LocalBasePath that is empty string
+	 * Creates VolumeID and LocalBasePath as empty string
 	 */
 	public VolumeID createVolumeID() {	
 		vid = new VolumeID();
@@ -195,11 +195,16 @@ public class LinkInfo implements Serializable {
 	 * If s is null takes no effect 
 	 */
 	public LinkInfo setLocalBasePath(String s) {
-		if (s == null) return this;
+		if (s == null) {
+			vid = null;
+			lif.clearVolumeIDAndLocalBasePath();
+		} else {
+			if (vid == null)
+				vid = new VolumeID();
+			lif.setVolumeIDAndLocalBasePath();
+		}
 		
 		localBasePath = s;
-		if (vid == null) vid = new VolumeID();
-		lif.setVolumeIDAndLocalBasePath();
 		return this;
 	}
 	
@@ -220,10 +225,16 @@ public class LinkInfo implements Serializable {
 	 * If s is null takes no effect 
 	 */
 	public LinkInfo setCommonPathSuffix(String s) {
-		if (s == null) return this;
+		if (s == null) {
+			cnrlink = null;
+			lif.clearCommonNetworkRelativeLinkAndPathSuffix();
+		} else {
+			if (cnrlink == null)
+				cnrlink = new CNRLink();
+			lif.setCommonNetworkRelativeLinkAndPathSuffix();
+		}
+
 		commonPathSuffix = s;
-		if (cnrlink == null) cnrlink = new CNRLink();
-		lif.setCommonNetworkRelativeLinkAndPathSuffix();
 		return this;
 	}
 

@@ -102,6 +102,14 @@ public class Registry {
 		return false;
 	}
 
+	public static boolean isKnownFolderClsid(GUID clsid) {
+		if (!indexClsids.containsKey(clsid))
+			return false;
+
+		var entry = indexClsids.get(clsid);
+		return Arrays.stream(entry.allowedClasses).anyMatch(cls -> cls == ItemIDKnownFolder.class);
+	}
+
 	public static boolean isControlClsid(GUID clsid) {
 		if (!indexClsids.containsKey(clsid))
 			return false;

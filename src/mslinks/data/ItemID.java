@@ -33,6 +33,7 @@ public class ItemID implements Serializable {
 	public static final int ID_TYPE_GROUPMASK = 0x70;
 	public static final int ID_TYPE_INGROUPMASK = 0x0f;
 
+	public static final int GROUP_KF = 0x00;
 	public static final int GROUP_ROOT = 0x10;
 	public static final int GROUP_COMPUTER = 0x20;
 	public static final int GROUP_FS = 0x30;
@@ -96,6 +97,10 @@ public class ItemID implements Serializable {
 		int group = typeFlags & ID_TYPE_GROUPMASK;
 		int subGroup = typeFlags & ID_TYPE_INGROUPMASK;
 		switch (group) {
+		case GROUP_KF:
+			if (subGroup == 0)
+				return new ItemIDKnownFolder();
+			break;
 		case GROUP_ROOT:
 			return new ItemIDRoot(typeFlags);
 		case GROUP_COMPUTER: 
@@ -107,10 +112,10 @@ public class ItemID implements Serializable {
 		case GROUP_CONTROLPANEL:
 			if (subGroup == TYPE_CONTROL_SPECIAL_FOLDER)
 				return new ItemIDControl(typeFlags);
-			// fall through
-		default:
-			return new ItemIDUnknown(typeFlags);
+			break;
 		}
+
+		return new ItemIDUnknown(typeFlags);
 	}
 
 	public static String typeFlagsToLog(long value) {
@@ -127,6 +132,9 @@ public class ItemID implements Serializable {
 
 		String prefix = "";
 		switch (group) {
+		case GROUP_KF:
+			builder.append("GROUP_KF");
+			break;
 		case GROUP_ROOT:
 			builder.append("GROUP_ROOT");
 			prefix = "TYPE_ROOT_";

@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import mslinks.data.ItemID;
+import mslinks.data.ItemIDControl;
 import mslinks.data.ItemIDDrive;
 import mslinks.data.ItemIDFS;
+import mslinks.data.ItemIDKnownFolder;
 import mslinks.data.ItemIDRoot;
 import mslinks.data.ItemIDUnknown;
 import mslinks.data.Registry;
@@ -126,8 +128,14 @@ public class LinkTargetIDList extends LinkedList<ItemID> implements Serializable
 			if (firstId instanceof ItemIDFS)
 				path.append("<Desktop>\\");
 
-			for (ItemID i : this) {
-				path.append(i.toString());
+			int i = 0;
+			// a known folder is already bound to aspecific absolute location
+			// ItemIDRoot before it doesn't make much sense but without it links don't work
+			if (size() > 1 && get(0) instanceof ItemIDRoot && get(1) instanceof ItemIDKnownFolder) {
+				++i;
+			}
+			for (; i < size(); ++i) {
+				path.append(get(i).toString());
 			}
 		}
 		return path.toString();

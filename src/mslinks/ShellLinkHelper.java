@@ -27,6 +27,7 @@ import mslinks.data.ItemID;
 import mslinks.data.ItemIDControl;
 import mslinks.data.ItemIDDrive;
 import mslinks.data.ItemIDFS;
+import mslinks.data.ItemIDKnownFolder;
 import mslinks.data.ItemIDRoot;
 import mslinks.data.Registry;
 import mslinks.data.VolumeID;
@@ -178,18 +179,26 @@ public class ShellLinkHelper {
 			throw new ShellLinkException("Can't use Computer guid as a special folder root! Use setLocalTarget with a drive name instead ");
 		}
 		
-		link.getHeader().getLinkFlags().setHasLinkTargetIDList();
 		var idList = link.createTargetIdList();
-		// although later systems use ItemIDRoot(computer) + ItemIDRegFolder(root clsid) pair, always set root clsid as ItemIDRoot for simplicity
-		idList.add(new ItemIDRoot().setClsid(root));
 
+		boolean isKnownFolderClsid = Registry.isKnownFolderClsid(root);
 		boolean isControlClsid = Registry.isControlClsid(root);
 
 		// each segment of the path is directory
 		path = path.replaceAll("^(\\\\|\\/)", "");
 		String[] pathSegments = path.split("\\\\|\\/");
-		if (isControlClsid && pathSegments.length > 0) {
-			idList.add(new ItemIDControl().setName(pathSegments[0]));
+		if (isKnownFolderClsid) {
+			// even though Registry.CLSID_USERFOLDER points specifically to C:\Users\<user>
+			// known folders are not necesserily under C:\Users\<user>
+			// yet it doesn't work without CLSID_USERFOLDER as a first item
+			idList.add(new ItemIDRoot().setClsid(Registry.CLSID_USERFOLDER));
+			idList.add(new ItemIDKnownFolder().setClsid(root));
+		} else {
+			// although later systems use ItemIDRoot(computer) + ItemIDRegFolder(root clsid) pair, always set root clsid as ItemIDRoot for simplicity
+			idList.add(new ItemIDRoot().setClsid(root));
+			if (isControlClsid && pathSegments.length > 0 && pathSegments[0].length() > 0) {
+				idList.add(new ItemIDControl().setName(pathSegments[0]));
+			}
 		}
 
 		for (int i = isControlClsid ? 1 : 0; i < pathSegments.length; ++i) {
