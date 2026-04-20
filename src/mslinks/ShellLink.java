@@ -46,7 +46,7 @@ import mslinks.extra.VistaIDList;
 
 public class ShellLink {
 
-	public static final String VERSION = "1.1.2";
+	public static final String VERSION = "1.2.0";
 	
 	private static HashMap<Integer, Class<? extends Serializable>> extraTypes = new HashMap<>(Map.ofEntries(
 		Map.entry(ConsoleData.signature, ConsoleData.class),
