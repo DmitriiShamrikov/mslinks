@@ -24,7 +24,7 @@ jobs:
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Set up JDK
       uses: actions/setup-java@v5
