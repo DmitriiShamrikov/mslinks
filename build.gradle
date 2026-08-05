@@ -59,11 +59,11 @@ testlogger {
 
 eclipse {
     classpath {
-        defaultOutputDir = file('build/eclipse-default')
+        defaultOutputDir = file('build/classes/java/main')
         file.whenMerged {
             entries.each { entry ->
                 if (entry.kind == 'src' && entry.hasProperty('output')) {
-                    entry.output = entry.output.replace('bin/', "build/eclipse/")
+                    entry.output = entry.output.replace('bin/', "build/classes/java/")
                 }
             }
         }
